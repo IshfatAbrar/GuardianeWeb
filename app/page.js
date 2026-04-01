@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { APP_STORE_URL, PLAY_STORE_URL } from "../lib/storeLinks";
 import { ThemeToggle } from "../components/theme-toggle";
+
+import { DownloadButtons } from "../components/DownloadButtons";
 
 const features = [
   {
@@ -145,24 +146,7 @@ export default function Home() {
               </strong>{" "}
               when something needs you now, not later.
             </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="focus-visible-ring brand-btn rounded-full px-7 py-3 text-sm font-medium"
-              >
-                App Store
-              </a>
-              <a
-                href={PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="focus-visible-ring outline-btn rounded-full px-7 py-3 text-sm font-medium"
-              >
-                Google Play
-              </a>
-            </div>
+            <DownloadButtons className="flex flex-col gap-3 sm:flex-row" />
             <div className="flex flex-wrap justify-center gap-2 pt-1">
               <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]">
                 Mood boards
@@ -393,22 +377,7 @@ export default function Home() {
                 id="download"
                 className="flex flex-col items-center justify-center gap-3 pt-2 scroll-mt-28 sm:flex-row"
               >
-                <a
-                  href={APP_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="focus-visible-ring brand-btn rounded-full px-8 py-3.5 text-sm font-medium"
-                >
-                  App Store
-                </a>
-                <a
-                  href={PLAY_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="focus-visible-ring outline-btn rounded-full px-8 py-3.5 text-sm font-medium"
-                >
-                  Google Play
-                </a>
+                <DownloadButtons className="flex flex-col items-center justify-center gap-3 sm:flex-row" />
               </div>
             </div>
           </div>

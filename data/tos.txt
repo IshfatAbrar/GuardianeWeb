@@ -1,0 +1,178 @@
+Guardiané Terms of Service
+Effective Date: March 31, 2026
+Last Updated: March 31, 2026
+These Terms of Service (“Terms”) govern your access to and use of Guardiané’s websites, applications, dashboards, family accounts, tools, content, and related services (collectively, the “Services”). By accessing or using the Services, creating an account, clicking “Agree,” or otherwise indicating acceptance, you agree to be bound by these Terms. If you do not agree to these Terms, do not use the Services.
+1. Who We Are
+“Guardiané,” “we,” “our,” or “us” means AI-Guardian Lab LLC, the provider of the Services.
+2. Eligibility
+You may use the Services only if:
+• you have the legal capacity to enter into these Terms;
+• you provide accurate and current information;
+• you are authorized to create and manage any account you establish; and
+• your use of the Services complies with applicable law.
+If you create, manage, or supervise a child or teen account, you represent and warrant that you are the child’s or teen’s parent or legal guardian, or are otherwise legally authorized to do so.
+If a child is under 13, use of any applicable child account or child-directed feature is subject to the Guardiané Privacy Policy and any required parental notice and verifiable parental consent procedures.
+3. Account Registration and Security
+You may need to create an account to access certain Services. You agree to:
+• provide accurate, complete, and current account information;
+• maintain the confidentiality of your login credentials;
+• notify us promptly of any unauthorized use of your account or suspected security incident; and
+• accept responsibility for activity occurring under your account to the extent permitted by law.
+You are responsible for all devices, settings, permissions, and linked accounts associated with your use of the Services.
+4. Parent/Guardian Responsibility, Institutional Compliance, and Lawful Use
+Guardiané is designed to support family safety, communication, awareness, and parent- or guardian-enabled account supervision.
+Certain features may allow authorized users to configure alerts, account supervision, check-ins, location-related functions, contact settings, wellness or safety-related notifications, and other family safety tools. You are solely responsible for determining whether you have the legal authority to enable, connect, configure, or use any feature with respect to a device, account, child, teen, employee, student, or other person, and whether your use is permitted under applicable law, school or employer rules, account-owner permissions, and carrier or platform terms.
+You agree that you will:
+• use the Services only for lawful, authorized, and appropriate purposes;
+• provide any notices required by law;
+• obtain any consents, authorizations, permissions, and approvals required by law or contract;
+• comply with applicable privacy, communications, education, employment, consumer protection, and data protection laws, as well as school rules, workplace policies, collective obligations, and contractual restrictions;
+• avoid covert, deceptive, unauthorized, or unlawful monitoring, interception, recording, or data collection; and
+• review alerts and outputs independently and decide what action, if any, is appropriate.
+Guardiané does not authorize or encourage unlawful interception of communications. If a feature could implicate laws governing messages, calls, recordings, or electronic communications, you may use that feature only where all legally required consents and authorizations have been obtained.
+Without limiting the foregoing, you are solely responsible for complying with any laws or requirements relating to parental authority, verifiable parental consent, child or teen privacy, wiretapping or electronic communications, school or student records, FERPA-related institutional restrictions, workplace monitoring, employment law, and device, operating-system, carrier, or account-provider terms that may apply to your use of the Services.
+If you use the Services in connection with a school, district, university, employer, workplace, youth organization, or any other institution, you are solely responsible for determining whether the Services are legally permitted and operationally appropriate in that setting, and for obtaining all required notices, approvals, authorizations, consents, and administrative permissions before use.
+5. Your Instructions and Configuration Choices
+By enabling features, linking devices or accounts, selecting settings, inviting users, adding contacts, or otherwise configuring the Services, you instruct Guardiané to process related information in accordance with your choices and our Privacy Policy.
+You are responsible for the configuration choices you make and for confirming that those choices are lawful and appropriate for your use case.
+6. Privacy
+Your use of the Services is also governed by the Guardiané Privacy Policy and, where applicable, any Guardiané Family Privacy Disclosure for Children and Teens or similar supplemental privacy notice we provide.
+7. Subscription, Billing, Automatic Renewal, and Cancellation
+Some Services may require a paid subscription.
+If you purchase a paid plan, you agree that:
+• you will pay all fees and applicable taxes disclosed at checkout;
+• you authorize us and our payment processor to charge your selected payment method on a recurring basis, if applicable;
+• your subscription may automatically renew unless you cancel before the renewal date;
+• we may change subscription pricing prospectively, and if required by law we will provide advance notice before the new price applies to a renewal term; and
+• except as required by law or expressly stated in a specific offer, payments are non-refundable.
+If a free trial or promotional period converts to a paid subscription, the applicable recurring charges and timing will be disclosed at sign-up.
+You may cancel your subscription through your account settings or through another cancellation method we make available to you. Where required by law, we will provide a cancellation mechanism that is at least as easy to use as the sign-up method.
+Cancellation will take effect at the end of the current billing period unless we state otherwise at the time of cancellation. Deleting the app does not automatically cancel a paid subscription.
+If you purchase a subscription through Apple, Google, or another third-party app marketplace, billing, cancellation, and refund rights may also be governed by that marketplace’s terms and procedures.
+8. License and Permitted Use
+Subject to these Terms, Guardiané grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Services for your personal, family, or other expressly authorized use.
+You may not:
+• copy, distribute, modify, reverse engineer, decompile, or create derivative works from the Services except as permitted by law;
+• use the Services for unlawful surveillance, harassment, stalking, abuse, discrimination, retaliation, or exploitation;
+• use the Services in a way that violates the privacy or legal rights of any person;
+• upload malware or malicious code, interfere with the integrity or availability of the Services, or bypass security controls;
+• access devices, accounts, or information without authorization; or
+• resell, sublicense, lease, or commercially exploit the Services without our prior written consent.
+9. User Content and Service Data
+You may provide content or information to the Services, including account details, profile information, check-ins, contacts, settings, messages you choose to submit, support requests, and information associated with enabled features (“User Content”).
+You retain ownership of User Content you are legally entitled to own. However, you grant Guardiané a non-exclusive, worldwide, royalty-free license to host, store, reproduce, process, transmit, analyze, and display User Content only as reasonably necessary to:
+• provide, operate, secure, maintain, troubleshoot, support, and improve the Services in a manner consistent with these Terms and our Privacy Policy;
+• enforce these Terms; and
+• comply with applicable law, legal process, or valid governmental requests.
+Guardiané does not obtain ownership of your User Content under these Terms.
+You represent and warrant that:
+• you have the rights, authority, and legal basis to submit User Content or authorize its processing;
+• your User Content and your use of the Services do not violate any law, contract, or third-party right; and
+• you will not submit content that you know is unlawful, fraudulent, malicious, or infringing.
+10. Automated Analysis and Alerts
+Guardiané may use automated systems, including machine learning or artificial intelligence tools, to analyze selected data and generate alerts, summaries, recommendations, or other outputs.
+You understand and agree that:
+• alerts and outputs may be incomplete, delayed, inaccurate, or unavailable;
+• automated systems may produce false positives, false negatives, or incomplete assessments;
+• not every harmful, unlawful, predatory, bullying-related, self-harm-related, or emergency situation will be detected, classified, or reported; and
+• outputs are informational tools only and do not replace human judgment, parental judgment, professional judgment, or emergency response.
+11. No Duty to Monitor or Prevent Harm
+Guardiané does not undertake, assume, or accept any duty to monitor, detect, investigate, prevent, or remediate misconduct, abuse, bullying, exploitation, predatory behavior, self-harm, emergencies, or any other harmful conduct.
+We do not guarantee that the Services will identify, flag, escalate, or prevent any specific event, communication, condition, or risk. A failure to generate an alert, a delayed alert, an inaccurate alert, or an unavailable feature does not create a duty, promise, guarantee, or liability on the part of Guardiané.
+12. No Medical, Mental Health, Legal, Emergency, or Special Relationship
+Guardiané is not:
+• a medical device;
+• a healthcare provider;
+• a mental health provider;
+• a legal service;
+• a law enforcement service;
+• a crisis line; or
+• a replacement for 911, 988, emergency responders, or qualified professionals.
+Your use of the Services does not create any fiduciary, custodial, supervisory, therapist-patient, school-student, guardian-ward, special relationship, or other heightened duty relationship between you and Guardiané.
+If you believe there is an imminent threat, emergency, abuse, self-harm risk, or medical issue, contact emergency services, 988, law enforcement, or an appropriate qualified professional immediately.
+13. Safety Disclaimer
+Guardiané’s alerts, dashboards, summaries, wellness indicators, notifications, and related outputs are provided for informational and support purposes only. They are not guarantees of safety, supervision, prevention, or outcome.
+You remain solely responsible for:
+• supervising your family members or other authorized users;
+• reviewing alerts and deciding how to respond;
+• determining when to contact emergency responders, schools, healthcare providers, counselors, employers, or other professionals; and
+• complying with legal obligations applicable to your use of the Services.
+14. Third-Party Services and Integrations
+The Services may interoperate with third-party devices, platforms, operating systems, app stores, maps, messaging systems, analytics tools, payment processors, or other third-party services.
+We are not responsible for third-party products, services, content, APIs, policies, availability, or security practices. Your use of third-party services is governed by their own terms and privacy policies.
+If you access the Services through Apple’s App Store, Google Play, or another app marketplace, additional third-party terms may apply.
+If you obtain a mobile application through Apple’s App Store, you acknowledge that these Terms are between you and AI-Guardian Lab LLC, not with Apple, and that Apple has no obligation to furnish any maintenance or support services for the application. The license granted under these Terms is a limited, non-transferable license to use the application on Apple-branded products that you own or control and as otherwise permitted by the App Store Terms of Service.
+To the maximum extent permitted by law, Apple has no warranty obligation with respect to the application and is not responsible for addressing any claims relating to the application or your possession or use of it, including product liability claims, claims that the application fails to conform to legal or regulatory requirements, or claims arising under consumer protection, privacy, or similar laws.
+Apple and Apple’s subsidiaries are third-party beneficiaries of these Terms as they relate to the application obtained through the App Store, and upon your acceptance of these Terms, Apple will have the right to enforce these Terms against you as a third-party beneficiary. If you obtain the Services through Google Play or another marketplace, you also agree to comply with any applicable marketplace terms.
+15. Intellectual Property
+The Services, including software, interfaces, designs, trademarks, logos, text, graphics, audiovisual material, and content created by Guardiané, are owned by Guardiané or its licensors and are protected by intellectual property and other applicable laws.
+Except for the limited license expressly granted in these Terms, no rights are granted to you.
+“Guardiané” and related names, logos, and branding are our trademarks or those of our affiliates or licensors.
+16. Feedback
+If you provide suggestions, ideas, comments, or other feedback regarding the Services, you grant us a non-exclusive, worldwide, royalty-free, fully paid-up, transferable, sublicensable right to use, reproduce, modify, and incorporate that feedback without restriction or compensation to you.
+17. Beta or Experimental Features
+We may designate certain features, tools, models, integrations, or functionality as beta, pilot, early access, evaluation, or experimental (“Beta Features”). Beta Features may be modified, suspended, or discontinued at any time and may be subject to additional eligibility requirements, usage limits, or supplemental terms.
+Beta Features may be more limited, less reliable, or more error-prone than other parts of the Services. To the maximum extent permitted by law, Beta Features are provided “as is” and “as available,” without any warranty or guarantee of availability, performance, or continued support.
+18. Suspension, Restriction, and Termination
+We may suspend, restrict, disable, terminate, or modify your access to some or all of the Services, features, content, or functionality at any time, with or without notice, if:
+• you violate these Terms;
+• your use creates risk, harm, legal exposure, or security concerns;
+• we believe your use is unauthorized, unlawful, deceptive, abusive, or fraudulent;
+• required by law; or
+• necessary to protect the Services, our users, minors, families, or others.
+We reserve the right, to the extent permitted by law, to investigate suspected misuse of the Services, threats, harassment, fraud, abuse, unlawful access, or other conduct that may expose Guardiané or others to harm or liability; to preserve relevant records; and to disclose information as reasonably necessary to comply with law, legal process, law-enforcement requests, or to protect the rights, safety, and security of Guardiané, our users, minors, families, and others.
+You may stop using the Services at any time. If you violate these Terms, your license to use the Services will terminate immediately.
+Sections that by their nature should survive termination will survive, including sections relating to payment obligations, intellectual property, disclaimers, limitations of liability, indemnification, export compliance, and dispute resolution.
+19. Disclaimers
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SERVICES ARE PROVIDED “AS IS” AND “AS AVAILABLE.”
+AI-GUARDIAN LAB LLC AND GUARDIANÉ DISCLAIM ALL WARRANTIES, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, RELIABILITY, QUIET ENJOYMENT, OR THAT THE SERVICES WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE.
+WITHOUT LIMITING THE FOREGOING, WE DO NOT WARRANT THAT:
+• alerts, analyses, or outputs will be accurate, complete, timely, or available;
+• the Services will detect all risks, threats, misconduct, or safety issues;
+• any location, notification, or communication-related feature will always function correctly; or
+• the Services will prevent harm, loss, injury, or damage.
+20. Limitation of Liability
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, AI-GUARDIAN LAB LLC, GUARDIANÉ, AND THEIR OFFICERS, DIRECTORS, MEMBERS, MANAGERS, EMPLOYEES, CONTRACTORS, AFFILIATES, LICENSORS, AND SERVICE PROVIDERS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, GOODWILL, OR BUSINESS INTERRUPTION, ARISING OUT OF OR RELATING TO THE SERVICES OR THESE TERMS, UNDER ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, TORT, NEGLIGENCE, STRICT LIABILITY, STATUTE, OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR TOTAL LIABILITY FOR ALL CLAIMS ARISING OUT OF OR RELATING TO THE SERVICES OR THESE TERMS WILL NOT EXCEED THE GREATER OF:
+• the amount you paid to us for the Services during the 12 months before the event giving rise to the claim; or
+• USD $100.
+Some jurisdictions do not allow certain disclaimers or limitations of liability, so some portions of this section may not apply to you.
+21. Indemnification
+To the maximum extent permitted by law, you agree to defend, indemnify, and hold harmless AI-GUARDIAN LAB LLC, Guardiané, and their officers, directors, members, managers, employees, affiliates, licensors, and service providers from and against claims, liabilities, damages, judgments, losses, and expenses, including reasonable attorneys’ fees, arising out of or relating to:
+• your use or misuse of the Services;
+• your User Content;
+• your violation of these Terms;
+• your unlawful, unauthorized, or improper monitoring, configuration, disclosure, or data collection;
+• your violation of applicable law; or
+• your infringement or violation of the rights of any person or entity.
+This section does not require you to indemnify us for any matter caused solely by our gross negligence, willful misconduct, or where prohibited by law.
+22. Governing Law, Informal Resolution, Arbitration, and Class Action Waiver
+These Terms are governed by the laws of the State of Florida, without regard to conflict of law principles.
+Before either party begins arbitration or files a claim in court for any dispute covered by this section, that party must first send the other party a written notice of dispute describing the nature of the claim and the requested relief. Notices to Guardiané must be sent to the contact information listed in Section 26. The parties agree to attempt to resolve the dispute informally for at least 30 days after the notice is received before starting arbitration or court proceedings, except that either party may seek immediate injunctive or equitable relief for alleged misuse of intellectual property, unauthorized access, threatened unlawful conduct, or where immediate relief is reasonably necessary to prevent imminent harm.
+Except for disputes that qualify for small claims court, and except as otherwise expressly stated in this section, any dispute, claim, or controversy arising out of or relating to these Terms or the Services will be resolved by binding individual arbitration administered by the American Arbitration Association (“AAA”) under its applicable consumer arbitration rules. The arbitration will take place in Hillsborough County, Florida, unless the parties agree otherwise or applicable law requires another location.
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, YOU AND AI-GUARDIAN LAB LLC AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN AN INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS, COLLECTIVE, REPRESENTATIVE, CONSOLIDATED, COORDINATED, MASS, OR PRIVATE ATTORNEY GENERAL ACTION OR PROCEEDING. Unless both parties agree otherwise, the arbitrator may not consolidate more than one person’s claims and may not preside over any form of representative, coordinated, mass, or class proceeding.
+If 25 or more substantially similar claims are asserted against AI-Guardian Lab LLC or related parties by the same or coordinated counsel or are otherwise coordinated, the parties agree that, to the maximum extent permitted by law, those claims may be administered in batches or staged proceedings in a manner designed to promote efficiency, consistency, and fairness. If any such batching or mass-arbitration administration provision is determined to be unenforceable, then the dispute shall proceed to the maximum extent permitted by the remaining provisions of this section.
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, YOU AND AI-GUARDIAN LAB LLC WAIVE ANY RIGHT TO A JURY TRIAL FOR ANY DISPUTE, CLAIM, OR CONTROVERSY ARISING OUT OF OR RELATING TO THESE TERMS, THE SERVICES, OR ANY DEALINGS BETWEEN THE PARTIES, WHETHER RESOLVED IN ARBITRATION OR IN COURT.
+If a court determines that the class action waiver in this section is unenforceable as to a particular claim or request for relief, then that claim or request for relief will be severed and litigated in a court of competent jurisdiction in Hillsborough County, Florida, and the remaining claims will be resolved in arbitration to the fullest extent permitted by law.
+23. Electronic Communications and Notices
+You consent to receive communications from Guardiané electronically, including through email, in-app messages, postings within the Services, or other electronic means. You agree that electronic notices, disclosures, agreements, and other communications satisfy any legal requirement that such communications be in writing, to the extent permitted by law.
+You are responsible for keeping your contact information current and for regularly reviewing communications we send regarding the Services or these Terms.
+24. Export Controls and Sanctions Compliance
+You may not use, export, re-export, transfer, or make available the Services except as authorized by United States law and other applicable laws. You represent and warrant that you are not located in, ordinarily resident in, or organized under the laws of a country or territory subject to comprehensive U.S. embargoes or sanctions, and that you are not a person or entity with whom U.S. persons are prohibited from dealing.
+You may not use the Services in violation of export control, sanctions, anti-boycott, or similar laws or regulations.
+25. Changes to the Services or Terms
+We may modify the Services or these Terms from time to time. If we make material changes, we will provide notice as required by law.
+Your continued use of the Services after the effective date of revised Terms constitutes your acceptance of the updated Terms. If you do not agree to the revised Terms, you must stop using the Services. Any material revision will apply prospectively only unless a retroactive change is required by law or is expressly permitted by law and clearly communicated to you; material revisions will not apply retroactively to disputes that accrued before the revised Terms became effective.
+26. Miscellaneous
+These Terms, together with the Privacy Policy and any additional terms or notices presented for specific Services or features, constitute the entire agreement between you and Guardiané regarding the Services.
+If any provision of these Terms is found to be unlawful, invalid, or unenforceable, the remaining provisions will remain in full force and effect.
+You may not assign or transfer these Terms without our prior written consent. We may assign these Terms in connection with a merger, acquisition, financing, reorganization, sale of assets, or by operation of law.
+Our failure to enforce any provision of these Terms is not a waiver of that provision or any other provision.
+The headings in these Terms are for convenience only and do not affect interpretation.
+27. Contact Information
+For questions about these Terms, contact:
+Guardiané
+AI-Guardian Lab LLC
+10547 Martinique Isle Dr.
+Tampa, FL 33647
+Email: info@guardianeusa.com
