@@ -1,34 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+function subscribe(onStoreChange) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("themechange", onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("themechange", onStoreChange);
+  };
+}
+
+function getSnapshot() {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  return (
+    document.documentElement.getAttribute("data-theme") ||
+    localStorage.getItem("theme") ||
+    (window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark")
+  );
+}
+
+function getServerSnapshot() {
+  return "light";
+}
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState("dark");
-
-  useEffect(() => {
-    const stored = localStorage.getItem("theme");
-    const resolved =
-      stored ||
-      (window.matchMedia("(prefers-color-scheme: light)").matches
-        ? "light"
-        : "dark");
-    setTheme(resolved);
-    document.documentElement.setAttribute("data-theme", resolved);
-  }, []);
+  const theme = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
+    window.dispatchEvent(new Event("themechange"));
   }
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className="focus-visible-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--muted)] transition-colors hover:border-[var(--brand)] hover:text-[var(--foreground)]"
+      aria-label={
+        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+      }
+      className="focus-visible-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.35)] text-[var(--muted)] transition-colors hover:border-[var(--brand)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
     >
       {theme === "dark" ? (
         <svg
@@ -39,7 +62,13 @@ export function ThemeToggle() {
           fill="none"
           aria-hidden
         >
-          <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
+          <circle
+            cx="12"
+            cy="12"
+            r="4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
           <path
             d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
             stroke="currentColor"

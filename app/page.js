@@ -1,372 +1,452 @@
+import Image from "next/image";
 import Link from "next/link";
-import { APP_STORE_URL, PLAY_STORE_URL } from "../lib/storeLinks";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faApple, faGooglePlay } from "@fortawesome/free-brands-svg-icons";
+import { PartnerWithUsModal } from "../components/partner-with-us-modal";
 import { ThemeToggle } from "../components/theme-toggle";
 
-const features = [
+const teamMembers = [
   {
-    title: "Mood boards & emotional arc",
-    body: "See how they’re doing at a glance—mood levels, history, and charts that help you spot patterns before they become problems.",
+    name: "Dr. Tingting Zhang",
+    role: "Founding Director",
+    affiliation: "University of South Florida",
+    initials: "TZ",
+    bio: "Scholar in technology innovation, artificial intelligence, and human-centered innovation. Her work focuses on developing ethical, practical, and socially impactful AI systems to protect children and families, strengthen digital safety, and expand access to mental health and community support.",
   },
   {
-    title: "Screen-time intelligence",
-    body: "Know where hours go: top apps, balance over the week, and reporting windows that match how your family actually lives.",
+    name: "Dr. Jing Wang",
+    role: "Research Member",
+    affiliation: "University of South Florida",
+    initials: "JW",
+    bio: "Professor of Instruction and Director of the Pathway to Computing Program. Her work focuses on computing education, computer animation, and broadening participation in computing, bringing expertise in inclusive technology education and student-centered innovation.",
   },
   {
-    title: "Learning progress",
-    body: "Modules, lessons, assignments, and streaks in one hub—so growth shows up as progress you can see and celebrate.",
+    name: "Dr. Seungbae Kim",
+    role: "Research Member",
+    affiliation: "University of South Florida",
+    initials: "SK",
+    bio: "Assistant Professor in the Bellini College of Artificial Intelligence, Cybersecurity and Computing. Research centers on AI, social AI, and trustworthy machine learning systems for complex real-world decision-making.",
   },
   {
-    title: "Family messaging",
-    body: "Stay in the same conversation as your kid—fast, clear parent–child threads when schedules won’t wait.",
+    name: "Dr. Yongjei Lee",
+    role: "Research Member",
+    affiliation: "University of South Florida",
+    initials: "YL",
+    bio: "Assistant Professor in Criminology. Expertise includes spatial-temporal crime analysis and predictive approaches to public safety, contributing insight into risk patterns, intervention strategies, and data-informed protection systems.",
   },
   {
-    title: "Threat-aware texting",
-    body: "Smart signals when messages look off, urgent, or risky—step in early instead of finding out late.",
+    name: "Dr. Guangjing Wang",
+    role: "Research Member",
+    affiliation: "University of South Florida",
+    initials: "GW",
+    bio: "Assistant Professor in the Bellini College of AI, Cybersecurity and Computing. Research focuses on LLM agents, security and privacy, sensing, and intelligent data systems—advancing privacy-aware technologies and secure computing.",
   },
   {
-    title: "Alerts that demand attention",
-    body: "What matters rises to the top—so you’re not drowning in noise when something actually needs a parent.",
+    name: "Dr. Xiaomin Lin",
+    role: "Research Member",
+    affiliation: "University of South Florida",
+    initials: "XL",
+    bio: "Assistant Professor in Electrical Engineering with affiliated work spanning robotics and AI. Research sits at the intersection of perception, autonomy, edge AI, and intelligent robotic systems across healthcare and other domains.",
   },
   {
-    title: "Emergency contacts & map",
-    body: "Contacts and location context in reach when safety isn’t theoretical—it’s right now.",
+    name: "Dr. Wenbin Zhang",
+    role: "Research Member",
+    affiliation: "Florida International University",
+    initials: "WZ",
+    bio: "Assistant Professor in the Knight Foundation School of Computing and Information Sciences at FIU. Research focuses on responsible AI and socially beneficial machine learning, with applications in healthcare, digital forensics, and beyond.",
   },
   {
-    title: "Built for every kid in the house",
-    body: "Switch child profiles in seconds—each one gets a clear dashboard, tailored to their world.",
+    name: "Dr. Stacie Herrera",
+    role: "Clinical Advisor",
+    affiliation: "Herrera Psychology",
+    initials: "SH",
+    bio: "Licensed school psychologist and owner of Herrera Psychology. Expert in supporting children and adolescents through psychological assessment, therapy, and school-based guidance with expertise in learning, coping, and family-centered mental health.",
+  },
+  {
+    name: "Dr. Heather Agazzi",
+    role: "Clinical Advisor",
+    affiliation: "USF Health",
+    initials: "HA",
+    bio: "Professor at USF Health in Pediatrics with a joint appointment in Psychiatry and Behavioral Neurosciences, and Chief of the Division of Child Development. Board-certified specialist in Clinical Child and Adolescent Psychology.",
   },
 ];
 
-const statBlocks = [
-  { k: "Mood", v: "boards & emotional trends" },
-  { k: "Time", v: "screen intelligence" },
-  { k: "Learn", v: "progress & lessons" },
-  { k: "Safe", v: "text alerts & signals" },
+const whyItems = [
+  {
+    label: "Real-time support",
+    body: "Early awareness of potential digital safety and emotional risks",
+  },
+  {
+    label: "Parent-centered guidance",
+    body: "Practical tools tailored to individual family needs",
+  },
+  {
+    label: "Educational empowerment",
+    body: "Digital safety, resilience, and life-skills learning resources",
+  },
+  {
+    label: "Mental wellness support",
+    body: "Seamless pathways to trusted counselor networks",
+  },
+  {
+    label: "Privacy-conscious design",
+    body: "Responsible AI development built on family trust",
+  },
+  {
+    label: "Integrated ecosystem",
+    body: "Technology, education, and care unified in one platform",
+  },
 ];
+
+const whatWeDo = [
+  "Detect digital safety and emotional risk signals in real time",
+  "Support parents with practical, personalized guidance",
+  "Provide children and teens with developmentally appropriate learning resources",
+  "Connect families with trusted counseling and crisis support when needed",
+  "Prioritize privacy-preserving, responsible AI design",
+];
+
+const guardianeFeatures = [
+  {
+    title: "Intelligent Monitoring",
+    desc: "Real-time detection of digital safety and emotional risk signals",
+  },
+  {
+    title: "Dynamic Education",
+    desc: "Developmentally appropriate content for children and teens",
+  },
+  {
+    title: "Parental Guidance",
+    desc: "Personalized, practical tools tailored to every family",
+  },
+  {
+    title: "Counselor Networks",
+    desc: "Seamless access to vetted mental health professionals",
+  },
+];
+
+const careerAreas = [
+  "AI and machine learning",
+  "Digital safety research",
+  "Child and adolescent wellbeing",
+  "Educational content development",
+  "Family engagement and community outreach",
+  "Counseling partnerships and care coordination",
+  "Product design and user experience",
+];
+
+const navLinks = [
+  ["Home", "/"],
+  ["About", "#about"],
+  ["Guardiané", "#guardiane"],
+  ["Why Us", "#why"],
+  ["Team", "#team"],
+  ["Careers", "#careers"],
+];
+
+const contactEmail = "tingting.zhang@guardianeusa.com";
 
 export default function Home() {
   return (
     <>
-      <header className="sticky top-0 z-50 glass">
-        <nav className="mx-auto flex h-[52px] w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/"
-            className="focus-visible-ring text-sm font-semibold tracking-tight"
-          >
-            Guardiané
-          </Link>
-          <ul className="hidden items-center gap-7 text-xs lg:flex">
-            <li>
-              <Link
-                href="#features"
-                className="focus-visible-ring font-medium text-[var(--foreground)] transition-colors"
-              >
-                Product
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#overview"
-                className="focus-visible-ring text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-              >
-                Overview
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#families"
-                className="focus-visible-ring text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-              >
-                Families
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#download"
-                className="focus-visible-ring text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-              >
-                Download
-              </Link>
-            </li>
+      {/* ── HEADER ── */}
+      <header className="sticky top-0 z-50 glass clarity-hero">
+        <nav className="clarity-wrap flex items-center justify-between gap-6 px-4 py-5 sm:px-6 lg:px-8">
+          <ul className="hidden items-center gap-7 text-[0.8rem] font-medium text-[var(--muted)] lg:flex">
+            {navLinks.map(([label, href]) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  className="focus-visible-ring transition-colors hover:text-[var(--foreground)]"
+                >
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2.5 font-sans">
             <ThemeToggle />
-            <Link
-              href="#download"
-              className="focus-visible-ring brand-btn rounded-full px-4 py-1.5 text-xs font-medium"
+            <PartnerWithUsModal
+              email={contactEmail}
+              className="focus-visible-ring outline-btn  px-4 py-2 text-[0.78rem] font-medium"
             >
-              Get the app
-            </Link>
+              Partner With Us
+              <span className="pill-btn-icon" aria-hidden>
+                ↗
+              </span>
+            </PartnerWithUsModal>
           </div>
         </nav>
       </header>
 
-      <main className="min-h-screen overflow-x-clip overflow-y-visible text-[var(--foreground)]">
-        <section className="relative flex min-h-svh flex-col items-center justify-center px-4 pb-28 pt-32 text-center sm:px-6 sm:pb-24 sm:pt-28 lg:px-8">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-[60vh] opacity-30"
-            style={{
-              background:
-                "radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in oklab, var(--foreground) 10%, transparent), transparent)",
-            }}
-          />
-          <div
-            data-reveal
-            className="relative z-10 flex flex-col items-center gap-6"
-          >
-            <span className="inline-flex rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-xs font-medium tracking-wide text-[var(--muted)]">
-              Clarity for parents. Calm for families.
-            </span>
-            <h1 className="gradient-heading max-w-4xl text-5xl font-bold leading-[1.1] tracking-tighter sm:text-6xl lg:text-7xl lg:leading-[1.08] xl:text-[80px] xl:leading-[1.06]">
-              Know their world
-              <br className="hidden sm:block" /> before the noise wins
-            </h1>
-            <p className="max-w-2xl text-lg leading-relaxed text-[var(--muted)] sm:text-xl">
-              Guardiané turns scattered signals into a single story:{" "}
-              <strong className="font-semibold text-[var(--foreground)]">
-                mood boards
-              </strong>
-              ,{" "}
-              <strong className="font-semibold text-[var(--foreground)]">
-                screen-time intelligence
-              </strong>
-              ,{" "}
-              <strong className="font-semibold text-[var(--foreground)]">
-                learning progress
-              </strong>
-              , and{" "}
-              <strong className="font-semibold text-[var(--foreground)]">
-                family messaging
-              </strong>{" "}
-              with smart alerts—including{" "}
-              <strong className="font-semibold text-[var(--foreground)]">
-                threat-aware texting
-              </strong>{" "}
-              when something needs you now, not later.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="focus-visible-ring brand-btn rounded-full px-7 py-3 text-sm font-medium"
-              >
-                App Store
-              </a>
-              <a
-                href={PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="focus-visible-ring outline-btn rounded-full px-7 py-3 text-sm font-medium"
-              >
-                Google Play
-              </a>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2 pt-1">
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]">
-                Mood boards
-              </span>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]">
-                Screen-time monitoring
-              </span>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]">
-                Learning progress
-              </span>
-              <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs text-[var(--muted)]">
-                Threat-aware texting
-              </span>
-            </div>
-          </div>
-
-          <div
-            data-reveal
-            id="overview"
-            className="product-glow relative z-10 mt-16 w-full max-w-xl scroll-mt-24"
-          >
-            <div className="relative z-10 overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] elevated-shadow">
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-muted)]">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      aria-hidden
-                    >
-                      <path
-                        d="M4 11.5V6a2 2 0 0 1 2-2h5M4 17v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2h-1.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M9 22V12h6v10M9 12H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <div className="text-left">
-                    <p className="text-sm font-medium">Parent dashboard</p>
-                    <p className="text-xs text-[var(--muted)]">
-                      Child profile selected
-                    </p>
-                  </div>
-                </div>
-                <span className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
-                  <span
-                    className="h-1.5 w-1.5 rounded-full bg-[var(--color-emerald-500)]"
-                    aria-hidden
-                  />
-                  Live
-                </span>
-              </div>
-              <div className="space-y-3 p-5 text-sm">
-                <div className="ml-auto max-w-[80%] rounded-2xl rounded-br-sm bg-[var(--surface-muted)] px-4 py-3 text-left">
-                  Flag anything odd in last night’s thread?
-                </div>
-                <div className="max-w-[88%] rounded-2xl rounded-bl-sm border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-left text-[var(--muted)]">
-                  Yes—threat-aware texting surfaced two phrases for review. Mood
-                  board is steady; screen time dipped after school. Open{" "}
-                  <Link
-                    href="#features"
-                    className="text-[var(--foreground)] underline underline-offset-2"
-                  >
-                    Reports
-                  </Link>{" "}
-                  for the full arc.
-                </div>
-              </div>
-              <div className="flex items-center gap-3 border-t border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3">
-                <button
-                  type="button"
-                  aria-label="Primary action"
-                  className="focus-visible-ring mic-pulse inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--background)] transition-opacity hover:opacity-80"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M12 3.5a3 3 0 0 0-3 3v5a3 3 0 1 0 6 0v-5a3 3 0 0 0-3-3Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M5 11.5a7 7 0 0 0 14 0M12 18.5V21m-3 0h6"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-                <p className="text-xs text-[var(--muted)]">
-                  Drawer: switch kids, mood boards, and learning progress—one tap
-                  away.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-[var(--border)]" id="families">
-          <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-            <p
-              data-reveal
-              className="mb-8 text-center text-xs font-medium uppercase tracking-[0.2em] text-[var(--muted)]"
-            >
-              When staying close means staying informed
-            </p>
-            <div
-              data-reveal
-              className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--border)] sm:grid-cols-4"
-            >
-              {["Busy parents", "School nights", "Blended homes", "Teen years"].map((label) => (
-                <div
-                  key={label}
-                  className="bg-[var(--surface)] px-6 py-5 text-center text-sm font-medium text-[var(--muted)]"
-                >
-                  {label}
-                </div>
-              ))}
-            </div>
-            <div
-              data-reveal
-              className="mt-8 grid gap-4 sm:grid-cols-2"
-            >
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-sm text-[var(--muted)]">
-                <p>
-                  <strong className="text-[var(--foreground)]">
-                    Every child, one clear view.
-                  </strong>{" "}
-                  Swap profiles in seconds—mood boards, screen time, and learning
-                  follow the kid you’re focused on.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-6 py-5 text-sm text-[var(--muted)]">
-                <p>
-                  <strong className="text-[var(--foreground)]">
-                    One story, not scattered tabs.
-                  </strong>{" "}
-                  Messages, alerts, and trends surface together so you connect
-                  dots instead of chasing them.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
-          <div data-reveal className="mb-16 text-center">
-            <h2 className="gradient-heading text-4xl font-bold leading-[1.12] tracking-tighter sm:text-5xl lg:text-6xl">
-              What you actually get
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-[var(--border)] lg:grid-cols-4">
-            {statBlocks.map((row, i) => (
-              <div
-                key={row.k}
-                data-reveal
-                className="flex flex-col items-center gap-1 bg-[var(--surface)] px-6 py-10 text-center"
-                style={{ transitionDelay: `${i * 40}ms` }}
-              >
-                <span className="text-4xl font-bold tracking-tighter lg:text-5xl">
-                  {row.k}
-                </span>
-                <span className="text-sm text-[var(--muted)]">{row.v}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-t border-[var(--border)]" id="features">
-          <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
-            <div data-reveal className="mb-16 max-w-2xl">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">
-                Features
+      <main className="min-h-screen overflow-x-clip text-[var(--foreground)]">
+        {/* ── HERO ── */}
+        <section className="clarity-hero border-b border-[var(--border)]">
+          <div className="clarity-wrap grid gap-14 px-4 pb-24 pt-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:px-8 lg:pb-28">
+            <div className="clarity-copy">
+              <h1 className="gradient-heading max-w-3xl text-[2.75rem] font-normal leading-[1.06] tracking-[-0.045em] sm:text-[3.2rem] lg:text-[3.55rem]">
+                AI-Guardian Center
+              </h1>
+              <p className="mt-6 max-w-2xl text-xl leading-9 text-[var(--foreground)]">
+                Protecting children&apos;s digital safety and mental wellbeing
+                through responsible AI
               </p>
-              <h2 className="gradient-heading text-4xl font-bold leading-[1.12] tracking-tighter sm:text-5xl">
-                Everything you need to lead with confidence.
+              <p className="clarity-prose mt-6 max-w-2xl">
+                The AI-Guardian Center is dedicated to developing innovative,
+                ethical, and privacy-conscious AI solutions that protect
+                children and teens in digital environments. Through advanced
+                risk detection, parent-centered support tools, educational
+                resources, and counselor-connected care pathways, the Center
+                works to create safer online experiences and stronger mental
+                wellbeing support systems for families and communities.
+              </p>
+              <p className="mt-5 max-w-2xl text-sm italic leading-8 text-[var(--muted)]">
+                &ldquo;Every child is unique and blessed. At AI-Guardian Center,
+                we devote our utmost efforts to ensuring children&apos;s digital
+                safety and mental wellbeing.&rdquo;
+              </p>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <a
+                  href="#about"
+                  className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
+                >
+                  Learn More
+                </a>
+                <a
+                  href="#guardiane"
+                  className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
+                >
+                  Explore Guardiané
+                </a>
+                <PartnerWithUsModal
+                  email={contactEmail}
+                  className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
+                >
+                  Partner With Us
+                </PartnerWithUsModal>
+              </div>
+            </div>
+
+            <div className="hidden lg:block">
+              <div className="mx-auto flex w-full max-w-[320px] items-center justify-center">
+                <Image
+                  src="/logo.png"
+                  alt="AI-Guardian Center logo"
+                  width={260}
+                  height={260}
+                  priority
+                  className="opacity-95"
+                  style={{ width: "auto", height: "auto" }}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── ABOUT THE CENTER ── */}
+        <section
+          id="about"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
+            <div data-reveal className="clarity-section-title mb-14">
+              <h2 className="gradient-heading text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                Who We Are
               </h2>
             </div>
-            <div className="grid gap-px overflow-hidden rounded-3xl border border-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
-              {features.map((f, i) => (
-                <div
-                  key={f.title}
-                  data-reveal
-                  className="group bg-[var(--surface)] p-6 transition-colors hover:bg-[var(--surface-muted)]"
-                  style={{ transitionDelay: `${i * 40}ms` }}
+
+            <div data-reveal className="clarity-article">
+              <p>
+                The AI-Guardian Center is an innovation and research hub focused
+                on advancing artificial intelligence solutions for child and
+                adolescent digital safety, emotional wellbeing, and family
+                support. We bring together expertise in AI, education, mental
+                health, family wellbeing, and responsible technology design to
+                develop tools that are effective, ethical, and accessible.
+              </p>
+
+              <h3>Our Vision</h3>
+              <p className="text-[var(--foreground)]">
+                To build a future where every child can grow, learn, and
+                interact online in a safe, supportive, and empowering digital
+                environment.
+              </p>
+
+              <h3>Our Mission</h3>
+              <p>
+                The AI-Guardian Center delivers real-time safety intelligence,
+                personalized parental guidance, and seamless access to vetted
+                mental health counselor networks, removing barriers to
+                protecting children&apos;s digital and emotional wellbeing.
+              </p>
+
+              <h3>What We Do</h3>
+              <ul className="space-y-2">
+                {whatWeDo.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FLAGSHIP: GUARDIANÉ ── */}
+        <section
+          id="guardiane"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
+            <div data-reveal className="clarity-section-title mb-14">
+              <h2 className="gradient-heading text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                Guardiané
+              </h2>
+            </div>
+
+            <div data-reveal className="clarity-article">
+              <p>
+                Guardiané is a mobile-based system for real-time risk detection
+                and parental support that operates with a strong focus on
+                privacy and child wellbeing. The platform integrates intelligent
+                monitoring, dynamic educational content, and interactive support
+                tools to help families navigate digital safety and mental
+                wellness challenges.
+              </p>
+
+              <blockquote className="mt-6 border-l-2 border-[var(--accent)] pl-5 text-sm italic text-[var(--muted)]">
+                &ldquo;Every child is unique and blessed. At Guardiané, we
+                devote our utmost efforts to ensuring your child&apos;s digital
+                safety and mental wellbeing.&rdquo;
+              </blockquote>
+
+              <h3>Marketing Summary</h3>
+              <p className="text-[var(--foreground)]">
+                Guardiané combines real-time safety and vetted counselor support
+                to protect children&apos;s digital and mental wellbeing.
+              </p>
+
+              <h3>Investor &amp; Partner Pitch</h3>
+              <p>
+                Guardiané unites AI-powered risk detection, tailored parental
+                tools, and integrated counselor networks to close the gap in
+                digital safety and mental health for children.
+              </p>
+
+              <h3>Core Features</h3>
+              <ul className="space-y-2">
+                {guardianeFeatures.map((item) => (
+                  <li key={item.title}>
+                    <span className="font-medium text-[var(--foreground)]">
+                      {item.title}:
+                    </span>{" "}
+                    {item.desc}
+                  </li>
+                ))}
+              </ul>
+
+              <h3>Download the App</h3>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <a
+                  href="#"
+                  className="focus-visible-ring store-btn"
+                  aria-label="Download on the App Store"
                 >
-                  <h3 className="mb-2 text-base font-semibold">{f.title}</h3>
-                  <p className="text-sm leading-relaxed text-[var(--muted)]">
-                    {f.body}
+                  <FontAwesomeIcon
+                    icon={faApple}
+                    className="store-btn-icon"
+                    aria-hidden
+                  />
+                  <span className="store-btn-title">App Store</span>
+                </a>
+                <a
+                  href="#"
+                  className="focus-visible-ring store-btn"
+                  aria-label="Get it on Google Play"
+                >
+                  <FontAwesomeIcon
+                    icon={faGooglePlay}
+                    className="store-btn-icon"
+                    aria-hidden
+                  />
+                  <span className="store-btn-title">Google Play</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── WHY AI-GUARDIAN CENTER ── */}
+        <section
+          id="why"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
+            <div data-reveal className="clarity-section-title mb-12">
+              <h2 className="gradient-heading mb-5 text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                Why Our Work Matters
+              </h2>
+              <p className="clarity-prose text-sm">
+                Children and teens are growing up in a digital world filled with
+                both opportunities and risks. Families often need better tools
+                to recognize warning signs early, guide healthy digital habits,
+                and access trustworthy support without overwhelming complexity.
+                The AI-Guardian Center addresses this need by integrating safety
+                technology, educational empowerment, and human-centered care.
+              </p>
+            </div>
+
+            <div data-reveal className="clarity-article">
+              <ul className="clarity-list space-y-3">
+                {whyItems.map((item) => (
+                  <li key={item.label}>
+                    <span className="font-medium text-[var(--foreground)]">
+                      {item.label}:
+                    </span>{" "}
+                    {item.body}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* ── CORE TEAM ── */}
+        <section
+          id="team"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
+            <div data-reveal className="clarity-section-title mb-14">
+              <h2 className="gradient-heading text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                Core Team Members
+              </h2>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {teamMembers.map((member, i) => (
+                <div
+                  key={member.name}
+                  data-reveal
+                  className="clarity-card group p-6 transition-all duration-300 hover:border-[var(--accent-border)]"
+                  style={{ transitionDelay: `${(i % 3) * 60}ms` }}
+                >
+                  <div className="mb-4 flex items-start gap-4">
+                    <span className="member-avatar">{member.initials}</span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold leading-snug">
+                        {member.name}
+                      </h3>
+                      <p className="mt-0.5 text-xs font-medium text-[var(--accent)]">
+                        {member.role}
+                      </p>
+                      <p className="text-xs text-[var(--muted)]">
+                        {member.affiliation}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs leading-relaxed text-[var(--muted)]">
+                    {member.bio}
                   </p>
                 </div>
               ))}
@@ -374,105 +454,220 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-[var(--border)] bg-[var(--surface)]">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-center px-4 py-24 text-center sm:px-6 lg:px-8">
-            <div data-reveal className="flex max-w-3xl flex-col items-center gap-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
-                Ready when you are
-              </p>
-              <h2 className="gradient-heading mx-auto max-w-3xl text-4xl font-bold leading-[1.1] tracking-tighter sm:text-5xl lg:text-6xl">
-                Stop guessing.
-                <br className="hidden sm:block" /> Start knowing.
+        {/* ── CAREERS ── */}
+        <section
+          id="careers"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
+            <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
+              <div data-reveal>
+                <h2 className="gradient-heading mb-6 text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                  Join Our Mission
+                </h2>
+                <p className="clarity-prose text-sm">
+                  Join us in shaping the future of child safety, family
+                  wellbeing, and responsible AI innovation. The AI-Guardian
+                  Center welcomes mission-driven individuals who are passionate
+                  about applying technology, research, education, and care to
+                  make a meaningful difference in children&apos;s lives.
+                </p>
+              </div>
+
+              <div data-reveal className="clarity-card p-8">
+                <h3 className="mb-5 text-sm font-semibold uppercase tracking-wider text-[var(--muted)]">
+                  Potential Career Areas
+                </h3>
+                <ul className="clarity-list space-y-3">
+                  {careerAreas.map((area, i) => (
+                    <li key={i} className="text-sm text-[var(--foreground)]">
+                      {area}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SCHOLARSHIP ── */}
+        <section
+          id="scholarship"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
+            <div data-reveal className="clarity-section-title">
+              <h2 className="gradient-heading mb-6 text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                $5,000 Scholarship Initiative
               </h2>
-              <p className="mx-auto max-w-xl text-lg text-[var(--muted)]">
-                Download Guardiané and put mood, screen time, learning, and
-                safer messaging in one decisive dashboard—built for parents who
-                don&apos;t have time for guesswork.
+              <p className="clarity-prose text-sm">
+                The AI-Guardian Center believes that every child deserves the
+                opportunity to grow, learn, and thrive. Through the Guardiané
+                Premium Care &amp; Growth plan, families are automatically
+                entered for a chance to receive a{" "}
+                <strong className="font-semibold text-[var(--foreground)]">
+                  $5,000 scholarship
+                </strong>{" "}
+                to support summer study camps or other study-related
+                opportunities for their child. This initiative reflects our
+                commitment not only to protection and support, but also to
+                growth, confidence, and future opportunity.
               </p>
-              <div
-                id="download"
-                className="flex flex-col items-center justify-center gap-3 pt-2 scroll-mt-28 sm:flex-row"
-              >
+            </div>
+          </div>
+        </section>
+
+        {/* ── FINAL CTA ── */}
+        <section
+          id="contact"
+          className="border-t border-[var(--border)] scroll-mt-20"
+        >
+          <div className="clarity-wrap flex flex-col px-4 py-24 sm:px-6 lg:px-8">
+            <div
+              data-reveal
+              className="clarity-section-title flex flex-col gap-5"
+            >
+              <h2 className="gradient-heading max-w-3xl text-4xl font-normal leading-[1.05] tracking-[-0.04em] sm:text-5xl lg:text-6xl">
+                Technology that cares for children, supports parents, and
+                strengthens families.
+              </h2>
+              <p className="max-w-xl text-sm leading-relaxed text-[var(--muted)]">
+                Through Guardiané and our broader innovation efforts, we are
+                building a future where digital safety and mental wellbeing are
+                not luxuries, but accessible foundations for every child.
+              </p>
+              <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap">
                 <a
-                  href={APP_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
+                  className="focus-visible-ring accent-btn rounded-full px-8 py-3.5 text-sm font-medium"
+                >
+                  Get Started
+                  <span className="pill-btn-icon" aria-hidden>
+                    ↗
+                  </span>
+                </a>
+                <a
+                  href={`mailto:${contactEmail}`}
                   className="focus-visible-ring brand-btn rounded-full px-8 py-3.5 text-sm font-medium"
                 >
-                  App Store
+                  Contact Us
+                  <span className="pill-btn-icon" aria-hidden>
+                    ↗
+                  </span>
                 </a>
-                <a
-                  href={PLAY_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <PartnerWithUsModal
+                  email={contactEmail}
                   className="focus-visible-ring outline-btn rounded-full px-8 py-3.5 text-sm font-medium"
                 >
-                  Google Play
-                </a>
+                  Partner With Us
+                  <span className="pill-btn-icon" aria-hidden>
+                    ↗
+                  </span>
+                </PartnerWithUsModal>
               </div>
             </div>
           </div>
         </section>
       </main>
 
+      {/* ── FOOTER ── */}
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
-        <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div>
-            <Link href="/" className="text-base font-semibold">
-              Guardiané
+            <Link
+              href="/"
+              className="focus-visible-ring mb-3 flex items-center gap-2.5"
+            >
+              <span className="center-monogram" aria-hidden>
+                AIG
+              </span>
+              <span className="text-base">AI-Guardian Center</span>
             </Link>
-            <p className="mt-2 max-w-md text-sm text-[var(--muted)]">
-              The parent app for mood boards, screen-time clarity, learning
-              progress, family messaging, and threat-aware texting—so you see
-              what matters and act while it still counts.
+            <p className="max-w-sm text-sm text-[var(--muted)]">
+              Protecting children&apos;s digital safety and mental wellbeing
+              through responsible AI innovation. Home of Guardiané—real-time
+              safety intelligence for families.
             </p>
           </div>
+
           <div className="grid grid-cols-2 gap-6 text-sm sm:grid-cols-4">
-            <div className="space-y-2">
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
+                Center
+              </p>
               <Link
-                href="#features"
+                href="#about"
                 className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
               >
+                About
+              </Link>
+              <Link
+                href="#team"
+                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
+                Team
+              </Link>
+              <Link
+                href="#careers"
+                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
+                Careers
+              </Link>
+            </div>
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
                 Product
-              </Link>
+              </p>
               <Link
-                href="#download"
+                href="#guardiane"
                 className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                Download
+                Guardiané
               </Link>
               <Link
-                href="#overview"
+                href="#why"
                 className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                Overview
+                Why Us
+              </Link>
+              <Link
+                href="#scholarship"
+                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
+              >
+                Scholarship
               </Link>
             </div>
-            <div className="space-y-2">
-              <Link
-                href="#families"
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
+                Legal
+              </p>
+              <span className="block text-[var(--muted)]">Privacy Policy</span>
+              <span className="block text-[var(--muted)]">
+                Terms of Service
+              </span>
+            </div>
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
+                Contact
+              </p>
+              <a
+                href={`mailto:${contactEmail}`}
                 className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                Families
-              </Link>
-              <Link
-                href="#features"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
+                Contact Us
+              </a>
+              <PartnerWithUsModal
+                email={contactEmail}
+                className="focus-visible-ring block text-left text-[var(--muted)] hover:text-[var(--foreground)]"
               >
-                Features
-              </Link>
-            </div>
-            <div className="space-y-2">
-              <span className="block text-[var(--muted)]">Privacy</span>
-              <span className="block text-[var(--muted)]">Terms</span>
-            </div>
-            <div className="space-y-2">
-              <span className="block text-[var(--muted)]">Contact</span>
+                Partner With Us
+              </PartnerWithUsModal>
             </div>
           </div>
         </div>
+
         <div className="border-t border-[var(--border)] px-4 py-4 text-center text-xs text-[var(--muted)] sm:px-6 lg:px-8">
-          © {new Date().getFullYear()} Guardiané. All rights reserved.
+          © {new Date().getFullYear()} AI-Guardian Center. All rights reserved.
         </div>
       </footer>
     </>
