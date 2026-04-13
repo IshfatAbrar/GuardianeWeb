@@ -1,7 +1,7 @@
 import { Epilogue } from "next/font/google";
 import "./globals.css";
-import { ThemeToggle } from "../components/theme-toggle";
 import { RevealObserver } from "../components/reveal-observer";
+import { SiteHeader } from "../components/site-header";
 
 const epilogue = Epilogue({
   variable: "--font-epilogue",
@@ -37,6 +37,7 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <RevealObserver />
+        <SiteHeader />
         {children}
       </body>
     </html>

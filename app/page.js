@@ -1,72 +1,61 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faApple, faGooglePlay } from "@fortawesome/free-brands-svg-icons";
 import { PartnerWithUsModal } from "../components/partner-with-us-modal";
-import { ThemeToggle } from "../components/theme-toggle";
+import { contactEmail } from "../lib/siteConfig";
 
 const teamMembers = [
   {
     name: "Dr. Tingting Zhang",
     role: "Founding Director",
     affiliation: "University of South Florida",
-    initials: "TZ",
     bio: "Scholar in technology innovation, artificial intelligence, and human-centered innovation. Her work focuses on developing ethical, practical, and socially impactful AI systems to protect children and families, strengthen digital safety, and expand access to mental health and community support.",
   },
   {
     name: "Dr. Jing Wang",
     role: "Research Member",
     affiliation: "University of South Florida",
-    initials: "JW",
     bio: "Professor of Instruction and Director of the Pathway to Computing Program. Her work focuses on computing education, computer animation, and broadening participation in computing, bringing expertise in inclusive technology education and student-centered innovation.",
   },
   {
     name: "Dr. Seungbae Kim",
     role: "Research Member",
     affiliation: "University of South Florida",
-    initials: "SK",
     bio: "Assistant Professor in the Bellini College of Artificial Intelligence, Cybersecurity and Computing. Research centers on AI, social AI, and trustworthy machine learning systems for complex real-world decision-making.",
   },
   {
     name: "Dr. Yongjei Lee",
     role: "Research Member",
     affiliation: "University of South Florida",
-    initials: "YL",
     bio: "Assistant Professor in Criminology. Expertise includes spatial-temporal crime analysis and predictive approaches to public safety, contributing insight into risk patterns, intervention strategies, and data-informed protection systems.",
   },
   {
     name: "Dr. Guangjing Wang",
     role: "Research Member",
     affiliation: "University of South Florida",
-    initials: "GW",
     bio: "Assistant Professor in the Bellini College of AI, Cybersecurity and Computing. Research focuses on LLM agents, security and privacy, sensing, and intelligent data systems—advancing privacy-aware technologies and secure computing.",
   },
   {
     name: "Dr. Xiaomin Lin",
     role: "Research Member",
     affiliation: "University of South Florida",
-    initials: "XL",
     bio: "Assistant Professor in Electrical Engineering with affiliated work spanning robotics and AI. Research sits at the intersection of perception, autonomy, edge AI, and intelligent robotic systems across healthcare and other domains.",
   },
   {
     name: "Dr. Wenbin Zhang",
     role: "Research Member",
     affiliation: "Florida International University",
-    initials: "WZ",
     bio: "Assistant Professor in the Knight Foundation School of Computing and Information Sciences at FIU. Research focuses on responsible AI and socially beneficial machine learning, with applications in healthcare, digital forensics, and beyond.",
   },
   {
     name: "Dr. Stacie Herrera",
     role: "Clinical Advisor",
     affiliation: "Herrera Psychology",
-    initials: "SH",
     bio: "Licensed school psychologist and owner of Herrera Psychology. Expert in supporting children and adolescents through psychological assessment, therapy, and school-based guidance with expertise in learning, coping, and family-centered mental health.",
   },
   {
     name: "Dr. Heather Agazzi",
     role: "Clinical Advisor",
     affiliation: "USF Health",
-    initials: "HA",
     bio: "Professor at USF Health in Pediatrics with a joint appointment in Psychiatry and Behavioral Neurosciences, and Chief of the Division of Child Development. Board-certified specialist in Clinical Child and Adolescent Psychology.",
   },
 ];
@@ -127,6 +116,7 @@ const guardianeFeatures = [
 
 const careerAreas = [
   "AI and machine learning",
+  "Fair and trustworthy AI",
   "Digital safety research",
   "Child and adolescent wellbeing",
   "Educational content development",
@@ -135,51 +125,9 @@ const careerAreas = [
   "Product design and user experience",
 ];
 
-const navLinks = [
-  ["Home", "/"],
-  ["About", "#about"],
-  ["Guardiané", "#guardiane"],
-  ["Why Us", "#why"],
-  ["Team", "#team"],
-  ["Careers", "#careers"],
-];
-
-const contactEmail = "tingting.zhang@guardianeusa.com";
-
 export default function Home() {
   return (
     <>
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-50 glass clarity-hero">
-        <nav className="clarity-wrap flex items-center justify-between gap-6 px-4 py-5 sm:px-6 lg:px-8">
-          <ul className="hidden items-center gap-7 text-[0.8rem] font-medium text-[var(--muted)] lg:flex">
-            {navLinks.map(([label, href]) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className="focus-visible-ring transition-colors hover:text-[var(--foreground)]"
-                >
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex items-center gap-2.5 font-sans">
-            <ThemeToggle />
-            <PartnerWithUsModal
-              email={contactEmail}
-              className="focus-visible-ring outline-btn  px-4 py-2 text-[0.78rem] font-medium"
-            >
-              Partner With Us
-              <span className="pill-btn-icon" aria-hidden>
-                ↗
-              </span>
-            </PartnerWithUsModal>
-          </div>
-        </nav>
-      </header>
-
       <main className="min-h-screen overflow-x-clip text-[var(--foreground)]">
         {/* ── HERO ── */}
         <section className="clarity-hero border-b border-[var(--border)]">
@@ -214,12 +162,12 @@ export default function Home() {
                 >
                   Learn More
                 </a>
-                <a
-                  href="#guardiane"
+                <Link
+                  href="/guardiane"
                   className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
                 >
                   Explore Guardiané
-                </a>
+                </Link>
                 <PartnerWithUsModal
                   email={contactEmail}
                   className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
@@ -232,11 +180,12 @@ export default function Home() {
             <div className="hidden lg:block">
               <div className="mx-auto flex w-full max-w-[320px] items-center justify-center">
                 <Image
-                  src="/logo.png"
+                  src="/logo.gif"
                   alt="AI-Guardian Center logo"
                   width={260}
                   height={260}
                   priority
+                  unoptimized
                   className="opacity-95"
                   style={{ width: "auto", height: "auto" }}
                 />
@@ -345,32 +294,17 @@ export default function Home() {
                 ))}
               </ul>
 
-              <h3>Download the App</h3>
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <a
-                  href="#"
-                  className="focus-visible-ring store-btn"
-                  aria-label="Download on the App Store"
+              <h3>Learn more</h3>
+              <div className="mt-4">
+                <Link
+                  href="/guardiane"
+                  className="focus-visible-ring outline-btn inline-flex items-center gap-1.5 rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
                 >
-                  <FontAwesomeIcon
-                    icon={faApple}
-                    className="store-btn-icon"
-                    aria-hidden
-                  />
-                  <span className="store-btn-title">App Store</span>
-                </a>
-                <a
-                  href="#"
-                  className="focus-visible-ring store-btn"
-                  aria-label="Get it on Google Play"
-                >
-                  <FontAwesomeIcon
-                    icon={faGooglePlay}
-                    className="store-btn-icon"
-                    aria-hidden
-                  />
-                  <span className="store-btn-title">Google Play</span>
-                </a>
+                  Learn more
+                  <span className="pill-btn-icon" aria-hidden>
+                    ↗
+                  </span>
+                </Link>
               </div>
             </div>
           </div>
@@ -431,19 +365,16 @@ export default function Home() {
                   className="clarity-card group p-6 transition-all duration-300 hover:border-[var(--accent-border)]"
                   style={{ transitionDelay: `${(i % 3) * 60}ms` }}
                 >
-                  <div className="mb-4 flex items-start gap-4">
-                    <span className="member-avatar">{member.initials}</span>
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-semibold leading-snug">
-                        {member.name}
-                      </h3>
-                      <p className="mt-0.5 text-xs font-medium text-[var(--accent)]">
-                        {member.role}
-                      </p>
-                      <p className="text-xs text-[var(--muted)]">
-                        {member.affiliation}
-                      </p>
-                    </div>
+                  <div className="mb-4 min-w-0">
+                    <h3 className="text-sm font-semibold leading-snug">
+                      {member.name}
+                    </h3>
+                    <p className="mt-0.5 text-xs font-medium text-[var(--accent)]">
+                      {member.role}
+                    </p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {member.affiliation}
+                    </p>
                   </div>
                   <p className="text-xs leading-relaxed text-[var(--muted)]">
                     {member.bio}
@@ -560,9 +491,6 @@ export default function Home() {
                   className="focus-visible-ring outline-btn rounded-full px-8 py-3.5 text-sm font-medium"
                 >
                   Partner With Us
-                  <span className="pill-btn-icon" aria-hidden>
-                    ↗
-                  </span>
                 </PartnerWithUsModal>
               </div>
             </div>
@@ -619,7 +547,7 @@ export default function Home() {
                 Product
               </p>
               <Link
-                href="#guardiane"
+                href="/guardiane"
                 className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
               >
                 Guardiané
