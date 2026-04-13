@@ -14,6 +14,10 @@ export const metadata = {
     "AI-Guardian Center — Protecting Children's Digital Safety & Mental Wellbeing",
   description:
     "The AI-Guardian Center is an innovation and research hub advancing ethical AI solutions for child digital safety, adolescent emotional wellbeing, and family support. Home of Guardiané.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {
