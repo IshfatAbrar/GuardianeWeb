@@ -37,18 +37,7 @@ export function SiteHeader() {
           </div>
           
         </div>
-        <div>
-          <nav className="flex items-end gap-0">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className="relative px-4 py-3.5 text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+        
 
         {/* Right */}
         <div className="flex items-center gap-4">
