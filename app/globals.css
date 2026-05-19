@@ -41,6 +41,9 @@
   --accent-hover: #2563eb;
   --accent-border: rgba(59, 130, 246, 0.35);
   --accent-bg: rgba(59, 130, 246, 0.08);
+  --accent-bg-hover: rgba(59, 130, 246, 0.16);
+  --danger: hsl(0, 68%, 42%);
+  --danger-bg: hsl(0, 68%, 96%);
   color-scheme: light;
 }
 
@@ -83,6 +86,9 @@ html[data-theme="dark"] {
   --accent-hover: #60a5fa;
   --accent-border: rgba(96, 165, 250, 0.35);
   --accent-bg: rgba(59, 130, 246, 0.12);
+  --accent-bg-hover: rgba(96, 165, 250, 0.22);
+  --danger: hsl(0, 75%, 62%);
+  --danger-bg: hsla(0, 70%, 40%, 0.18);
   color-scheme: dark;
 }
 

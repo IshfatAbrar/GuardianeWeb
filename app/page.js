@@ -136,11 +136,11 @@ export default function Home() {
               <h1 className="gradient-heading max-w-3xl text-[2.75rem] font-normal leading-[1.06] tracking-[-0.045em] sm:text-[3.2rem] lg:text-[3.55rem]">
                 AI-Guardian Center
               </h1>
-              <p className="mt-6 max-w-2xl text-xl leading-9 text-[var(--foreground)]">
+              <p className="mt-6 max-w-3xl text-xl leading-9 text-[var(--foreground)]">
                 Protecting children&apos;s digital safety and mental wellbeing
                 through responsible AI
               </p>
-              <p className="clarity-prose mt-6 max-w-2xl">
+              <p className="clarity-prose mt-6 max-w-3xl">
                 The AI-Guardian Center is dedicated to developing innovative,
                 ethical, and privacy-conscious AI solutions that protect
                 children and teens in digital environments. Through advanced
@@ -149,19 +149,19 @@ export default function Home() {
                 works to create safer online experiences and stronger mental
                 wellbeing support systems for families and communities.
               </p>
-              <p className="mt-5 max-w-2xl text-sm italic leading-8 text-[var(--muted)]">
+              <p className="mt-5 max-w-3xl text-sm italic leading-8 text-[var(--muted)]">
                 &ldquo;Every child is unique and blessed. At AI-Guardian Center,
                 we devote our utmost efforts to ensuring children&apos;s digital
                 safety and mental wellbeing.&rdquo;
               </p>
 
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <a
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                {/* <a
                   href="#about"
                   className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
                 >
                   Learn More
-                </a>
+                </a> */}
                 <Link
                   href="/guardiane"
                   className="focus-visible-ring outline-btn rounded-sm px-6 py-2.5 text-[0.78rem] font-medium uppercase tracking-[0.12em]"
