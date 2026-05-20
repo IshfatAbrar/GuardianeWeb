@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { contactEmail } from '../../lib/siteConfig'
 import { PartnerWithUsModal } from '../../components/partner-with-us-modal'
+import { signUp } from '../lib/authHelper'   // ← Firebase helper
 
 export default function SignupPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [numChildren, setNumChildren] = useState('')
   const [agreed, setAgreed] = useState(false)
+  const [error, setError] = useState('')
 
   // Password strength: 0–4
   const getStrength = (pw) => {
@@ -42,12 +44,45 @@ export default function SignupPage() {
   const strength = password ? getStrength(password) : 0
   const meta = strengthMeta[Math.max(0, strength - 1)]
 
-  const handleSignUp = () => {
-    if (!agreed) return
+  const handleSignUp = async () => {
+    setError('')
+
+    // Client-side guards
+    if (!firstName || !lastName) {
+      setError('Please enter your first and last name.')
+      return
+    }
+    if (!email) {
+      setError('Please enter your email address.')
+      return
+    }
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+    if (!agreed) {
+      setError('Please agree to the Terms of Service and Privacy Policy.')
+      return
+    }
+
     setIsLoading(true)
-    setTimeout(() => {
+    try {
+      await signUp(email, password)
       router.push('/onboarding')
-    }, 900)
+    } catch (err) {
+      const code = err?.code ?? ''
+      if (code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists. Try logging in.')
+      } else if (code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.')
+      } else if (code === 'auth/weak-password') {
+        setError('Password is too weak. Please choose a stronger password.')
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -71,6 +106,13 @@ export default function SignupPage() {
                 Set up your parent portal in minutes
               </p>
             </div>
+
+            {/* Error banner */}
+            {error && (
+              <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-[0.78rem] text-red-700">
+                {error}
+              </div>
+            )}
 
             {/* Name row */}
             <div className="mb-5 grid grid-cols-2 gap-3">
@@ -177,7 +219,6 @@ export default function SignupPage() {
 
             {/* Actions */}
             <div className="flex flex-col gap-2.5">
-              {/* BLUE: Create account primary button — bg var(--accent) / hover var(--accent-hover) */}
               <button
                 onClick={handleSignUp}
                 disabled={isLoading || !agreed}
@@ -222,7 +263,6 @@ export default function SignupPage() {
             <p className="clarity-prose mt-6 max-w-2xl text-[0.95rem] leading-[1.85]">
               Set up your parent account in under two minutes. Add children, configure monitoring preferences, and get real-time alerts — all from one trusted dashboard built by child safety researchers and psychologists.
             </p>
-
           </div>
         </div>
       </section>
@@ -241,53 +281,22 @@ export default function SignupPage() {
 
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
             {[
-    {
-        icon: Zap,
-        title: 'Set up in 2 minutes',
-        desc: 'Guided onboarding gets your first child profile live fast.',
-    },
-    {
-        icon: Bell,
-        title: 'Instant alerts',
-        desc: 'Push notifications for high-risk signals, day or night.',
-    },
-    {
-        icon: Lock,
-        title: 'Privacy by design',
-        desc: 'Your data is never sold. COPPA and GDPR compliant.',
-    },
-    {
-        icon: Users,
-        title: 'Expert support',
-        desc: 'Access vetted counselors and child safety specialists.',
-    },
-    ].map((f) => {
-    const Icon = f.icon
-
-  return (
-    <div
-      key={f.title}
-      className="bg-[var(--surface)] p-7 transition-colors"
-    >
-      {/* preserves original emoji spacing/layout */}
-      {/* BLUE: feature icon — text var(--accent) */}
-      <span className="mb-3.5 block">
-        <Icon
-          className="h-[28px] w-[28px] text-[var(--accent)]"
-          strokeWidth={1.8}
-        />
-      </span>
-
-      <h4 className="mb-1.5 text-[0.84rem] font-semibold text-[var(--foreground)]">
-        {f.title}
-      </h4>
-
-      <p className="text-[0.76rem] leading-[1.65] text-[var(--muted)]">
-        {f.desc}
-      </p>
-    </div>
-  )
-})}
+              { icon: Zap,   title: 'Set up in 2 minutes', desc: 'Guided onboarding gets your first child profile live fast.' },
+              { icon: Bell,  title: 'Instant alerts',       desc: 'Push notifications for high-risk signals, day or night.' },
+              { icon: Lock,  title: 'Privacy by design',    desc: 'Your data is never sold. COPPA and GDPR compliant.' },
+              { icon: Users, title: 'Expert support',       desc: 'Access vetted counselors and child safety specialists.' },
+            ].map((f) => {
+              const Icon = f.icon
+              return (
+                <div key={f.title} className="bg-[var(--surface)] p-7 transition-colors">
+                  <span className="mb-3.5 block">
+                    <Icon className="h-[28px] w-[28px] text-[var(--accent)]" strokeWidth={1.8} />
+                  </span>
+                  <h4 className="mb-1.5 text-[0.84rem] font-semibold text-[var(--foreground)]">{f.title}</h4>
+                  <p className="text-[0.76rem] leading-[1.65] text-[var(--muted)]">{f.desc}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -296,92 +305,37 @@ export default function SignupPage() {
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div>
-            <Link
-              href="/"
-              className="focus-visible-ring mb-3 flex items-center gap-2.5"
-            >
-              <span className="center-monogram" aria-hidden>
-                AIG
-              </span>
+            <Link href="/" className="focus-visible-ring mb-3 flex items-center gap-2.5">
+              <span className="center-monogram" aria-hidden>AIG</span>
               <span className="text-base">AI-Guardian Center</span>
             </Link>
             <p className="max-w-sm text-sm text-[var(--muted)]">
-              Protecting children&apos;s digital safety and mental wellbeing
-              through responsible AI innovation. Home of Guardiané—real-time
-              safety intelligence for families.
+              Protecting children&apos;s digital safety and mental wellbeing through responsible AI innovation.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-6 text-sm sm:grid-cols-4">
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Center
-              </p>
-              <Link
-                href="#about"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                About
-              </Link>
-              <Link
-                href="#team"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Team
-              </Link>
-              <Link
-                href="#careers"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Careers
-              </Link>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Center</p>
+              <Link href="#about"   className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">About</Link>
+              <Link href="#team"    className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Team</Link>
+              <Link href="#careers" className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Careers</Link>
             </div>
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Product
-              </p>
-              <Link
-                href="/guardiane"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Guardiané
-              </Link>
-              <Link
-                href="#why"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Why Us
-              </Link>
-              <Link
-                href="#scholarship"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Scholarship
-              </Link>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Product</p>
+              <Link href="/guardiane"   className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Guardiané</Link>
+              <Link href="#why"         className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Why Us</Link>
+              <Link href="#scholarship" className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Scholarship</Link>
             </div>
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Legal
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Legal</p>
               <span className="block text-[var(--muted)]">Privacy Policy</span>
-              <span className="block text-[var(--muted)]">
-                Terms of Service
-              </span>
+              <span className="block text-[var(--muted)]">Terms of Service</span>
             </div>
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Contact
-              </p>
-              <a
-                href={`mailto:${contactEmail}`}
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Contact Us
-              </a>
-              <PartnerWithUsModal
-                email={contactEmail}
-                className="focus-visible-ring block text-left text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Contact</p>
+              <a href={`mailto:${contactEmail}`} className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Contact Us</a>
+              <PartnerWithUsModal email={contactEmail} className="focus-visible-ring block text-left text-[var(--muted)] hover:text-[var(--foreground)]">
                 Partner With Us
               </PartnerWithUsModal>
             </div>

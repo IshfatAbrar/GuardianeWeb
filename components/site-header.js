@@ -141,7 +141,7 @@ export function SiteHeader() {
 
             <Link
               href="/signup"
-              className="focus-visible-ring rounded-full bg-white px-5 py-2 text-[0.78rem] font-semibold text-black shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
+              className="focus-visible-ring rounded-full bg-[var(--background)] px-5 py-2 text-[0.78rem] font-semibold text-[var(--background)] shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
             >
               Sign up today
             </Link>

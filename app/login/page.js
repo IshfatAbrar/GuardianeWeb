@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { contactEmail } from '../../lib/siteConfig'
 import { PartnerWithUsModal } from '../../components/partner-with-us-modal'
+import { signIn } from "../lib/authHelper"  // ← Firebase helper
 import {
   ShieldCheck,
   MessageCircleHeart,
@@ -15,14 +16,43 @@ import {
 export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError]       = useState('')
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
+    setError('')
+
+    // Basic client-side guard
+    if (!email || !password) {
+      setError('Please enter your email and password.')
+      return
+    }
+
     setIsLoading(true)
-    setTimeout(() => {
+    try {
+      await signIn(email, password)
       router.push('/dashboard')
-    }, 900)
+    } catch (err) {
+      // Map Firebase error codes to friendly messages
+      const code = err?.code ?? ''
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setError('Incorrect email or password. Please try again.')
+      } else if (code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please wait a moment and try again.')
+      } else if (code === 'auth/user-disabled') {
+        setError('This account has been disabled. Please contact support.')
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Allow Enter key to submit
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') handleSignIn()
   }
 
   return (
@@ -45,8 +75,6 @@ export default function LoginPage() {
             <p className="clarity-prose mt-6 max-w-2xl text-[0.95rem] leading-[1.85]">
               Guardiané&apos;s parent portal brings together real-time risk detection, learning progress, mood analytics, and screen-time insights so every family has the visibility they need to stay safe and supported.
             </p>
-
-            
           </div>
 
           {/* RIGHT: Login Card */}
@@ -64,6 +92,13 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {/* Error banner */}
+            {error && (
+              <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-[0.78rem] text-red-700">
+                {error}
+              </div>
+            )}
+
             {/* Email */}
             <div className="mb-5">
               <label className="mb-2 block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--muted)]">
@@ -74,6 +109,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 font-sans text-sm text-[var(--foreground)] outline-none transition-all focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               />
             </div>
@@ -88,6 +124,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 font-sans text-sm text-[var(--foreground)] outline-none transition-all focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               />
             </div>
@@ -101,7 +138,6 @@ export default function LoginPage() {
 
             {/* Actions */}
             <div className="flex flex-col gap-2.5">
-              {/* BLUE: Sign in primary button — bg var(--accent) / hover var(--accent-hover) */}
               <button
                 onClick={handleSignIn}
                 disabled={isLoading}
@@ -139,157 +175,71 @@ export default function LoginPage() {
       <section className="border-t border-[var(--border)] bg-[var(--surface)] px-6 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1120px]">
           <div className="mb-9">
-            <h2 className="mb-2 bg-gradient-to-r from-[var(--foreground)] via-[var(--accent-hover)] to-[var(--accent)] bg-clip-text text-3xl font-normal leading-[1.08] tracking-tight text-transparent sm:text-4xl">
+            <h2 className="mb-2 bg-[var(--foreground)] bg-clip-text text-3xl font-normal leading-[1.08] tracking-tight text-transparent sm:text-4xl">
               What you get access to
             </h2>
             <p className="text-[0.85rem] text-[var(--muted)]">
               Everything a parent needs to protect, support, and empower their children online.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-px overflow-hidden rounded border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
             {[
-                {
-                    icon: ShieldCheck,
-                    title: 'Live risk detection',
-                    desc: 'AI flags concerning digital activity patterns in real time before they escalate.',
-                },
-                {
-                    icon: MessageCircleHeart,
-                    title: 'Mood & wellbeing',
-                    desc: 'Daily mood logs and streak analytics give you an emotional pulse on each child.',
-                },
-                {
-                    icon: BookOpen,
-                    title: 'Learning progress',
-                    desc: 'Track completion of assigned digital safety and resilience modules.',
-                },
-                {
-                    icon: Stethoscope,
-                    title: 'Counselor connect',
-                    desc: 'Seamless access to vetted mental health professionals when your family needs support.',
-                },
-                ].map((f) => {
-                const Icon = f.icon
-
-                return (
-                    <div
-                    key={f.title}
-                    className="bg-[var(--surface)] p-7 transition-colors"
-                    >
-                    {/* keeps same layout/spacing as emoji */}
-                    {/* BLUE: feature icon — text var(--accent) */}
-                    <span className="mb-3.5 block">
-                        <Icon
-                        className="h-[28px] w-[28px] text-[var(--accent)]"
-                        strokeWidth={1.8}
-                        />
-                    </span>
-
-                    <h4 className="mb-1.5 text-[0.84rem] font-semibold text-[var(--foreground)]">
-                        {f.title}
-                    </h4>
-
-                    <p className="text-[0.76rem] leading-[1.65] text-[var(--muted)]">
-                        {f.desc}
-                    </p>
-                    </div>
-                )
+              { icon: ShieldCheck,        title: 'Live risk detection', desc: 'AI flags concerning digital activity patterns in real time before they escalate.' },
+              { icon: MessageCircleHeart, title: 'Mood & wellbeing',    desc: 'Daily mood logs and streak analytics give you an emotional pulse on each child.' },
+              { icon: BookOpen,           title: 'Learning progress',   desc: 'Track completion of assigned digital safety and resilience modules.' },
+              { icon: Stethoscope,        title: 'Counselor connect',   desc: 'Seamless access to vetted mental health professionals when your family needs support.' },
+            ].map((f) => {
+              const Icon = f.icon
+              return (
+                <div key={f.title} className="bg-[var(--surface)] p-7 transition-colors">
+                  <span className="mb-3.5 block">
+                    <Icon className="h-[28px] w-[28px] text-[var(--accent)]" strokeWidth={1.8} />
+                  </span>
+                  <h4 className="mb-1.5 text-[0.84rem] font-semibold text-[var(--foreground)]">{f.title}</h4>
+                  <p className="text-[0.76rem] leading-[1.65] text-[var(--muted)]">{f.desc}</p>
+                </div>
+              )
             })}
+          </div>
         </div>
-</div>
       </section>
 
-     {/* ── FOOTER ── */}
+      {/* ── FOOTER ── */}
       <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div>
-            <Link
-              href="/"
-              className="focus-visible-ring mb-3 flex items-center gap-2.5"
-            >
-              <span className="center-monogram" aria-hidden>
-                AIG
-              </span>
+            <Link href="/" className="focus-visible-ring mb-3 flex items-center gap-2.5">
+              <span className="center-monogram" aria-hidden>AIG</span>
               <span className="text-base">AI-Guardian Center</span>
             </Link>
             <p className="max-w-sm text-sm text-[var(--muted)]">
-              Protecting children&apos;s digital safety and mental wellbeing
-              through responsible AI innovation. Home of Guardiané—real-time
-              safety intelligence for families.
+              Protecting children&apos;s digital safety and mental wellbeing through responsible AI innovation.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-6 text-sm sm:grid-cols-4">
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Center
-              </p>
-              <Link
-                href="#about"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                About
-              </Link>
-              <Link
-                href="#team"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Team
-              </Link>
-              <Link
-                href="#careers"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Careers
-              </Link>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Center</p>
+              <Link href="#about"   className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">About</Link>
+              <Link href="#team"    className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Team</Link>
+              <Link href="#careers" className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Careers</Link>
             </div>
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Product
-              </p>
-              <Link
-                href="/guardiane"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Guardiané
-              </Link>
-              <Link
-                href="#why"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Why Us
-              </Link>
-              <Link
-                href="#scholarship"
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Scholarship
-              </Link>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Product</p>
+              <Link href="/guardiane" className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Guardiané</Link>
+              <Link href="#why"        className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Why Us</Link>
+              <Link href="#scholarship" className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Scholarship</Link>
             </div>
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Legal
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Legal</p>
               <span className="block text-[var(--muted)]">Privacy Policy</span>
-              <span className="block text-[var(--muted)]">
-                Terms of Service
-              </span>
+              <span className="block text-[var(--muted)]">Terms of Service</span>
             </div>
             <div className="space-y-2.5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">
-                Contact
-              </p>
-              <a
-                href={`mailto:${contactEmail}`}
-                className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
-                Contact Us
-              </a>
-              <PartnerWithUsModal
-                email={contactEmail}
-                className="focus-visible-ring block text-left text-[var(--muted)] hover:text-[var(--foreground)]"
-              >
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)]">Contact</p>
+              <a href={`mailto:${contactEmail}`} className="focus-visible-ring block text-[var(--muted)] hover:text-[var(--foreground)]">Contact Us</a>
+              <PartnerWithUsModal email={contactEmail} className="focus-visible-ring block text-left text-[var(--muted)] hover:text-[var(--foreground)]">
                 Partner With Us
               </PartnerWithUsModal>
             </div>
