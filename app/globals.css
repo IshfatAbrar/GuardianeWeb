@@ -137,7 +137,8 @@ a {
   color: inherit;
   text-decoration: none;
   transition:
-    color 0.2s ease,
+    color 0.2
+    s ease,
     border-color 0.2s ease,
     background-color 0.2s ease,
     opacity 0.2s ease;
@@ -414,7 +415,6 @@ blockquote {
 }
 
 .clarity-section-title {
-  max-width: 720px;
   margin-inline: auto;
 }
 
@@ -423,7 +423,6 @@ blockquote {
 }
 
 .clarity-article {
-  max-width: 720px;
   margin-inline: auto;
 }
 

@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+
 import Link from 'next/link'
 import { contactEmail } from '../../lib/siteConfig'
 import { PartnerWithUsModal } from '../../components/partner-with-us-modal'
+import { AuthGuard } from '../../components/auth-guard'
 import { signIn } from "../lib/authHelper"  // ← Firebase helper
 import {
   ShieldCheck,
@@ -31,7 +33,19 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
-      await signIn(email, password)
+      const { user, profile } = await signIn(email, password)
+      console.log('[GUARDIANE-DB] login: signed-in user →', user)
+      console.log('[GUARDIANE-DB] login: user.toJSON() →', user.toJSON())
+      console.log('[GUARDIANE-DB] login: Firestore profile →', profile)
+      console.log('[GUARDIANE-DB] login: providerData →', user.providerData)
+      console.log('[GUARDIANE-DB] login: metadata →', user.metadata)
+      try {
+        const tokenResult = await user.getIdTokenResult()
+        console.log('[GUARDIANE-DB] login: ID token (JWT) →', tokenResult.token)
+        console.log('[GUARDIANE-DB] login: token claims →', tokenResult.claims)
+      } catch (e) {
+        console.log('[GUARDIANE-DB] login: could not fetch token →', e)
+      }
       router.push('/dashboard')
     } catch (err) {
       // Map Firebase error codes to friendly messages
@@ -56,6 +70,7 @@ export default function LoginPage() {
   }
 
   return (
+    <AuthGuard mode="public">
     <div className="clarity-hero text-[var(--foreground)]">
 
       {/* ── HERO / LOGIN ── */}
@@ -251,5 +266,6 @@ export default function LoginPage() {
         </div>
       </footer>
     </div>
+    </AuthGuard>
   )
 }

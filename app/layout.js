@@ -2,6 +2,7 @@ import { Epilogue } from "next/font/google";
 import "./globals.css";
 import { RevealObserver } from "../components/reveal-observer";
 import { SiteHeader } from "../components/site-header";
+import { AuthProvider } from "./context/AuthContext";
 
 const epilogue = Epilogue({
   variable: "--font-epilogue",
@@ -40,9 +41,11 @@ export default function RootLayout({ children }) {
         className={`${epilogue.className} antialiased`}
         suppressHydrationWarning
       >
-        <RevealObserver />
-        <SiteHeader />
-        {children}
+        <AuthProvider>
+          <RevealObserver />
+          <SiteHeader />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

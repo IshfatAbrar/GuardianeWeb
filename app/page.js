@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { PartnerWithUsModal } from "../components/partner-with-us-modal";
+import { AuthGuard } from "../components/auth-guard";
 import { contactEmail } from "../lib/siteConfig";
 
 const teamMembers = [
@@ -128,6 +129,7 @@ const careerAreas = [
 export default function Home() {
   return (
     <>
+      <AuthGuard mode="public" />
       <main className="min-h-screen overflow-x-clip text-[var(--foreground)]">
         {/* ── HERO ── */}
         <section className="clarity-hero border-b border-[var(--border)]">

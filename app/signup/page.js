@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { contactEmail } from '../../lib/siteConfig'
 import { PartnerWithUsModal } from '../../components/partner-with-us-modal'
+import { AuthGuard } from '../../components/auth-guard'
 import { signUp } from '../lib/authHelper'   // ← Firebase helper
 
 export default function SignupPage() {
@@ -67,7 +68,14 @@ export default function SignupPage() {
 
     setIsLoading(true)
     try {
-      await signUp(email, password)
+      const { user, profile } = await signUp(
+        email,
+        password,
+        `${firstName} ${lastName}`.trim(),
+        { firstName, lastName, numChildren },
+      )
+      console.log('[GUARDIANE-DB] signup: new user →', user)
+      console.log('[GUARDIANE-DB] signup: Firestore profile →', profile)
       router.push('/onboarding')
     } catch (err) {
       const code = err?.code ?? ''
@@ -86,6 +94,7 @@ export default function SignupPage() {
   }
 
   return (
+    <AuthGuard mode="public">
     <div className="clarity-hero text-[var(--foreground)]">
 
       {/* ── HERO / SIGNUP ── */}
@@ -347,5 +356,6 @@ export default function SignupPage() {
         </div>
       </footer>
     </div>
+    </AuthGuard>
   )
 }
