@@ -15,12 +15,15 @@ import {
   onSnapshot,
   serverTimestamp,
   Timestamp,
+  writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
 // ── Collection name constants ────────────────────────────────────────────────
 export const COLLECTIONS = {
   USERS: 'users',
+  FAMILIES: 'families',
+  CHILDREN: 'children',
   MODULES: 'modules',
   LEARNING_PROGRESS: 'learning_progress',
   MESSAGES: 'messages',
@@ -56,15 +59,126 @@ export async function getUserProfile(uid) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-/** Return every child profile linked to this parent (users where parentId == uid). */
+/** Return every child profile linked to this parent (children where parentIds array-contains uid). */
 export async function getChildrenForParent(parentUid) {
   const q = query(
-    collection(db, COLLECTIONS.USERS),
-    where('role', '==', 'child'),
-    where('parentId', '==', parentUid),
+    collection(db, COLLECTIONS.CHILDREN),
+    where('parentIds', 'array-contains', parentUid),
   )
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+// Convert "YYYY-MM-DD" (HTML <input type="date">) to "MM/DD/YYYY" so the iOS
+// app's existing string-based reads keep working.
+function toBirthDateString(input) {
+  if (!input) return ''
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input)
+  if (m) return `${m[2]}/${m[3]}/${m[1]}`
+  return input
+}
+
+// Compute age in whole years from "YYYY-MM-DD". Rules require 0–18 ints.
+function computeAge(yyyyMmDd) {
+  if (!yyyyMmDd) return 0
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd)
+  if (!m) return 0
+  const dob = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  if (Number.isNaN(dob.getTime())) return 0
+  const now = new Date()
+  let age = now.getFullYear() - dob.getFullYear()
+  const monthDelta = now.getMonth() - dob.getMonth()
+  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) age--
+  return Math.max(0, Math.min(18, age))
+}
+
+/**
+ * Provision a brand-new parent: writes users/{uid}, families/{auto}, one
+ * children/{auto} per child, then links them via families.childIds and
+ * users.familyId. Sequenced into two batches because the rules' `get()` on
+ * the family doc only sees committed state — children create must happen
+ * after the family is committed.
+ *
+ * Shapes match the iOS rule helpers (validUserData/validFamilyData/validChildData).
+ * Returns { familyId, childIds }.
+ */
+export async function provisionParentAndFamily({ uid, email, fullName, children }) {
+  const childrenArr = Array.isArray(children) ? children : []
+
+  // ── Batch 1: parent profile + family doc ──────────────────────────────────
+  const batch1 = writeBatch(db)
+
+  const userRef = doc(db, COLLECTIONS.USERS, uid)
+  batch1.set(userRef, {
+    email,
+    fullName,
+    isActive: true,
+    hasCompletedOnboarding: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+
+  const familyRef = doc(collection(db, COLLECTIONS.FAMILIES))
+  const familyId = familyRef.id
+  batch1.set(familyRef, {
+    name: `${fullName}'s Family`,
+    parentIds: [uid],
+    childIds: [],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+
+  await batch1.commit()
+
+  // ── Batch 2: child docs + link them back to family/user ───────────────────
+  const batch2 = writeBatch(db)
+  const childIds = []
+
+  childrenArr.forEach((c) => {
+    const childRef = doc(collection(db, COLLECTIONS.CHILDREN))
+    childIds.push(childRef.id)
+    batch2.set(childRef, {
+      name: c.name,
+      age: computeAge(c.bday),
+      birthDate: toBirthDateString(c.bday),
+      gender: c.gender || null,
+      grade: c.grade || null,
+      familyId,
+      parentIds: [uid],
+      isActive: true,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+  })
+
+  if (childIds.length > 0) {
+    batch2.update(familyRef, {
+      childIds,
+      updatedAt: serverTimestamp(),
+    })
+  }
+
+  batch2.update(userRef, {
+    familyId,
+    hasCompletedOnboarding: true,
+    updatedAt: serverTimestamp(),
+  })
+
+  await batch2.commit()
+
+  return { familyId, childIds }
+}
+
+/**
+ * Best-effort cleanup if batch 2 failed but batch 1 succeeded.
+ * Deletes the family doc (rules permit owner delete). The user doc cannot
+ * be deleted (rules deny it); orphaned docs are unreadable to anyone else.
+ */
+export async function rollbackFamilyProvision(familyId) {
+  if (!familyId) return
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.FAMILIES, familyId))
+  } catch (_) {}
 }
 
 // ─── Modules & learning progress ─────────────────────────────────────────────

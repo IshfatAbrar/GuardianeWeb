@@ -13,7 +13,11 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { auth } from './firebase'
-import { createUserProfile, getUserProfile } from './database'
+import {
+  provisionParentAndFamily,
+  rollbackFamilyProvision,
+  getUserProfile,
+} from './database'
 
 /**
  * Sign in. Returns { user, profile } — the Firebase user and the matching
@@ -26,26 +30,40 @@ export async function signIn(email, password) {
 }
 
 /**
- * Create account. `extras` carries the fields we persist on the Firestore
- * users/{uid} document: { firstName, lastName, numChildren }.
- * Returns { user, profile }.
+ * Create account. Matches the live iOS Firestore schema enforced by security
+ * rules: writes `users/{uid}` (parent profile), `families/{auto}` (family doc),
+ * and one `children/{auto}` per child, then links familyId and childIds back.
+ * `extras` shape: { children: [{ name, bday, gender, grade }] }
+ * Returns { user, profile, familyId, childIds }.
  */
 export async function signUp(email, password, displayName, extras = {}) {
+  const fullName = (displayName || '').trim()
   const credential = await createUserWithEmailAndPassword(auth, email, password)
-  if (displayName) {
-    await updateProfile(credential.user, { displayName })
+  const uid = credential.user.uid
+
+  if (fullName) {
+    await updateProfile(credential.user, { displayName: fullName })
   }
-  const { firstName = '', lastName = '', numChildren = 0 } = extras
-  await createUserProfile(credential.user.uid, {
-    email,
-    displayName: displayName || '',
-    firstName,
-    lastName,
-    role: 'parent',
-    numChildren: Number(numChildren) || 0,
-  })
-  const profile = await getUserProfile(credential.user.uid)
-  return { user: credential.user, profile }
+
+  const { children = [] } = extras
+  let familyId = null
+  try {
+    const result = await provisionParentAndFamily({
+      uid,
+      email,
+      fullName,
+      children,
+    })
+    familyId = result.familyId
+    const profile = await getUserProfile(uid)
+    return { user: credential.user, profile, familyId, childIds: result.childIds }
+  } catch (err) {
+    // Best-effort cleanup: family doc (deletable), then Auth user (frees email).
+    // users/{uid} cannot be deleted by rule — orphaned but unreadable.
+    if (familyId) await rollbackFamilyProvision(familyId)
+    try { await credential.user.delete() } catch (_) {}
+    throw err
+  }
 }
 
 /** Sign out the current user */

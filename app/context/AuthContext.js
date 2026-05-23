@@ -21,7 +21,8 @@ import {
 } from 'firebase/auth'
 import { auth } from '../lib/firebase'
 import {
-  createUserProfile,
+  provisionParentAndFamily,
+  rollbackFamilyProvision,
   getUserProfile,
   listenToDoc,
   COLLECTIONS,
@@ -87,23 +88,27 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signUp = useCallback(
-    async (email, password, { firstName, lastName, numChildren } = {}) => {
+    async (email, password, { fullName, firstName, lastName, children = [] } = {}) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password)
-      const displayName = [firstName, lastName].filter(Boolean).join(' ').trim()
+      const displayName = (fullName || [firstName, lastName].filter(Boolean).join(' ')).trim()
       if (displayName) {
         await updateProfile(cred.user, { displayName })
       }
-      // Write the matching users/{uid} document — this is the "role = parent"
-      // record the iOS app also creates on first sign-up.
-      await createUserProfile(cred.user.uid, {
-        email,
-        firstName: firstName || '',
-        lastName: lastName || '',
-        displayName,
-        role: 'parent',
-        numChildren: numChildren ? Number(numChildren) : 0,
-      })
-      return cred.user
+      let familyId = null
+      try {
+        const result = await provisionParentAndFamily({
+          uid: cred.user.uid,
+          email,
+          fullName: displayName,
+          children,
+        })
+        familyId = result.familyId
+        return cred.user
+      } catch (err) {
+        if (familyId) await rollbackFamilyProvision(familyId)
+        try { await cred.user.delete() } catch (_) {}
+        throw err
+      }
     },
     [],
   )
@@ -131,3 +136,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
+

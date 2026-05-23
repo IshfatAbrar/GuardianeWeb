@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Check, Plus, Trash2, X, Smartphone, Shield, Bell, Lock, Zap, Users } from 'lucide-react'
+import { Check, Plus, Trash2, X, Smartphone, Bell, Lock, Zap, Users } from 'lucide-react'
 import { AuthGuard } from '../../components/auth-guard'
 import { signUp } from '../lib/authHelper'
 
@@ -624,15 +624,14 @@ export default function SignupPage() {
     setSubmitError('')
     try {
       const trimmedName = account.fullName.trim()
-      const [firstName, ...rest] = trimmedName.split(/\s+/)
-      const lastName = rest.join(' ')
-      await signUp(account.email, account.password, trimmedName, { firstName, lastName })
+      await signUp(account.email, account.password, trimmedName, { children })
       setStep('done')
     } catch (e) {
       const code = e?.code ?? ''
       if (code === 'auth/email-already-in-use') setSubmitError('An account with this email already exists. Try logging in.')
       else if (code === 'auth/invalid-email') setSubmitError('Please enter a valid email address.')
       else if (code === 'auth/weak-password') setSubmitError('Password is too weak.')
+      else if (code === 'permission-denied') setSubmitError('Firestore rules rejected the write. Check the browser console for the failing operation.')
       else setSubmitError('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
