@@ -24,6 +24,9 @@ export const COLLECTIONS = {
   USERS: 'users',
   FAMILIES: 'families',
   CHILDREN: 'children',
+  ALERTS: 'alerts',
+  ASSIGNMENTS: 'assignments',
+  MOOD_ENTRIES: 'moodEntries',
   MODULES: 'modules',
   LEARNING_PROGRESS: 'learning_progress',
   MESSAGES: 'messages',
@@ -187,6 +190,53 @@ export async function rollbackFamilyProvision(familyId) {
 export async function getModules() {
   const snap = await getDocs(collection(db, COLLECTIONS.MODULES))
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+// ── Dashboard reads ──────────────────────────────────────────────────────────
+// All scoped by single-equality where() to avoid needing composite indexes.
+// Client-side filters/sorts handle the rest.
+
+/** Alerts for a family. Returns newest first, optionally only active ones. */
+export async function getAlertsForFamily(familyId, { activeOnly = false, max = 20 } = {}) {
+  if (!familyId) return []
+  const snap = await getDocs(
+    query(collection(db, COLLECTIONS.ALERTS), where('familyId', '==', familyId)),
+  )
+  let rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  if (activeOnly) rows = rows.filter((a) => a.status === 'active')
+  rows.sort((a, b) => (b.timestamp?.toMillis?.() ?? 0) - (a.timestamp?.toMillis?.() ?? 0))
+  return rows.slice(0, max)
+}
+
+/** Assignments for a family. */
+export async function getAssignmentsForFamily(familyId) {
+  if (!familyId) return []
+  const snap = await getDocs(
+    query(collection(db, COLLECTIONS.ASSIGNMENTS), where('familyId', '==', familyId)),
+  )
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+/** Most recent mood entry for a child, restricted to today (or null). */
+export async function getTodaysMoodForChild(childId) {
+  if (!childId) return null
+  const snap = await getDocs(
+    query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
+  )
+  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  rows.sort((a, b) => (b.timestamp?.toMillis?.() ?? 0) - (a.timestamp?.toMillis?.() ?? 0))
+  const latest = rows[0]
+  if (!latest?.timestamp?.toDate) return null
+  const ts = latest.timestamp.toDate()
+  const now = new Date()
+  if (
+    ts.getFullYear() === now.getFullYear() &&
+    ts.getMonth() === now.getMonth() &&
+    ts.getDate() === now.getDate()
+  ) {
+    return latest
+  }
+  return null
 }
 
 /** Get a single child's learning_progress documents. */
