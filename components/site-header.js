@@ -198,7 +198,7 @@ export function SiteHeader() {
 
           {/* Logo */}
           <Link
-            href="/dashboard"
+            href="/"
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
             <span className="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">
