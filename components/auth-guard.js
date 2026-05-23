@@ -38,6 +38,11 @@ export function AuthGuard({
   if (mode === 'protected' && (loading || !user)) {
     return fallback
   }
+  // Public pages: don't flash the form while auth is still resolving, and
+  // don't flash it when a signed-in user is about to be redirected away.
+  if (mode === 'public' && (loading || user)) {
+    return fallback
+  }
 
   return children
 }

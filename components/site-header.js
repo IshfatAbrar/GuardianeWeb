@@ -24,7 +24,7 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-function ProfileMenu({ user, profile }) {
+function ProfileMenu({ user, profile, compact = false }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const wrapperRef = useRef(null)
@@ -61,35 +61,48 @@ function ProfileMenu({ user, profile }) {
 
   return (
     <div ref={wrapperRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="flex cursor-pointer items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)] px-3 py-2 transition-colors hover:bg-white/5"
-      >
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6] text-[9px] font-semibold text-white">
-          {initials}
-        </div>
-
-        <span className="text-[11px] font-medium text-[var(--foreground)]">
-          {name}
-        </span>
-
-        <svg
-          width="11"
-          height="11"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          viewBox="0 0 24 24"
-          className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`}
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label={`Account menu — ${name}`}
+          className="focus-visible-ring flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-semibold text-white shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.04]"
         >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
+          {initials}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="flex cursor-pointer items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)] px-3 py-2 transition-colors hover:bg-white/5"
+        >
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6] text-[9px] font-semibold text-white">
+            {initials}
+          </div>
+
+          <span className="text-[11px] font-medium text-[var(--foreground)]">
+            {name}
+          </span>
+
+          <svg
+            width="11"
+            height="11"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+            className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      )}
 
       {open && (
         <div
@@ -184,11 +197,14 @@ export function SiteHeader() {
         <div className="flex items-center justify-between">
 
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
             <span className="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">
               Guardiané
             </span>
-          </div>
+          </Link>
 
         </div>
 
@@ -263,19 +279,39 @@ export function SiteHeader() {
           <div className="flex items-center gap-2.5 font-sans">
             <ThemeToggle />
 
-            <Link
-              href="/login"
-              className="focus-visible-ring rounded-full px-4 py-2 text-[0.78rem] font-medium text-[var(--muted)] transition-all duration-200 hover:bg-white/5 hover:text-[var(--foreground)]"
-            >
-              Login
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="focus-visible-ring group inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-transparent px-5 py-2 text-[0.78rem] font-medium text-[var(--foreground)] transition-all duration-200 hover:border-[var(--foreground)]/30 hover:bg-white/5"
+                >
+                  Dashboard
+                  <span
+                    aria-hidden
+                    className="text-[var(--muted)] transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--foreground)]"
+                  >
+                    ↗
+                  </span>
+                </Link>
+                <ProfileMenu user={user} profile={userProfile} compact />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="focus-visible-ring rounded-full px-4 py-2 text-[0.78rem] font-medium text-[var(--muted)] transition-all duration-200 hover:bg-white/5 hover:text-[var(--foreground)]"
+                >
+                  Login
+                </Link>
 
-            <Link
-              href="/signup"
-              className="focus-visible-ring rounded-full bg-[var(--background)] px-5 py-2 text-[0.78rem] font-semibold text-[var(--background)] shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
-            >
-              Sign up today
-            </Link>
+                <Link
+                  href="/signup"
+                  className="focus-visible-ring rounded-full bg-[var(--background)] px-5 py-2 text-[0.78rem] font-semibold text-[var(--background)] shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.02]"
+                >
+                  Sign up today
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       )}
