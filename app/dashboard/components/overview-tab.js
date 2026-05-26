@@ -31,7 +31,7 @@ export function OverviewTab({ data }) {
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? null
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-7 p-6">
       {/* Greeting */}
       <div className="flex items-end justify-between">
         <div>

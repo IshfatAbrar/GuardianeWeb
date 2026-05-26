@@ -16,5 +16,6 @@ export function PlaceholderTab({ title, subtitle }) {
         <p className="mt-1 text-[11px] text-[var(--muted)]">This section is under development.</p>
       </div>
     </div>
+    
   )
 }

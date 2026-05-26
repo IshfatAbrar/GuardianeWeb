@@ -79,7 +79,7 @@ export function Sidebar({
         </div>
       </div>
 
-      <div className="mx-4 my-3 h-px bg-[var(--border)]" />
+      <div className="my-3 h-px bg-[var(--border)]" />
 
       {/* Highlight nav */}
       <nav className="px-3 space-y-0.5">
@@ -93,7 +93,7 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="mx-4 my-3 h-px bg-[var(--border)]" />
+      <div className="my-3 h-px bg-[var(--border)]" />
 
       {/* Main nav */}
       <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
