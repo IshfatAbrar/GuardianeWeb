@@ -7,6 +7,9 @@ import { PlaceholderTab } from "./components/placeholder-tab";
 import { JojoChatTab } from "./components/jojo-chat-tab";
 import { LearningTab } from "./components/learning-tab";
 import { ModulesTab } from "./components/modules-tab";
+import { AccessTab } from "./components/access-tab";
+import { EmergencyTab } from "./components/emergency-tab";
+import { SettingsTab } from "./components/settings-tab";
 import { placeholderTabLabels } from "./data/nav";
 import { AuthGuard } from "../../components/auth-guard";
 import { useDashboardData } from "./_lib/useDashboardData";
@@ -31,6 +34,9 @@ export default function DashboardPage() {
     }
     if (activeNav === "learning") return <LearningTab />;
     if (activeNav === "modules") return <ModulesTab />;
+    if (activeNav === "access") return <AccessTab />;
+    if (activeNav === "emergency") return <EmergencyTab />;
+    if (activeNav === "settings") return <SettingsTab data={data} />;
     const [title, subtitle] = placeholderTabLabels[activeNav] || ["Page", ""];
     return <PlaceholderTab title={title} subtitle={subtitle} />;
   };

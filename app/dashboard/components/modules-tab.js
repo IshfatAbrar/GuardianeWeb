@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AssignModuleModal } from "./assign-module-modal";
 
 const CHILDREN = [
   { id: "cowey", name: "Cowey" },
@@ -17,8 +18,6 @@ const MODULES = [
   { id: "social-media", title: "Social Media Literacy" },
   { id: "mindful-tech", title: "Mindful Tech Use" },
 ];
-
-const PRIORITIES = ["Low", "Medium", "High"];
 
 const SEED_ASSIGNMENTS = [
   {
@@ -48,7 +47,6 @@ const SEED_ASSIGNMENTS = [
     status: "completed",
     progress: 100,
   },
-
 ];
 
 const STATUS_META = {
@@ -197,8 +195,11 @@ function StatsRow({ assignments }) {
   );
 }
 
-function ListView({ assignments, onAssign }) {
+export function ModulesTab() {
+  const [assignments, setAssignments] = useState(SEED_ASSIGNMENTS);
+  const [assignOpen, setAssignOpen] = useState(false);
   const [filter, setFilter] = useState("all");
+
   const filters = [
     { id: "all", label: "All" },
     { id: "assigned", label: "Assigned" },
@@ -211,10 +212,14 @@ function ListView({ assignments, onAssign }) {
       ? assignments
       : assignments.filter((a) => a.status === filter);
 
+  function handleAssign(newAssignment) {
+    setAssignments((prev) => [newAssignment, ...prev]);
+  }
+
   return (
-    <div className="space-y-7 p-6">
+    <div>
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 p-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
             Module Assignments
@@ -225,7 +230,7 @@ function ListView({ assignments, onAssign }) {
         </div>
         <button
           type="button"
-          onClick={onAssign}
+          onClick={() => setAssignOpen(true)}
           className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5"
         >
           <svg
@@ -247,258 +252,54 @@ function ListView({ assignments, onAssign }) {
 
       <div className="h-px w-full bg-[var(--border)]" />
 
-      <StatsRow assignments={assignments} />
+      <div className="p-6 flex flex-col gap-3">
+        <StatsRow assignments={assignments} />
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => {
-          const active = filter === f.id;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={`rounded-full border px-4 py-1.5 text-[12px] font-semibold transition-colors ${
-                active
-                  ? "border-[var(--accent)] bg-[var(--accent-bg)] text-[var(--accent)]"
-                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)]"
-              }`}
-            >
-              {f.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Assignments grid */}
-      {visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-12 text-center">
-          <p className="text-sm font-medium text-[var(--foreground)]">
-            No assignments to show
-          </p>
-          <p className="mt-1 text-[11px] text-[var(--muted)]">
-            Try a different filter, or assign a new module.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visible.map((a) => (
-            <AssignmentCard key={a.id} assignment={a} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FieldGroup({ label, children }) {
-  return (
-    <div className="space-y-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
-
-function SelectField({ value, onChange, options, placeholder }) {
-  return (
-    <div className="relative rounded-xl border border-[var(--border)] bg-[var(--surface)] transition-colors focus-within:border-[var(--accent-border)]">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-xl bg-transparent px-4 py-3 pr-10 text-[14px] text-[var(--foreground)] focus:outline-none"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <svg
-        aria-hidden
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--accent)]"
-        width="14"
-        height="14"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        viewBox="0 0 24 24"
-      >
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
-    </div>
-  );
-}
-
-function Toggle({ checked, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        checked
-          ? "bg-[var(--accent)]"
-          : "border border-[var(--border)] bg-[var(--surface-muted)]"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-}
-
-function AssignView({ onCancel, onAssign }) {
-  const [childId, setChildId] = useState("");
-  const [moduleId, setModuleId] = useState("");
-  const [priority, setPriority] = useState("Medium");
-  const [hasDueDate, setHasDueDate] = useState(false);
-  const [dueDate, setDueDate] = useState("");
-
-  const canAssign = childId && moduleId;
-
-  function handleSubmit() {
-    if (!canAssign) return;
-    onAssign({
-      id: `a-${Date.now()}`,
-      childId,
-      moduleId,
-      priority,
-      dueDate: hasDueDate ? dueDate : null,
-      status: "assigned",
-      progress: 0,
-    });
-  }
-
-  return (
-    <div className="mx-auto max-w-2xl space-y-7 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-[14px] font-semibold text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)]"
-        >
-          Cancel
-        </button>
-        <h1 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
-          Assign Module
-        </h1>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!canAssign}
-          className={`text-[14px] font-semibold transition-colors ${
-            canAssign
-              ? "text-[var(--accent)] hover:text-[var(--accent-hover)]"
-              : "cursor-not-allowed text-[var(--muted)]"
-          }`}
-        >
-          Assign
-        </button>
-      </div>
-
-      <div className="h-px w-full bg-[var(--border)]" />
-
-      {/* Child */}
-      <FieldGroup label="Child">
-        <SelectField
-          value={childId}
-          onChange={setChildId}
-          options={CHILDREN.map((c) => ({ id: c.id, label: c.name }))}
-          placeholder="Select a child"
-        />
-      </FieldGroup>
-
-      {/* Module */}
-      <FieldGroup label="Learning Module">
-        <SelectField
-          value={moduleId}
-          onChange={setModuleId}
-          options={MODULES.map((m) => ({ id: m.id, label: m.title }))}
-          placeholder="Choose a module"
-        />
-      </FieldGroup>
-
-      {/* Priority */}
-      <FieldGroup label="Priority">
-        <div
-          role="radiogroup"
-          aria-label="Priority"
-          className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-1"
-        >
-          {PRIORITIES.map((p) => {
-            const active = priority === p;
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 pt-3">
+          {filters.map((f) => {
+            const active = filter === f.id;
             return (
               <button
-                key={p}
+                key={f.id}
                 type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setPriority(p)}
-                className={`rounded-lg px-6 py-2 text-[13px] font-semibold transition-all ${
+                onClick={() => setFilter(f.id)}
+                className={`rounded-full border px-4 py-1.5 text-[12px] font-semibold transition-colors ${
                   active
-                    ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    ? "border-[var(--accent)] bg-[var(--accent-bg)] text-[var(--accent)]"
+                    : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)]"
                 }`}
               >
-                {p}
+                {f.label}
               </button>
             );
           })}
         </div>
-      </FieldGroup>
 
-      {/* Due Date */}
-      <FieldGroup label="Due Date">
-        <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-[14px] font-medium text-[var(--foreground)]">
-              Set Due Date
-            </span>
-            <Toggle checked={hasDueDate} onChange={setHasDueDate} />
+        {/* Assignments grid */}
+        {visible.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-12 text-center">
+            <p className="text-sm font-medium text-[var(--foreground)]">
+              No assignments to show
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--muted)]">
+              Try a different filter, or assign a new module.
+            </p>
           </div>
-          {hasDueDate && (
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13.5px] text-[var(--foreground)] focus:border-[var(--accent-border)] focus:outline-none"
-            />
-          )}
-        </div>
-      </FieldGroup>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {visible.map((a) => (
+              <AssignmentCard key={a.id} assignment={a} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AssignModuleModal
+        open={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        onAssign={handleAssign}
+      />
     </div>
-  );
-}
-
-export function ModulesTab() {
-  const [view, setView] = useState("list");
-  const [assignments, setAssignments] = useState(SEED_ASSIGNMENTS);
-
-  function handleAssign(newAssignment) {
-    setAssignments((prev) => [newAssignment, ...prev]);
-    setView("list");
-  }
-
-  return view === "list" ? (
-    <ListView
-      assignments={assignments}
-      onAssign={() => setView("assign")}
-    />
-  ) : (
-    <AssignView
-      onCancel={() => setView("list")}
-      onAssign={handleAssign}
-    />
   );
 }
