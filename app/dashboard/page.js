@@ -32,8 +32,8 @@ export default function DashboardPage() {
         <JojoChatTab userInitial={userInitialFrom(data.userProfile, data.user)} />
       );
     }
-    if (activeNav === "learning") return <LearningTab />;
-    if (activeNav === "modules") return <ModulesTab />;
+    if (activeNav === "learning") return <LearningTab data={data} />;
+    if (activeNav === "modules") return <ModulesTab data={data} />;
     if (activeNav === "access") return <AccessTab />;
     if (activeNav === "emergency") return <EmergencyTab />;
     if (activeNav === "settings") return <SettingsTab data={data} />;

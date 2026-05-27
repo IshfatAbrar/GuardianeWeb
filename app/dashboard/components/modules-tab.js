@@ -1,53 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AssignModuleModal } from "./assign-module-modal";
-
-const CHILDREN = [
-  { id: "cowey", name: "Cowey" },
-  { id: "emma", name: "Emma" },
-  { id: "liam", name: "Liam" },
-  { id: "sophia", name: "Sophia" },
-];
-
-const MODULES = [
-  { id: "cyberbullying", title: "Cyberbullying" },
-  { id: "online-safety", title: "Online Safety" },
-  { id: "privacy-protection", title: "Privacy Protection" },
-  { id: "digital-wellness", title: "Digital Wellness" },
-  { id: "social-media", title: "Social Media Literacy" },
-  { id: "mindful-tech", title: "Mindful Tech Use" },
-];
-
-const SEED_ASSIGNMENTS = [
-  {
-    id: "a1",
-    childId: "emma",
-    moduleId: "online-safety",
-    priority: "High",
-    dueDate: "2026-06-12",
-    status: "in-progress",
-    progress: 60,
-  },
-  {
-    id: "a2",
-    childId: "liam",
-    moduleId: "cyberbullying",
-    priority: "Medium",
-    dueDate: "2026-06-04",
-    status: "assigned",
-    progress: 0,
-  },
-  {
-    id: "a3",
-    childId: "sophia",
-    moduleId: "digital-wellness",
-    priority: "Low",
-    dueDate: null,
-    status: "completed",
-    progress: 100,
-  },
-];
+import { useAuth } from "../../context/AuthContext";
+import {
+  fetchAllModules,
+  getAssignmentsForParent,
+} from "../../lib/learningModules";
 
 const STATUS_META = {
   assigned: {
@@ -66,31 +25,24 @@ const STATUS_META = {
   },
 };
 
-const PRIORITY_DOT = {
-  Low: "bg-[var(--muted)]",
-  Medium: "bg-[var(--accent)]",
-  High: "bg-[var(--danger)]",
-};
+function statusFor(assignment) {
+  if (assignment.isCompleted) return "completed";
+  if ((assignment.progress || 0) > 0) return "in-progress";
+  return "assigned";
+}
 
-function formatDate(iso) {
-  if (!iso) return "No due date";
+function formatDate(value) {
+  if (!value) return "No due date";
   try {
-    return new Date(iso).toLocaleDateString(undefined, {
+    const d = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+    return d.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
   } catch {
-    return iso;
+    return "—";
   }
-}
-
-function childName(id) {
-  return CHILDREN.find((c) => c.id === id)?.name || "—";
-}
-
-function moduleTitle(id) {
-  return MODULES.find((m) => m.id === id)?.title || "—";
 }
 
 function ProgressBar({ value }) {
@@ -98,23 +50,23 @@ function ProgressBar({ value }) {
     <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--surface-muted)]">
       <div
         className="h-full rounded-full bg-[var(--accent)] transition-all"
-        style={{ width: `${value}%` }}
+        style={{ width: `${Math.round(value * 100)}%` }}
       />
     </div>
   );
 }
 
-function AssignmentCard({ assignment }) {
-  const status = STATUS_META[assignment.status] || STATUS_META.assigned;
+function AssignmentCard({ assignment, childName, moduleTitle }) {
+  const status = STATUS_META[statusFor(assignment)] || STATUS_META.assigned;
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 transition-all hover:border-[var(--accent-border)] hover:shadow-[var(--shadow-card)]">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
-            {childName(assignment.childId)}
+            {childName}
           </p>
           <h3 className="text-base font-semibold tracking-tight text-[var(--foreground)]">
-            {moduleTitle(assignment.moduleId)}
+            {moduleTitle}
           </h3>
         </div>
         <span
@@ -125,14 +77,6 @@ function AssignmentCard({ assignment }) {
       </div>
 
       <div className="flex items-center gap-4 text-[11px] font-medium text-[var(--muted)]">
-        <span className="inline-flex items-center gap-1.5">
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              PRIORITY_DOT[assignment.priority]
-            }`}
-          />
-          {assignment.priority} priority
-        </span>
         <span className="inline-flex items-center gap-1.5">
           <svg
             width="13"
@@ -147,16 +91,16 @@ function AssignmentCard({ assignment }) {
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <path d="M16 2v4M8 2v4M3 10h18" />
           </svg>
-          {formatDate(assignment.dueDate)}
+          Assigned {formatDate(assignment.assignedAt)}
         </span>
       </div>
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[11px] font-medium text-[var(--muted)]">
           <span>Progress</span>
-          <span>{assignment.progress}%</span>
+          <span>{Math.round((assignment.progress || 0) * 100)}%</span>
         </div>
-        <ProgressBar value={assignment.progress} />
+        <ProgressBar value={assignment.progress || 0} />
       </div>
     </div>
   );
@@ -164,10 +108,9 @@ function AssignmentCard({ assignment }) {
 
 function StatsRow({ assignments }) {
   const total = assignments.length;
-  const completed = assignments.filter((a) => a.status === "completed").length;
-  const inProgress = assignments.filter((a) => a.status === "in-progress")
-    .length;
-  const assigned = assignments.filter((a) => a.status === "assigned").length;
+  const completed = assignments.filter((a) => statusFor(a) === "completed").length;
+  const inProgress = assignments.filter((a) => statusFor(a) === "in-progress").length;
+  const assigned = assignments.filter((a) => statusFor(a) === "assigned").length;
 
   const stats = [
     { label: "Total", value: total },
@@ -195,10 +138,50 @@ function StatsRow({ assignments }) {
   );
 }
 
-export function ModulesTab() {
-  const [assignments, setAssignments] = useState(SEED_ASSIGNMENTS);
+export function ModulesTab({ data }) {
+  const { user } = useAuth();
+  const parentId = user?.uid;
+
+  const [assignments, setAssignments] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [filter, setFilter] = useState("all");
+
+  const refresh = useCallback(async () => {
+    if (!parentId) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const [assignmentRows, moduleRows] = await Promise.all([
+        getAssignmentsForParent(parentId),
+        fetchAllModules(),
+      ]);
+      setAssignments(assignmentRows);
+      setModules(moduleRows);
+    } catch (err) {
+      setErrorMessage(err.message || "Failed to load assignments");
+    } finally {
+      setLoading(false);
+    }
+  }, [parentId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const childList = useMemo(() => data?.children || [], [data?.children]);
+  const childById = useMemo(() => {
+    const map = new Map();
+    for (const c of childList) map.set(c.id, c);
+    return map;
+  }, [childList]);
+  const moduleById = useMemo(() => {
+    const map = new Map();
+    for (const m of modules) map.set(m.id, m);
+    return map;
+  }, [modules]);
 
   const filters = [
     { id: "all", label: "All" },
@@ -210,11 +193,7 @@ export function ModulesTab() {
   const visible =
     filter === "all"
       ? assignments
-      : assignments.filter((a) => a.status === filter);
-
-  function handleAssign(newAssignment) {
-    setAssignments((prev) => [newAssignment, ...prev]);
-  }
+      : assignments.filter((a) => statusFor(a) === filter);
 
   return (
     <div>
@@ -228,26 +207,50 @@ export function ModulesTab() {
             Track your children&apos;s progress
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setAssignOpen(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5"
-        >
-          <svg
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading || !parentId}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-[12px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v8M8 12h8" />
-          </svg>
-          Assign Module
-        </button>
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <path d="M3 12a9 9 0 1 0 3-6.7" />
+              <path d="M3 4v5h5" />
+            </svg>
+            {loading ? "Refreshing…" : "Refresh"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAssignOpen(true)}
+            disabled={!parentId}
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v8M8 12h8" />
+            </svg>
+            Assign Module
+          </button>
+        </div>
       </div>
 
       <div className="h-px w-full bg-[var(--border)]" />
@@ -276,8 +279,18 @@ export function ModulesTab() {
           })}
         </div>
 
+        {errorMessage && (
+          <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-4 text-[12.5px] text-[var(--danger)]">
+            {errorMessage}
+          </div>
+        )}
+
         {/* Assignments grid */}
-        {visible.length === 0 ? (
+        {loading ? (
+          <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-12 text-center text-sm text-[var(--muted)]">
+            Loading assignments…
+          </div>
+        ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-12 text-center">
             <p className="text-sm font-medium text-[var(--foreground)]">
               No assignments to show
@@ -289,7 +302,12 @@ export function ModulesTab() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visible.map((a) => (
-              <AssignmentCard key={a.id} assignment={a} />
+              <AssignmentCard
+                key={a.id}
+                assignment={a}
+                childName={childById.get(a.childId)?.name || "—"}
+                moduleTitle={moduleById.get(a.moduleId)?.title || "—"}
+              />
             ))}
           </div>
         )}
@@ -298,7 +316,10 @@ export function ModulesTab() {
       <AssignModuleModal
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
-        onAssign={handleAssign}
+        onAssigned={refresh}
+        childList={childList}
+        modules={modules}
+        parentId={parentId}
       />
     </div>
   );

@@ -2,24 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-
-const CHILDREN = [
-  { id: "cowey", name: "Cowey" },
-  { id: "emma", name: "Emma" },
-  { id: "liam", name: "Liam" },
-  { id: "sophia", name: "Sophia" },
-];
-
-const MODULES = [
-  { id: "cyberbullying", title: "Cyberbullying" },
-  { id: "online-safety", title: "Online Safety" },
-  { id: "privacy-protection", title: "Privacy Protection" },
-  { id: "digital-wellness", title: "Digital Wellness" },
-  { id: "social-media", title: "Social Media Literacy" },
-  { id: "mindful-tech", title: "Mindful Tech Use" },
-];
-
-const PRIORITIES = ["Low", "Medium", "High"];
+import {
+  assignModuleToChild,
+  MODULE_CATEGORIES,
+} from "../../lib/learningModules";
 
 function FieldGroup({ label, children }) {
   return (
@@ -65,48 +51,29 @@ function SelectField({ value, onChange, options, placeholder }) {
   );
 }
 
-function Toggle({ checked, onChange }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        checked
-          ? "bg-[var(--accent)]"
-          : "border border-[var(--border)] bg-[var(--surface-muted)]"
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
-      />
-    </button>
-  );
-}
-
-export function AssignModuleModal({ open, onClose, onAssign }) {
+export function AssignModuleModal({
+  open,
+  onClose,
+  onAssigned,
+  childList = [],
+  modules = [],
+  parentId,
+}) {
   const [childId, setChildId] = useState("");
   const [moduleId, setModuleId] = useState("");
-  const [priority, setPriority] = useState("Medium");
-  const [hasDueDate, setHasDueDate] = useState(false);
-  const [dueDate, setDueDate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
-  const canAssign = childId && moduleId;
+  const canAssign = !!(childId && moduleId && parentId && !submitting);
 
   useEffect(() => {
     if (!open) return undefined;
-
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     function onKeyDown(event) {
       if (event.key === "Escape") onClose();
     }
     window.addEventListener("keydown", onKeyDown);
-
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
@@ -117,27 +84,36 @@ export function AssignModuleModal({ open, onClose, onAssign }) {
     if (!open) {
       setChildId("");
       setModuleId("");
-      setPriority("Medium");
-      setHasDueDate(false);
-      setDueDate("");
+      setSubmitting(false);
+      setErrorMessage(null);
     }
   }, [open]);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!canAssign) return;
-    onAssign({
-      id: `a-${Date.now()}`,
-      childId,
-      moduleId,
-      priority,
-      dueDate: hasDueDate ? dueDate : null,
-      status: "assigned",
-      progress: 0,
-    });
-    onClose();
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const chosen = modules.find((m) => m.id === moduleId);
+      await assignModuleToChild({
+        parentId,
+        childId,
+        moduleId,
+        category: chosen?.category || MODULE_CATEGORIES.CHILD,
+      });
+      onAssigned?.();
+      onClose();
+    } catch (err) {
+      setErrorMessage(err.message || "Failed to assign module");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!open || typeof document === "undefined") return null;
+
+  const childOptions = childList.map((c) => ({ id: c.id, label: c.name || "Child" }));
+  const moduleOptions = modules.map((m) => ({ id: m.id, label: m.title || "Untitled" }));
 
   const modal = (
     <div
@@ -178,79 +154,46 @@ export function AssignModuleModal({ open, onClose, onAssign }) {
                   : "cursor-not-allowed text-[var(--muted)]"
               }`}
             >
-              Assign
+              {submitting ? "Saving…" : "Assign"}
             </button>
           </div>
 
           <div className="h-px w-full bg-[var(--border)]" />
 
-          {/* Child */}
+          {errorMessage && (
+            <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-3 text-[12.5px] text-[var(--danger)]">
+              {errorMessage}
+            </div>
+          )}
+
           <FieldGroup label="Child">
-            <SelectField
-              value={childId}
-              onChange={setChildId}
-              options={CHILDREN.map((c) => ({ id: c.id, label: c.name }))}
-              placeholder="Select a child"
-            />
+            {childOptions.length === 0 ? (
+              <p className="text-[12.5px] text-[var(--muted)]">
+                No children on file yet — add children from settings first.
+              </p>
+            ) : (
+              <SelectField
+                value={childId}
+                onChange={setChildId}
+                options={childOptions}
+                placeholder="Select a child"
+              />
+            )}
           </FieldGroup>
 
-          {/* Module */}
           <FieldGroup label="Learning Module">
-            <SelectField
-              value={moduleId}
-              onChange={setModuleId}
-              options={MODULES.map((m) => ({ id: m.id, label: m.title }))}
-              placeholder="Choose a module"
-            />
-          </FieldGroup>
-
-          {/* Priority */}
-          <FieldGroup label="Priority">
-            <div
-              role="radiogroup"
-              aria-label="Priority"
-              className="inline-flex rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-1"
-            >
-              {PRIORITIES.map((p) => {
-                const active = priority === p;
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setPriority(p)}
-                    className={`rounded-lg px-6 py-2 text-[13px] font-semibold transition-all ${
-                      active
-                        ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-            </div>
-          </FieldGroup>
-
-          {/* Due Date */}
-          <FieldGroup label="Due Date">
-            <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-[14px] font-medium text-[var(--foreground)]">
-                  Set Due Date
-                </span>
-                <Toggle checked={hasDueDate} onChange={setHasDueDate} />
-              </div>
-              {hasDueDate && (
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[13.5px] text-[var(--foreground)] focus:border-[var(--accent-border)] focus:outline-none"
-                />
-              )}
-            </div>
+            {moduleOptions.length === 0 ? (
+              <p className="text-[12.5px] text-[var(--muted)]">
+                No modules to assign yet. Create one from the Learning Modules tab first.
+              </p>
+            ) : (
+              <SelectField
+                value={moduleId}
+                onChange={setModuleId}
+                options={moduleOptions}
+                placeholder="Choose a module"
+              />
+            )}
           </FieldGroup>
         </div>
       </div>
