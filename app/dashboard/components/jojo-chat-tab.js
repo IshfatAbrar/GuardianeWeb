@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-const SUGGESTED_PROMPTS = [
-  "How do I talk to my teen about screen time?",
-  "What are signs my child is struggling with anxiety?",
-  "Help me set healthy device boundaries for my family.",
-  "How can I support my child after a tough day at school?",
-];
+import { sendJojoMessage, JojoChatError } from "../../lib/jojoChat";
 
 const INTRO_MESSAGE = {
   role: "assistant",
@@ -99,34 +93,22 @@ export function JojoChatTab({ userInitial = "Y" }) {
     if (!trimmed || isSending) return;
 
     const userMessage = { role: "user", content: trimmed };
-    const next = [...messages, userMessage];
-    setMessages(next);
+    const nextHistory = [...messages, userMessage];
+    setMessages(nextHistory);
     setInput("");
     setIsSending(true);
 
     try {
-      const res = await fetch("/api/jojo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: next.map((m) => ({ role: m.role, content: m.content })),
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      const reply =
-        data?.reply ||
-        "I'm having trouble responding right now. Please try again in a moment.";
-
+      const reply = await sendJojoMessage({ messages: nextHistory });
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-    } catch {
+    } catch (err) {
+      const fallback =
+        err instanceof JojoChatError
+          ? err.message
+          : "I couldn't reach the server. Check your connection and try again.";
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content:
-            "I couldn't reach the server. Check your connection and try again.",
-        },
+        { role: "assistant", content: fallback },
       ]);
     } finally {
       setIsSending(false);
