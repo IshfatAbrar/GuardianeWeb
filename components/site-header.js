@@ -123,7 +123,7 @@ function ProfileMenu({ user, profile, compact = false }) {
           </div>
 
           <Link
-            href="/settings"
+            href="/dashboard?tab=settings"
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] font-medium text-[var(--foreground)] transition-colors hover:bg-white/5"

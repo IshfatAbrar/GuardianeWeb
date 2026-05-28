@@ -8,6 +8,7 @@ import { contactEmail } from '../../lib/siteConfig'
 import { PartnerWithUsModal } from '../../components/partner-with-us-modal'
 import { AuthGuard } from '../../components/auth-guard'
 import { signIn } from "../lib/authHelper"  // ← Firebase helper
+import { PasswordInput } from "../../components/password-input"
 import {
   ShieldCheck,
   MessageCircleHeart,
@@ -122,8 +123,7 @@ export default function LoginPage() {
               <label className="mb-2 block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--muted)]">
                 Password
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

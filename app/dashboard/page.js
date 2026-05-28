@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Sidebar } from "./components/sidebar";
 import { OverviewTab } from "./components/overview-tab";
 import { PlaceholderTab } from "./components/placeholder-tab";
@@ -14,6 +15,16 @@ import { placeholderTabLabels } from "./data/nav";
 import { AuthGuard } from "../../components/auth-guard";
 import { useDashboardData } from "./_lib/useDashboardData";
 
+const VALID_TABS = new Set([
+  "overview",
+  "chatbot",
+  "learning",
+  "modules",
+  "access",
+  "emergency",
+  "settings",
+]);
+
 function userInitialFrom(profile, user) {
   const source =
     profile?.fullName || user?.displayName || user?.email || "";
@@ -22,9 +33,36 @@ function userInitialFrom(profile, user) {
 }
 
 export default function DashboardPage() {
-  const [activeNav, setActiveNav] = useState("overview");
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const initialTab = VALID_TABS.has(tabFromUrl) ? tabFromUrl : "overview";
+
+  const [activeNav, setActiveNav] = useState(initialTab);
   const [pendingModuleId, setPendingModuleId] = useState(null);
   const data = useDashboardData();
+
+  // Sync the URL ?tab= when the user clicks around. replaceState (not push)
+  // so the browser-back button still leaves the dashboard rather than walking
+  // through every tab the user happened to click on.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (activeNav === "overview") params.delete("tab");
+    else params.set("tab", activeNav);
+    const qs = params.toString();
+    const next = qs ? `/dashboard?${qs}` : "/dashboard";
+    if (window.location.pathname + window.location.search !== next) {
+      window.history.replaceState(null, "", next);
+    }
+  }, [activeNav]);
+
+  // If the user clicks the same Settings link a second time (URL→state).
+  useEffect(() => {
+    if (VALID_TABS.has(tabFromUrl) && tabFromUrl !== activeNav) {
+      setActiveNav(tabFromUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabFromUrl]);
 
   const openLearningModule = (moduleId) => {
     setPendingModuleId(moduleId);

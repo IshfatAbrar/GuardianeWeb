@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { inputCls, STRENGTH_META } from '../../_lib/constants'
 import { getPasswordStrength } from '../../_lib/helpers'
 import { ErrorBanner, Field, StepCard, StepFooter } from '../StepShell'
+import { PasswordInput } from '../../../../components/password-input'
 
 export function StepAccount({ initial, onNext }) {
   const [fullName, setFullName] = useState(initial?.fullName ?? '')
@@ -56,8 +57,7 @@ export function StepAccount({ initial, onNext }) {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={<>Password{requiredStar}</>}>
-            <input
-              type="password"
+            <PasswordInput
               className={inputCls}
               placeholder="Min. 8 characters"
               value={password}
@@ -80,8 +80,7 @@ export function StepAccount({ initial, onNext }) {
             )}
           </Field>
           <Field label={<>Confirm password{requiredStar}</>}>
-            <input
-              type="password"
+            <PasswordInput
               className={inputCls}
               placeholder="Repeat password"
               value={confirm}
