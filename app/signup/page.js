@@ -72,7 +72,7 @@ export default function SignupPage() {
       case 2:
         return (
           <StepManageChildren
-            children={children}
+            childList={children}
             onAdd={addChild}
             onRemove={removeChild}
             onNext={() => setStep(3)}

@@ -23,16 +23,36 @@ function userInitialFrom(profile, user) {
 
 export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState("overview");
+  const [pendingModuleId, setPendingModuleId] = useState(null);
   const data = useDashboardData();
 
+  const openLearningModule = (moduleId) => {
+    setPendingModuleId(moduleId);
+    setActiveNav("learning");
+  };
+
   const renderContent = () => {
-    if (activeNav === "overview") return <OverviewTab data={data} />;
+    if (activeNav === "overview")
+      return (
+        <OverviewTab
+          data={data}
+          onNavigate={setActiveNav}
+          onOpenModule={openLearningModule}
+        />
+      );
     if (activeNav === "chatbot") {
       return (
         <JojoChatTab userInitial={userInitialFrom(data.userProfile, data.user)} />
       );
     }
-    if (activeNav === "learning") return <LearningTab data={data} />;
+    if (activeNav === "learning")
+      return (
+        <LearningTab
+          data={data}
+          initialModuleId={pendingModuleId}
+          onInitialModuleConsumed={() => setPendingModuleId(null)}
+        />
+      );
     if (activeNav === "modules") return <ModulesTab data={data} />;
     if (activeNav === "access") return <AccessTab data={data} />;
     if (activeNav === "emergency") return <EmergencyTab data={data} />;

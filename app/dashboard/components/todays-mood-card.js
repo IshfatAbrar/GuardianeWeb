@@ -14,7 +14,7 @@ function moodMeta(mood) {
   return MOOD_META[key] || { emoji: '🙂', label: mood.mood || mood.label || 'Logged', color: 'text-[var(--accent)]' }
 }
 
-export function TodaysMoodCard({ mood, childName }) {
+export function TodaysMoodCard({ mood, childName, onFullReport }) {
   const meta = moodMeta(mood)
   const childFirst = childName?.split(' ')[0]
 
@@ -53,7 +53,11 @@ export function TodaysMoodCard({ mood, childName }) {
         )}
       </div>
 
-      <button className="w-full rounded-xl bg-[var(--accent-bg)] py-2.5 text-[13px] font-semibold text-[var(--accent)] hover:bg-[var(--accent-bg-hover)] transition-colors">
+      <button
+        type="button"
+        onClick={onFullReport}
+        className="w-full rounded-xl bg-[var(--accent-bg)] py-2.5 text-[13px] font-semibold text-[var(--accent)] hover:bg-[var(--accent-bg-hover)] transition-colors"
+      >
         Full Report
       </button>
     </div>

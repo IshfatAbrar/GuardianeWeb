@@ -4,7 +4,7 @@ import { ChildCard } from '../ChildCard'
 import { ChildForm } from '../ChildForm'
 import { StepCard, StepFooter } from '../StepShell'
 
-export function StepManageChildren({ children, onAdd, onRemove, onNext, onBack }) {
+export function StepManageChildren({ childList, onAdd, onRemove, onNext, onBack }) {
   const [showForm, setShowForm] = useState(false)
 
   const handleAdd = (child) => {
@@ -15,7 +15,7 @@ export function StepManageChildren({ children, onAdd, onRemove, onNext, onBack }
   return (
     <StepCard title="Manage children" sub="Review and edit your children's profiles">
       <div className="grid gap-2.5">
-        {children.map((c, i) => (
+        {childList.map((c, i) => (
           <ChildCard key={i} child={c} onRemove={() => onRemove(i)} />
         ))}
       </div>

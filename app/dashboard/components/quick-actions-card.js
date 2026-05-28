@@ -1,6 +1,18 @@
 import { quickActions } from "../data/nav";
 
-export function QuickActionsCard() {
+export function QuickActionsCard({
+  onAddChild,
+  onReports,
+  onMessages,
+  onEmergency,
+}) {
+  const handlers = {
+    addChild: onAddChild,
+    reports: onReports,
+    messages: onMessages,
+    emergency: onEmergency,
+  };
+
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
       <div className="flex items-center gap-3 mb-4">
@@ -22,7 +34,9 @@ export function QuickActionsCard() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {quickActions.map((qa) => (
           <button
-            key={qa.label}
+            key={qa.id}
+            type="button"
+            onClick={handlers[qa.id]}
             className="flex flex-col items-center gap-2.5 group"
           >
             <div className="w-16 h-16 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center group-hover:bg-[var(--accent-bg-hover)] transition-colors">

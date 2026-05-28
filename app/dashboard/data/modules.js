@@ -1,10 +1,3 @@
-export const modules = [
-  { id: 1, name: 'Digital Safety', child: 'Emma', lessons: 4, status: 'done' },
-  { id: 2, name: 'Emotional Resilience', child: 'Sophia', lessons: 5, status: 'progress', pct: 50 },
-  { id: 3, name: 'Screen Time Balance', child: 'Liam', lessons: 3, status: 'progress', pct: 33 },
-  { id: 4, name: 'Online Friendships', child: 'All', lessons: 6, status: 'new' },
-]
-
 // Module card gradient palette — one entry per module card, cycled by index.
 // Kept as literal saturated colors since the cards always render white text on top,
 // so they read correctly in both light and dark themes.

@@ -6,22 +6,17 @@ import {
   getDocs,
   setDoc,
   updateDoc,
-  addDoc,
   deleteDoc,
   query,
   where,
-  orderBy,
-  limit,
   onSnapshot,
   serverTimestamp,
-  Timestamp,
   writeBatch,
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
-// ── Collection name constants ────────────────────────────────────────────────
 export const COLLECTIONS = {
   USERS: 'users',
   FAMILIES: 'families',
@@ -31,9 +26,6 @@ export const COLLECTIONS = {
   MOOD_ENTRIES: 'moodEntries',
   MODULES: 'modules',
   LEARNING_PROGRESS: 'learning_progress',
-  MESSAGES: 'messages',
-  SCREEN_TIME_ENTRIES: 'screen_time_entries',
-  EMERGENCY_CONTACTS: 'emergency_contacts', // sub-collection under users/{uid}
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
@@ -314,6 +306,24 @@ export async function getAssignmentsForFamily(familyId) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
+/** All mood entries for a child whose timestamp falls inside [fromDate, toDate). */
+export async function getMoodEntriesForChildInRange(childId, fromDate, toDate) {
+  if (!childId || !(fromDate instanceof Date) || !(toDate instanceof Date)) return []
+  const snap = await getDocs(
+    query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
+  )
+  const fromMs = fromDate.getTime()
+  const toMs = toDate.getTime()
+  const rows = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((r) => {
+      const ms = r.timestamp?.toMillis?.()
+      return typeof ms === 'number' && ms >= fromMs && ms < toMs
+    })
+  rows.sort((a, b) => (a.timestamp?.toMillis?.() ?? 0) - (b.timestamp?.toMillis?.() ?? 0))
+  return rows
+}
+
 /** Most recent mood entry for a child, restricted to today (or null). */
 export async function getTodaysMoodForChild(childId) {
   if (!childId) return null
@@ -336,124 +346,10 @@ export async function getTodaysMoodForChild(childId) {
   return null
 }
 
-/** Get a single child's learning_progress documents. */
-export async function getChildLearningProgress(childUid) {
-  const q = query(
-    collection(db, COLLECTIONS.LEARNING_PROGRESS),
-    where('childId', '==', childUid),
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-}
-
-// ─── Messages (real-time) ────────────────────────────────────────────────────
-
-/**
- * Subscribe to a conversation. `conversationId` is a deterministic id derived
- * from the two participants (mirrors the iOS implementation).
- * Returns the unsubscribe function.
- */
-export function listenToMessages(conversationId, callback) {
-  const q = query(
-    collection(db, COLLECTIONS.MESSAGES),
-    where('conversationId', '==', conversationId),
-    orderBy('createdAt', 'asc'),
-  )
-  const unsub = onSnapshot(q, (snap) => {
-    const messages = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-    callback(messages)
-  })
-  return unsub
-}
-
-/** Send a message into a conversation. */
-export async function sendMessage({ conversationId, senderId, recipientId, body }) {
-  const ref = await addDoc(collection(db, COLLECTIONS.MESSAGES), {
-    conversationId,
-    senderId,
-    recipientId,
-    body,
-    createdAt: serverTimestamp(),
-  })
-  return ref.id
-}
-
-// ─── Screen time ─────────────────────────────────────────────────────────────
-
-/**
- * Build a screen-time report for a single child between two dates.
- * Returns { totalMinutes, byApp: { [appName]: minutes }, entries }.
- */
-export async function getChildScreenTimeReport(childUid, { from, to } = {}) {
-  const constraints = [where('childId', '==', childUid)]
-  if (from) constraints.push(where('startedAt', '>=', Timestamp.fromDate(from)))
-  if (to) constraints.push(where('startedAt', '<=', Timestamp.fromDate(to)))
-  constraints.push(orderBy('startedAt', 'desc'))
-
-  const snap = await getDocs(query(collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES), ...constraints))
-  const entries = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-
-  let totalMinutes = 0
-  const byApp = {}
-  for (const e of entries) {
-    const mins = Number(e.durationMinutes) || 0
-    totalMinutes += mins
-    byApp[e.appName || 'unknown'] = (byApp[e.appName || 'unknown'] || 0) + mins
-  }
-
-  return { childUid, totalMinutes, byApp, entries }
-}
-
-/** Add one screen-time entry (typically called from the child device app). */
-export async function addScreenTimeEntry(entry) {
-  const ref = await addDoc(collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES), {
-    ...entry,
-    createdAt: serverTimestamp(),
-  })
-  return ref.id
-}
-
-// ─── Emergency contacts ──────────────────────────────────────────────────────
-// Stored as a sub-collection under users/{uid}/emergency_contacts.
-
-/** Get a parent's emergency contacts. */
-export async function getEmergencyContacts(parentUid) {
-  const snap = await getDocs(
-    collection(db, COLLECTIONS.USERS, parentUid, COLLECTIONS.EMERGENCY_CONTACTS),
-  )
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-}
-
-/** Add an emergency contact to a parent profile. */
-export async function addEmergencyContact(parentUid, contact) {
-  const ref = await addDoc(
-    collection(db, COLLECTIONS.USERS, parentUid, COLLECTIONS.EMERGENCY_CONTACTS),
-    { ...contact, createdAt: serverTimestamp() },
-  )
-  return ref.id
-}
-
-/** Remove an emergency contact. */
-export async function deleteEmergencyContact(parentUid, contactId) {
-  await deleteDoc(
-    doc(db, COLLECTIONS.USERS, parentUid, COLLECTIONS.EMERGENCY_CONTACTS, contactId),
-  )
-}
-
-// ─── Generic real-time helper ────────────────────────────────────────────────
-
-/**
- * Subscribe to a single Firestore document. Returns the unsubscribe function.
- * Useful for live-binding the signed-in user's profile.
- */
+/** Subscribe to a single Firestore document. Returns the unsubscribe function. */
 export function listenToDoc(path, callback) {
   const ref = doc(db, ...path.split('/'))
   return onSnapshot(ref, (snap) => {
-    const data = snap.exists() ? { id: snap.id, ...snap.data() } : null
-    callback(data)
+    callback(snap.exists() ? { id: snap.id, ...snap.data() } : null)
   })
 }
-
-// Suppress unused-warning for `limit` — kept exported-via-import in case
-// downstream files want to extend queries without re-importing from firestore.
-export { limit }

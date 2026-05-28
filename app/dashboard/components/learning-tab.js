@@ -312,7 +312,7 @@ function HubContent({
   );
 }
 
-export function LearningTab({ data }) {
+export function LearningTab({ data, initialModuleId, onInitialModuleConsumed }) {
   const { user, userProfile } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [modules, setModules] = useState([]);
@@ -320,11 +320,18 @@ export function LearningTab({ data }) {
   const [errorMessage, setErrorMessage] = useState(null);
 
   // Navigation: 'hub' | 'module' | 'lesson'
-  const [view, setView] = useState("hub");
-  const [activeModuleId, setActiveModuleId] = useState(null);
+  const [view, setView] = useState(initialModuleId ? "module" : "hub");
+  const [activeModuleId, setActiveModuleId] = useState(initialModuleId ?? null);
   const [activeLesson, setActiveLesson] = useState(null);
   const [activeLessonIsParent, setActiveLessonIsParent] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
+
+  useEffect(() => {
+    if (!initialModuleId) return;
+    setActiveModuleId(initialModuleId);
+    setView("module");
+    onInitialModuleConsumed?.();
+  }, [initialModuleId, onInitialModuleConsumed]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState(null);

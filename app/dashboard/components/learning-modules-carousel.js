@@ -14,7 +14,7 @@ function dedupeByTitle(modules) {
   return out
 }
 
-export function LearningModulesCarousel({ modules = [] }) {
+export function LearningModulesCarousel({ modules = [], onViewAll, onSelectModule }) {
   const unique = dedupeByTitle(modules)
   return (
     <div>
@@ -37,7 +37,11 @@ export function LearningModulesCarousel({ modules = [] }) {
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Learning Modules
         </h2>
-        <button className="ml-auto text-[13px] font-semibold text-[var(--accent)] bg-[var(--accent-bg)] px-3 py-1 rounded-lg hover:bg-[var(--accent-bg-hover)] transition-colors">
+        <button
+          type="button"
+          onClick={onViewAll}
+          className="ml-auto text-[13px] font-semibold text-[var(--accent)] bg-[var(--accent-bg)] px-3 py-1 rounded-lg hover:bg-[var(--accent-bg-hover)] transition-colors"
+        >
           View All
         </button>
       </div>
@@ -61,6 +65,15 @@ export function LearningModulesCarousel({ modules = [] }) {
             return (
               <div
                 key={mod.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectModule?.(mod)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectModule?.(mod);
+                  }
+                }}
                 className="flex-shrink-0 w-[200px] rounded-2xl p-4 flex flex-col gap-3 cursor-pointer hover:opacity-90 transition-opacity"
                 style={{ background: color.bg }}
               >

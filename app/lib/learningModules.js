@@ -13,12 +13,10 @@ import {
   doc,
   getDoc,
   getDocs,
-  setDoc,
   addDoc,
   updateDoc,
   query,
   where,
-  orderBy,
   onSnapshot,
   writeBatch,
   serverTimestamp,
@@ -27,13 +25,6 @@ import {
 import { db } from './firebase'
 
 export const MODULE_CATEGORIES = {
-  SAFETY: 'safety',
-  PRIVACY: 'privacy',
-  CYBERBULLYING: 'cyberbullying',
-  SCREEN_TIME: 'screen_time',
-  EMOTIONAL_HEALTH: 'emotional_health',
-  COMMUNICATION: 'communication',
-  CUSTOM: 'custom',
   PARENT: 'parent',
   CHILD: 'child',
 }
@@ -47,7 +38,6 @@ export const QUESTION_TYPES = {
 const MODULES = 'modules'
 const LESSONS = 'lessons'
 const ASSIGNMENTS = 'assignments'
-const LEARNING_PROGRESS = 'learning_progress'
 
 export const ASSIGNMENT_PRIORITY = {
   LOW: 'low',
@@ -92,31 +82,14 @@ export async function getModulesByCategory(category) {
   return sortNewestFirst(snap.docs.map(withId))
 }
 
-export async function getModulesForChild(childId, category) {
-  const rows = await getModulesByCategory(category)
-  return rows.filter((m) => {
-    if (!m.isChildSpecific) return true
-    const targets = Array.isArray(m.targetChildIds) ? m.targetChildIds : []
-    return targets.includes(childId)
-  })
-}
-
 export async function getModuleById(moduleId) {
   const snap = await getDoc(doc(db, MODULES, moduleId))
   return snap.exists() ? withId(snap) : null
 }
 
-export async function getLessonsForModule(moduleId, category = null) {
-  const lessonsRef = collection(db, MODULES, moduleId, LESSONS)
-  const snap = category
-    ? await getDocs(query(lessonsRef, where('category', '==', category)))
-    : await getDocs(lessonsRef)
+export async function getLessonsForModule(moduleId) {
+  const snap = await getDocs(collection(db, MODULES, moduleId, LESSONS))
   return sortNewestFirst(snap.docs.map(withId))
-}
-
-export async function getLessonById(moduleId, lessonId) {
-  const snap = await getDoc(doc(db, MODULES, moduleId, LESSONS, lessonId))
-  return snap.exists() ? withId(snap) : null
 }
 
 export async function getModuleWithLessons(moduleId) {
@@ -152,40 +125,6 @@ export async function fetchAllModules() {
 }
 
 // ─── Modules: write ──────────────────────────────────────────────────────────
-
-/**
- * Create a module with no lessons. Mirrors Swift `createModule(...)`.
- * `estimatedDuration` is in MINUTES — stored as seconds to match iOS.
- */
-export async function createModule({
-  title,
-  description,
-  category,
-  difficulty = 1,
-  estimatedDuration = 15,
-  createdBy,
-  createdByName,
-}) {
-  const payload = {
-    title: trim(title),
-    subtitle: trim(title),
-    description: trim(description),
-    icon: 'book.closed',
-    difficulty,
-    estimatedDuration: estimatedDuration * 60,
-    category: category === MODULE_CATEGORIES.CHILD ? MODULE_CATEGORIES.CHILD : MODULE_CATEGORIES.PARENT,
-    isActive: true,
-    isCustomModule: true,
-    lessonCount: 0,
-    createdBy,
-    createdByName,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  }
-  const ref = doc(collection(db, MODULES))
-  await setDoc(ref, payload)
-  return { id: ref.id, ...payload }
-}
 
 /**
  * Atomically create a module + its first lesson. Mirrors Swift
@@ -259,59 +198,11 @@ export async function createModuleWithLesson({
   }
 }
 
-/**
- * Add a lesson to an existing module. Mirrors Swift `createLesson(...)`.
- * Enforces the same permission check: only the module creator can add lessons.
- */
-export async function createLesson({
-  moduleId,
-  title,
-  description,
-  questions,
-  createdBy,
-  createdByName,
-  category,
-}) {
-  if (!Array.isArray(questions) || questions.length === 0) {
-    throw new Error('At least one question is required to create a lesson.')
-  }
-  const module_ = await getModuleById(moduleId)
-  if (!module_) throw new Error('Module not found')
-  if (module_.createdBy && module_.createdBy !== createdBy) {
-    throw new Error('You do not have permission to add lessons to this module.')
-  }
-
-  const actualCategory = module_.category || category
-  const lessonRef = doc(collection(db, MODULES, moduleId, LESSONS))
-  const payload = {
-    title: trim(title),
-    description: trim(description),
-    questions,
-    createdBy,
-    createdByName,
-    category: actualCategory,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  }
-  await setDoc(lessonRef, payload)
-  await updateModuleLessonCount(moduleId)
-  return { id: lessonRef.id, ...payload }
-}
-
-export async function updateModuleLessonCount(moduleId) {
-  const lessons = await getLessonsForModule(moduleId)
-  await updateDoc(doc(db, MODULES, moduleId), {
-    lessonCount: lessons.length,
-    updatedAt: serverTimestamp(),
-  })
-}
-
 // ─── Assignments ─────────────────────────────────────────────────────────────
 //
-// Mirrors iOS Module Assignment (FirebaseService.createAssignment +
-// ModuleAssignmentViewModel). Writes to the `assignments` collection with the
-// full schema: priority / dueDate / status / isActive / privacyLevel / etc.
-// Soft delete via isActive=false (matches iOS deleteAssignment).
+// Mirrors iOS Module Assignment. Writes to the `assignments` collection with
+// the full schema: priority / dueDate / status / isActive. Soft delete via
+// isActive=false (matches iOS deleteAssignment).
 
 /**
  * Create a new assignment. Mirrors Swift `FirebaseService.createAssignment`.
@@ -353,23 +244,6 @@ export async function assignModule({
 }
 
 /**
- * Mirrors iOS `FirebaseService.getAssignments(familyId:)` — filter by family,
- * isActive=true, newest first.
- */
-export async function getAssignmentsForFamily(familyId) {
-  if (!familyId) return []
-  const snap = await getDocs(
-    query(
-      collection(db, ASSIGNMENTS),
-      where('familyId', '==', familyId),
-      where('isActive', '==', true),
-    ),
-  )
-  const rows = snap.docs.map(withId)
-  return rows.sort((a, b) => tsMillis(b.assignedAt) - tsMillis(a.assignedAt))
-}
-
-/**
  * Real-time listener. Mirrors iOS `FirebaseService.listenToAssignments`.
  * `onUpdate` receives the array of assignments. `onError` is called on snapshot
  * errors. Returns an unsubscribe function.
@@ -393,21 +267,15 @@ export function listenToAssignments(parentId, onUpdate, onError) {
   )
 }
 
-/**
- * Generic update. Mirrors iOS `FirebaseService.updateAssignment`.
- */
-export async function updateAssignment(assignmentId, data) {
+async function patchAssignment(assignmentId, data) {
   await updateDoc(doc(db, ASSIGNMENTS, assignmentId), data)
 }
 
-/**
- * Set progress and derive status / isCompleted from the value. Matches
- * Swift `ModuleAssignmentViewModel.updateAssignmentProgress`.
- */
+/** Set progress, deriving status / isCompleted. */
 export async function updateAssignmentProgress(assignmentId, progress) {
   const clamped = Math.max(0, Math.min(1, Number(progress) || 0))
   const isComplete = clamped >= 1
-  await updateAssignment(assignmentId, {
+  await patchAssignment(assignmentId, {
     progress: clamped,
     isCompleted: isComplete,
     status: isComplete
@@ -418,26 +286,9 @@ export async function updateAssignmentProgress(assignmentId, progress) {
   })
 }
 
-/**
- * Mirrors Swift `completeModule(assignmentId:quizScore:timeSpent:)`.
- */
-export async function completeAssignment(assignmentId, { quizScore = null, timeSpent = null } = {}) {
-  const data = {
-    progress: 1,
-    isCompleted: true,
-    status: ASSIGNMENT_STATUS.COMPLETED,
-    completedAt: serverTimestamp(),
-  }
-  if (quizScore != null) data.quizScore = quizScore
-  if (timeSpent != null) data.timeSpent = timeSpent
-  await updateAssignment(assignmentId, data)
-}
-
-/**
- * Soft delete by flipping isActive=false. Matches iOS `deleteAssignment`.
- */
+/** Soft delete by flipping isActive=false. */
 export async function softDeleteAssignment(assignmentId) {
-  await updateAssignment(assignmentId, { isActive: false })
+  await patchAssignment(assignmentId, { isActive: false })
 }
 
 /**
@@ -459,17 +310,6 @@ export function effectiveAssignmentStatus(assignment) {
   if (assignment.isCompleted) return ASSIGNMENT_STATUS.COMPLETED
   if (isAssignmentOverdue(assignment)) return ASSIGNMENT_STATUS.OVERDUE
   return assignment.status || ASSIGNMENT_STATUS.ASSIGNED
-}
-
-// ─── Progress ────────────────────────────────────────────────────────────────
-
-export async function getLearningProgressForChild(childId, category = null) {
-  const constraints = [where('childId', '==', childId)]
-  if (category) constraints.push(where('category', '==', category))
-  const snap = await getDocs(
-    query(collection(db, LEARNING_PROGRESS), ...constraints),
-  )
-  return snap.docs.map(withId)
 }
 
 // ─── Question builders ───────────────────────────────────────────────────────

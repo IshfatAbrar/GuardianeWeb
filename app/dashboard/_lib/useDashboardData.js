@@ -7,8 +7,8 @@ import {
   getAlertsForFamily,
   getAssignmentsForFamily,
   getTodaysMoodForChild,
-  getModules,
 } from '../../lib/database'
+import { fetchAllModules } from '../../lib/learningModules'
 
 /**
  * Single hook that owns all reads for the dashboard overview.
@@ -75,7 +75,7 @@ export function useDashboardData() {
       getAlertsForFamily(familyId, { max: 10 }),
       getAlertsForFamily(familyId, { activeOnly: true, max: 50 }),
       getAssignmentsForFamily(familyId),
-      getModules(),
+      fetchAllModules(),
     ])
       .then(([alertsRes, activeRes, assignmentsRes, modulesRes]) => {
         if (cancelled) return

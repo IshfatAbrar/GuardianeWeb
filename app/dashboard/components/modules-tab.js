@@ -358,7 +358,7 @@ export function ModulesTab({ data }) {
           type="button"
           onClick={() => setAssignOpen(true)}
           disabled={!parentId || !familyId}
-          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--accent-border)] bg-[var(--accent-bg)] p-5 text-left transition-all hover:bg-[var(--accent)] hover:text-white disabled:cursor-not-allowed disabled:opacity-60 [&>div]:hover:[&_p]:text-white"
+          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--accent-border)] bg-[var(--accent-bg)] p-5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 [&>div]:hover:[&_p]:text-white"
         >
           <div className="space-y-0.5">
             <p className="text-[14px] font-semibold text-[var(--accent)]">

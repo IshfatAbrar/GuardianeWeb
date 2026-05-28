@@ -66,6 +66,7 @@ export const sideNavItems = [
 
 export const quickActions = [
   {
+    id: 'addChild',
     label: 'Add Child',
     icon: (
       <svg width="26" height="26" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -74,6 +75,7 @@ export const quickActions = [
     ),
   },
   {
+    id: 'reports',
     label: 'Reports',
     icon: (
       <svg width="26" height="26" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -82,6 +84,7 @@ export const quickActions = [
     ),
   },
   {
+    id: 'messages',
     label: 'Messages',
     icon: (
       <svg width="26" height="26" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -90,6 +93,7 @@ export const quickActions = [
     ),
   },
   {
+    id: 'emergency',
     label: 'Emergency',
     icon: (
       <svg width="26" height="26" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">

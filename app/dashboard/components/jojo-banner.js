@@ -1,4 +1,4 @@
-export function JojoBanner() {
+export function JojoBanner({ onTalk, onLearnMore }) {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[var(--accent-border)] bg-[var(--accent-bg)] p-5 sm:p-6">
       {/* Decorative blob */}
@@ -34,6 +34,7 @@ export function JojoBanner() {
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={onTalk}
               className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5"
             >
               Talk to JoJo
@@ -41,6 +42,7 @@ export function JojoBanner() {
             </button>
             <button
               type="button"
+              onClick={onLearnMore}
               className="inline-flex items-center gap-1.5 rounded-full border border-[var(--accent-border)] bg-transparent px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--accent)] transition-colors hover:bg-[var(--accent-bg-hover)]"
             >
               How JoJo helps
