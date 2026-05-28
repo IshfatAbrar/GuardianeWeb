@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import { sideNavItems, sideHighlightItems } from "../data/nav";
+import { ChildQrModal } from "./child-qr-modal";
 
 function initialsFromName(name) {
   if (!name) return "?";
@@ -15,6 +19,8 @@ export function Sidebar({
   selectedChildId,
   setSelectedChildId,
 }) {
+  const [qrChild, setQrChild] = useState(null);
+
   return (
     <aside className="flex flex-col w-[280px] flex-shrink-0 bg-[var(--surface)] border-r border-[var(--border)] overflow-hidden">
       {/* My Children */}
@@ -32,47 +38,77 @@ export function Sidebar({
           ) : (
             childList.map((child) => {
               const isSelected = selectedChildId === child.id;
+              const hasQr = typeof child.qrCode === "string" && child.qrCode.length > 0;
               return (
-                <button
+                <div
                   key={child.id}
-                  onClick={() => setSelectedChildId(child.id)}
-                  className={`flex items-center gap-3 w-full px-3 py-2 rounded-xl text-left transition-all ${
+                  className={`flex items-center w-full rounded-xl transition-all ${
                     isSelected
                       ? "bg-[var(--accent-bg)] border border-[var(--accent-border)]"
                       : "bg-transparent border border-transparent hover:bg-[var(--surface-muted)]"
                   }`}
                 >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border-2 ${
-                      isSelected
-                        ? "bg-[var(--surface)] border-[var(--accent-border)] text-[var(--accent)]"
-                        : "bg-[var(--surface-muted)] border-[var(--border)] text-[var(--muted)]"
-                    }`}
+                  <button
+                    onClick={() => setSelectedChildId(child.id)}
+                    className="flex items-center gap-3 flex-1 min-w-0 px-3 py-2 text-left"
                   >
-                    {initialsFromName(child.name)}
-                  </div>
-                  <span
-                    className={`flex-1 text-[13px] font-medium leading-none ${
-                      isSelected
-                        ? "text-[var(--accent)]"
-                        : "text-[var(--foreground)]"
-                    }`}
-                  >
-                    {child.name?.split(" ")[0] || "Child"}
-                  </span>
-                  {isSelected && (
-                    <div className="w-4 h-4 rounded-full bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border-2 ${
+                        isSelected
+                          ? "bg-[var(--surface)] border-[var(--accent-border)] text-[var(--accent)]"
+                          : "bg-[var(--surface-muted)] border-[var(--border)] text-[var(--muted)]"
+                      }`}
+                    >
+                      {initialsFromName(child.name)}
+                    </div>
+                    <span
+                      className={`flex-1 truncate text-[13px] font-medium leading-none ${
+                        isSelected
+                          ? "text-[var(--accent)]"
+                          : "text-[var(--foreground)]"
+                      }`}
+                    >
+                      {child.name?.split(" ")[0] || "Child"}
+                    </span>
+                    {isSelected && (
+                      <div className="w-4 h-4 rounded-full bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
+                        <svg
+                          width="8" height="8"
+                          fill="none" stroke="white"
+                          strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                          viewBox="0 0 24 24"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                  {hasQr && (
+                    <button
+                      type="button"
+                      onClick={() => setQrChild(child)}
+                      aria-label={`Show QR code for ${child.name || "child"}`}
+                      title="Show registration QR code"
+                      className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg mr-1.5 text-[var(--accent)] transition-colors hover:bg-[var(--accent-bg)]"
+                    >
                       <svg
-                        width="8" height="8"
-                        fill="none" stroke="white"
-                        strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                         viewBox="0 0 24 24"
                       >
-                        <polyline points="20 6 9 17 4 12" />
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <path d="M14 14h3v3h-3zM20 14v3M14 20h3v1M17 17v3M21 17v4" />
                       </svg>
-                    </div>
+                    </button>
                   )}
-                </button>
+                </div>
               );
             })
           )}
@@ -106,6 +142,13 @@ export function Sidebar({
           />
         ))}
       </nav>
+
+      <ChildQrModal
+        open={!!qrChild}
+        onClose={() => setQrChild(null)}
+        childName={qrChild?.name}
+        qrCode={qrChild?.qrCode}
+      />
     </aside>
   );
 }

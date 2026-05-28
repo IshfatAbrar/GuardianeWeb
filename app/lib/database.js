@@ -62,14 +62,53 @@ export async function getUserProfile(uid) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-/** Return every child profile linked to this parent (children where parentIds array-contains uid). */
+/**
+ * Generate the registration QR code string for a child. Matches the iOS
+ * format from OnboardingViewModel.generateChildQRCode:
+ *   guardiane:{parentUid}:{kebab-name}:{4-char-uuid}
+ */
+export function generateChildQRCode(parentUid, childName) {
+  const slug = String(childName || '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+  let suffix
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    suffix = crypto.randomUUID().slice(0, 4)
+  } else {
+    suffix = Math.random().toString(16).slice(2, 6)
+  }
+  return `guardiane:${parentUid}:${slug}:${suffix}`
+}
+
+/**
+ * Return every child profile linked to this parent (children where
+ * parentIds array-contains uid). Backfills `qrCode` for any child missing it
+ * — iOS auto-generates one at child creation, so this brings legacy/web-
+ * created docs into parity.
+ */
 export async function getChildrenForParent(parentUid) {
   const q = query(
     collection(db, COLLECTIONS.CHILDREN),
     where('parentIds', 'array-contains', parentUid),
   )
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+
+  // Backfill missing qrCode in the background — don't block the read.
+  const needsBackfill = rows.filter(
+    (c) => typeof c.qrCode !== 'string' || c.qrCode.length === 0,
+  )
+  for (const child of needsBackfill) {
+    const qrCode = generateChildQRCode(parentUid, child.name)
+    child.qrCode = qrCode
+    // Fire-and-forget; if rules deny the write we just won't have a QR yet.
+    updateDoc(doc(db, COLLECTIONS.CHILDREN, child.id), {
+      qrCode,
+      updatedAt: serverTimestamp(),
+    }).catch(() => {})
+  }
+
+  return rows
 }
 
 // Convert "YYYY-MM-DD" (HTML <input type="date">) to "MM/DD/YYYY" so the iOS
@@ -146,6 +185,7 @@ export async function provisionParentAndFamily({ uid, email, fullName, children 
       birthDate: toBirthDateString(c.bday),
       gender: c.gender || null,
       grade: c.grade || null,
+      qrCode: generateChildQRCode(uid, c.name),
       familyId,
       parentIds: [uid],
       isActive: true,
