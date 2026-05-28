@@ -35,7 +35,7 @@ export default function DashboardPage() {
     if (activeNav === "learning") return <LearningTab data={data} />;
     if (activeNav === "modules") return <ModulesTab data={data} />;
     if (activeNav === "access") return <AccessTab data={data} />;
-    if (activeNav === "emergency") return <EmergencyTab />;
+    if (activeNav === "emergency") return <EmergencyTab data={data} />;
     if (activeNav === "settings") return <SettingsTab data={data} />;
     const [title, subtitle] = placeholderTabLabels[activeNav] || ["Page", ""];
     return <PlaceholderTab title={title} subtitle={subtitle} />;
