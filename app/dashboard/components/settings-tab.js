@@ -561,6 +561,9 @@ export function SettingsTab({ data }) {
       <DeleteAccountModal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
+        uid={user?.uid}
+        familyId={familyId}
+        children={children}
         onDeleted={() => router.push("/login")}
       />
 

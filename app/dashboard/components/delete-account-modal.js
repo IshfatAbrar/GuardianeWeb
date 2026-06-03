@@ -4,15 +4,24 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { deleteUser } from "firebase/auth";
 import { auth } from "../../lib/firebase";
+import { softDeleteAccountData } from "../../lib/database";
 
 const CONFIRM_PHRASE = "DELETE";
 
-export function DeleteAccountModal({ open, onClose, onDeleted }) {
+export function DeleteAccountModal({ open, onClose, onDeleted, uid, familyId, children }) {
   if (!open || typeof document === "undefined") return null;
-  return <Content onClose={onClose} onDeleted={onDeleted} />;
+  return (
+    <Content
+      onClose={onClose}
+      onDeleted={onDeleted}
+      uid={uid}
+      familyId={familyId}
+      children={children}
+    />
+  );
 }
 
-function Content({ onClose, onDeleted }) {
+function Content({ onClose, onDeleted, uid, familyId, children }) {
   const [confirmText, setConfirmText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -38,6 +47,10 @@ function Content({ onClose, onDeleted }) {
     setErrorMessage(null);
     try {
       if (!auth.currentUser) throw new Error("Not signed in");
+      // Tear down Firestore data while still authenticated (rules require it),
+      // then remove the auth user. softDeleteAccountData is idempotent, so a
+      // retry after re-login is safe.
+      await softDeleteAccountData({ uid, familyId, children });
       await deleteUser(auth.currentUser);
       onDeleted?.();
     } catch (err) {
@@ -79,9 +92,9 @@ function Content({ onClose, onDeleted }) {
           </div>
 
           <p className="text-[13px] leading-relaxed text-[var(--muted)]">
-            This permanently removes your account from Guardiané. Your
-            children&apos;s profiles, assignments, and other data may also be
-            removed depending on retention rules. This cannot be undone.
+            This permanently deletes your sign-in and deactivates your family:
+            your children&apos;s profiles are turned off and your family record
+            is removed. This cannot be undone.
           </p>
 
           {errorMessage && (

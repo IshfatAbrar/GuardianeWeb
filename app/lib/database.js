@@ -284,6 +284,40 @@ export async function rollbackFamilyProvision(familyId) {
   } catch (_) {}
 }
 
+/**
+ * Tear down a parent's data before the Firebase Auth user is deleted. The
+ * security rules forbid hard-deleting user/child/mood docs (`delete: if false`)
+ * — the schema is soft-delete via `isActive=false`. So this:
+ *   • deactivates every child (the parent child-update rule allows it),
+ *   • deletes the family doc (owner delete is permitted),
+ *   • deactivates the parent profile (`isActive=false`; the doc itself can't
+ *     be deleted).
+ * Must run while the user is still authenticated. It is idempotent, so it's
+ * safe to re-run if the subsequent auth deletion needs a fresh re-login.
+ * Mood entries / alerts can't be purged from the client (rules) — a Cloud
+ * Function with the Admin SDK is required to fully erase those.
+ */
+export async function softDeleteAccountData({ uid, familyId, children }) {
+  const kids = Array.isArray(children) ? children : []
+  await Promise.all(
+    kids.map((c) =>
+      updateDoc(doc(db, COLLECTIONS.CHILDREN, c.id), {
+        isActive: false,
+        updatedAt: serverTimestamp(),
+      }).catch(() => {}),
+    ),
+  )
+  if (familyId) {
+    await deleteDoc(doc(db, COLLECTIONS.FAMILIES, familyId)).catch(() => {})
+  }
+  if (uid) {
+    await updateDoc(doc(db, COLLECTIONS.USERS, uid), {
+      isActive: false,
+      updatedAt: serverTimestamp(),
+    }).catch(() => {})
+  }
+}
+
 // ─── Modules & learning progress ─────────────────────────────────────────────
 
 /** Get every module document. */
