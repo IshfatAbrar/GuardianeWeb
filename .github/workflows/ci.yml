@@ -1,0 +1,43 @@
+name: CI
+
+# Runs the same checks Vercel runs (lint + build) plus unit tests, so a green
+# check here means the Vercel deploy will build. Catches deploy-breaking errors
+# before you push.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # next build needs these defined or pages that touch Firebase config
+          # can fail. Real values live in Vercel's env settings; CI only needs
+          # them present, so placeholders are fine (these are client-side keys).
+          NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ci-placeholder
+          NEXT_PUBLIC_FIREBASE_APP_ID: ci-placeholder
+          CLOUD_FUNCTION_URL: https://example.com
+          JOJO_API_KEY: ci-placeholder
