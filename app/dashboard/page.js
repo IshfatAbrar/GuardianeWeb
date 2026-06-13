@@ -138,7 +138,7 @@ function DashboardContent() {
         </div>
       }
     >
-      <div className="flex h-screen flex-col overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
+      <div className="flex  flex-col overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             activeNav={activeNav}

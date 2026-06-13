@@ -118,7 +118,6 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
     }
   }
 
-  const canSend = value.trim() && !disabled;
 
   return (
     <form
@@ -127,7 +126,7 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
         onSubmit();
       }}
     >
-      <div className="flex items-end gap-2 rounded-[26px] border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-colors focus-within:border-[var(--accent-border)]">
+      <div className="flex items-end gap-2 rounded-[26px] border border-[var(--accent-border)] bg-[var(--surface)] px-2.5 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-colors focus-within:border-[var(--accent-border)]">
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[var(--muted)]">
           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <path d="M12 5v14M5 12h14" />
@@ -144,7 +143,7 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
           disabled={disabled}
           className="flex-1 resize-none bg-transparent py-2 text-[15px] leading-relaxed text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none disabled:opacity-60"
         />
-        {canSend ? (
+
           <button
             type="submit"
             aria-label="Send message"
@@ -154,31 +153,7 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
               <path d="M12 19V5M5 12l7-7 7 7" />
             </svg>
           </button>
-        ) : (
-          <div className="flex flex-shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              aria-label="Dictate"
-              title="Voice input (coming soon)"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <rect x="9" y="2" width="6" height="12" rx="3" />
-                <path d="M5 10a7 7 0 0 0 14 0M12 17v4" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              aria-label="Voice mode"
-              title="Voice mode (coming soon)"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--background)] transition-opacity hover:opacity-90"
-            >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
-                <path d="M5 10v4M9 6v12M12 3v18M15 6v12M19 10v4" />
-              </svg>
-            </button>
-          </div>
-        )}
+        
       </div>
     </form>
   );
@@ -317,7 +292,7 @@ export function JojoChatTab() {
   const isEmpty = messages.length === 0 && !isSending && !loadingMessages;
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-[90vh] overflow-hidden">
       <ChatSidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
