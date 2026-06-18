@@ -47,35 +47,28 @@ export function Sidebar({
         collapsed ? "w-[68px]" : "w-[280px]"
       }`}
     >
-      {/* Top bar: collapse toggle */}
-      <div
-        className={`flex items-center pt-3 pb-1 ${
-          collapsed ? "justify-center px-2" : "justify-between px-4"
-        }`}
-      >
-        {!collapsed && (
-          <span className="text-[13px] font-semibold tracking-tight text-[var(--foreground)]">
-            Guardiane
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
-        >
-          <PanelIcon />
-        </button>
-      </div>
-
       {/* My Children */}
       <div className={collapsed ? "px-2 pt-2 pb-1" : "px-4 pt-2 pb-2"}>
-        {!collapsed && (
-          <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[var(--muted)] mb-2.5 px-1">
-            My Children
-          </p>
-        )}
+        <div
+          className={`flex items-center mb-3 mt-2 ${
+            collapsed ? "justify-center" : "justify-between px-1"
+          }`}
+        >
+          {!collapsed && (
+            <p className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[var(--muted)]">
+              My Children
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+          >
+            <PanelIcon />
+          </button>
+        </div>
         <div className={`flex flex-col gap-1 ${collapsed ? "items-center" : ""}`}>
           {childrenLoading ? (
             <ChildrenSkeleton collapsed={collapsed} />

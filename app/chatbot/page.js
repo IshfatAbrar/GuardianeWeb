@@ -15,6 +15,31 @@ import { ThemeToggle } from "../../components/theme-toggle";
 
 const STORAGE_KEY = "jojo_guest_v1";
 
+// Guests get one free turn with JoJo. After that, sending another message opens
+// the sign-up gate instead. The counter lives in localStorage (not the
+// sessionStorage chat store) so it survives a refresh / tab-close and can't be
+// reset by simply reopening the tab.
+const TRIAL_KEY = "jojo_guest_tries_v1";
+const TRIAL_LIMIT = 1;
+
+function readTries() {
+  if (typeof window === "undefined") return 0;
+  try {
+    return parseInt(localStorage.getItem(TRIAL_KEY) || "0", 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeTries(n) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(TRIAL_KEY, String(n));
+  } catch {
+    // Storage unavailable (e.g. private mode) — gate still works in-memory.
+  }
+}
+
 function newId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `s_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
@@ -441,6 +466,70 @@ function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewC
   );
 }
 
+// ── Sign-up gate (shown after the free trial turn is used) ───────────────────
+
+function SignupGate({ open, onClose }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm  "
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="jojo-signup-gate-title"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-2xl"
+      >
+        <div className="mx-auto mb-4 flex justify-center">
+          <JojoAvatar size={48} />
+        </div>
+        <h2
+          id="jojo-signup-gate-title"
+          className="mb-2 text-[19px] font-semibold tracking-tight text-[var(--foreground)]"
+        >
+          Sign up to keep chatting with JoJo
+        </h2>
+        <p className="mb-6 text-[14px] leading-relaxed text-[var(--muted)]">
+          You&apos;ve used your free trial message. Create a free account to
+          continue the conversation and unlock saved chat history, mood boards,
+          screen-time insights and alerts.
+        </p>
+        <div className="flex flex-col gap-2.5">
+          <Link
+            href="/signup"
+            className="w-full rounded-full bg-[var(--accent)] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+          >
+            Sign up free
+          </Link>
+          <Link
+            href="/login"
+            className="w-full rounded-full px-5 py-2.5 text-[14px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+          >
+            I already have an account
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ChatbotPage() {
@@ -457,8 +546,17 @@ export default function ChatbotPage() {
 
   const [input, setInput] = useState("");
   const [collapsed, setCollapsed] = useState(false);
+  const [triesUsed, setTriesUsed] = useState(0);
+  const [showSignupGate, setShowSignupGate] = useState(false);
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
+
+  // Hydrate the trial counter from localStorage after mount (reading storage
+  // during render would mismatch the storage-less server render).
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+    setTriesUsed(readTries());
+  }, []);
 
   // Auto-collapse the sidebar when the viewport drops to phone size, and reopen
   // it inline when there's room again. Syncing during render (with an equality
@@ -475,8 +573,18 @@ export default function ChatbotPage() {
   }, [messages, isSending]);
 
   function handleSend(text) {
-    sendMessage(text);
+    const trimmed = (text || "").trim();
+    if (!trimmed || isSending) return;
+    // Free trial is one turn — any further send opens the sign-up gate.
+    if (triesUsed >= TRIAL_LIMIT) {
+      setShowSignupGate(true);
+      return;
+    }
+    sendMessage(trimmed);
     setInput("");
+    const next = triesUsed + 1;
+    setTriesUsed(next);
+    writeTries(next);
   }
 
   function handleNewChat() {
@@ -494,6 +602,8 @@ export default function ChatbotPage() {
 
   return (
     <div className="relative flex h-dvh overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
+      <SignupGate open={showSignupGate} onClose={() => setShowSignupGate(false)} />
+
       {/* Desktop: inline sidebar (full panel or 56px rail) */}
       {!isMobile && (
         <ChatSidebar
