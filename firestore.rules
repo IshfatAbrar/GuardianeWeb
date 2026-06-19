@@ -421,6 +421,29 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // JOJO LEADS COLLECTION
+    // Lightweight contact capture from the PUBLIC, login-free JoJo chatbot
+    // (/chatbot). These are not accounts — just a way for guests to leave
+    // contact info so the team can invite them to the full product. Because the
+    // chatbot has no auth, create is open to unauthenticated visitors, but the
+    // shape is strictly validated and the docs are never client-readable.
+    function validJojoLead(data) {
+      return data.keys().hasOnly(['email', 'phone', 'name', 'childInfo', 'zip', 'source', 'createdAt']) &&
+             data.createdAt is timestamp &&
+             data.email is string && data.email.size() <= 254 &&
+             data.phone is string && data.phone.size() <= 32 &&
+             // Require at least one usable contact channel.
+             (data.email.size() >= 3 || data.phone.size() >= 7) &&
+             data.name is string && data.name.size() <= 100 &&
+             data.childInfo is string && data.childInfo.size() <= 500 &&
+             data.zip is string && data.zip.size() <= 20 &&
+             data.source is string && data.source.size() <= 40;
+    }
+    match /jojoLeads/{leadId} {
+      allow create: if validJojoLead(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
     // DEFAULT DENY ALL
     match /{document=**} {
       allow read, write: if false;

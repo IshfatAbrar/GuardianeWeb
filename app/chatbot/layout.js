@@ -1,3 +1,5 @@
+import { JojoAuthProvider } from "./lib/jojoAuth";
+
 export const metadata = {
   title: "JoJo — Free parenting chat assistant | Guardiané",
   description:
@@ -5,5 +7,7 @@ export const metadata = {
 };
 
 export default function ChatbotLayout({ children }) {
-  return children;
+  // Shares the lightweight JoJo identity across /chatbot, /chatbot/login and
+  // /chatbot/signup.
+  return <JojoAuthProvider>{children}</JojoAuthProvider>;
 }

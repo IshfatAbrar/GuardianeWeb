@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sendJojoMessage, JojoChatError } from "../lib/jojoChat";
 import { ThemeToggle } from "../../components/theme-toggle";
+import { useJojoAuth } from "./lib/jojoAuth";
+import { ChatbotAuthForm } from "./components/ChatbotAuthForm";
+import { JojoUserMenu } from "./components/JojoUserMenu";
 
 // ── Guest chat state (sessionStorage-backed, no auth, no Firestore) ───────────
 //
@@ -21,6 +24,10 @@ const STORAGE_KEY = "jojo_guest_v1";
 // reset by simply reopening the tab.
 const TRIAL_KEY = "jojo_guest_tries_v1";
 const TRIAL_LIMIT = 1;
+
+// Whether the guest is "registered" (and so can chat past the free trial) is
+// owned by the JoJo auth context — see _lib/jojoAuth.js. This page only tracks
+// the trial counter, which survives a refresh / tab-close.
 
 function readTries() {
   if (typeof window === "undefined") return 0;
@@ -41,7 +48,8 @@ function writeTries(n) {
 }
 
 function newId() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  if (typeof crypto !== "undefined" && crypto.randomUUID)
+    return crypto.randomUUID();
   return `s_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 }
 
@@ -133,7 +141,7 @@ function useGuestJojoChat() {
         return cur;
       });
     },
-    [commit]
+    [commit],
   );
 
   const sendMessage = useCallback(
@@ -151,7 +159,11 @@ function useGuestJojoChat() {
       // Lazily create the session on the first message.
       if (!sessionId) {
         sessionId = newId();
-        store.sessions.push({ id: sessionId, title: titleFromText(trimmed), updatedAt: Date.now() });
+        store.sessions.push({
+          id: sessionId,
+          title: titleFromText(trimmed),
+          updatedAt: Date.now(),
+        });
         setActiveId(sessionId);
       } else {
         const s = store.sessions.find((x) => x.id === sessionId);
@@ -181,7 +193,7 @@ function useGuestJojoChat() {
         setIsSending(false);
       }
     },
-    [activeId, isSending, messages, commit]
+    [activeId, isSending, messages, commit],
   );
 
   return {
@@ -203,7 +215,16 @@ const SUGGESTIONS = [
     label: "Spot cyberbullying signs",
     prompt: "What are the warning signs my teen is being cyberbullied?",
     icon: (
-      <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <svg
+        width="17"
+        height="17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        viewBox="0 0 24 24"
+      >
         <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" />
         <path d="M12 8v4M12 16h.01" />
       </svg>
@@ -211,9 +232,19 @@ const SUGGESTIONS = [
   },
   {
     label: "Start a hard conversation",
-    prompt: "How do I start a hard conversation with my teen about their mental health?",
+    prompt:
+      "How do I start a hard conversation with my teen about their mental health?",
     icon: (
-      <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <svg
+        width="17"
+        height="17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        viewBox="0 0 24 24"
+      >
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
@@ -223,32 +254,82 @@ const SUGGESTIONS = [
 // ── Icons ────────────────────────────────────────────────────────────────────
 
 const ComposeIcon = (p) => (
-  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}>
+  <svg
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    viewBox="0 0 24 24"
+    {...p}
+  >
     <path d="M12 20h9" />
     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
   </svg>
 );
 const SearchIcon = (p) => (
-  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}>
+  <svg
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    viewBox="0 0 24 24"
+    {...p}
+  >
     <circle cx="11" cy="11" r="7" />
     <path d="m21 21-4.3-4.3" />
   </svg>
 );
 const PanelIcon = (p) => (
-  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}>
+  <svg
+    width="18"
+    height="18"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    viewBox="0 0 24 24"
+    {...p}
+  >
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <path d="M9 3v18" />
   </svg>
 );
 const TrashIcon = (p) => (
-  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}>
+  <svg
+    width="14"
+    height="14"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    viewBox="0 0 24 24"
+    {...p}
+  >
     <path d="M3 6h18" />
     <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
   </svg>
 );
 const MenuIcon = (p) => (
-  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}>
+  <svg
+    width="20"
+    height="20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    viewBox="0 0 24 24"
+    {...p}
+  >
     <path d="M3 12h18M3 6h18M3 18h18" />
   </svg>
 );
@@ -262,7 +343,12 @@ function JojoAvatar({ size = 30 }) {
       className="flex flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)]"
       style={{ width: dim, height: dim }}
     >
-      <svg width={size * 0.55} height={size * 0.55} fill="white" viewBox="0 0 24 24">
+      <svg
+        width={size * 0.55}
+        height={size * 0.55}
+        fill="white"
+        viewBox="0 0 24 24"
+      >
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     </div>
@@ -325,7 +411,16 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
     >
       <div className="flex items-end gap-2 rounded-[26px] border border-[var(--accent-border)] bg-[var(--surface)] px-2.5 py-2 shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-colors focus-within:border-[var(--accent-border)]">
         <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[var(--muted)]">
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
         </span>
@@ -345,7 +440,16 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
           aria-label="Send message"
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-all hover:bg-[var(--accent-hover)]"
         >
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="M12 19V5M5 12l7-7 7 7" />
           </svg>
         </button>
@@ -356,7 +460,16 @@ function Composer({ value, onChange, onSubmit, disabled, autoFocus }) {
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
 
-function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewChat, onDelete, mobile = false }) {
+function ChatSidebar({
+  collapsed,
+  onToggle,
+  sessions,
+  activeId,
+  onSelect,
+  onNewChat,
+  onDelete,
+  mobile = false,
+}) {
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -369,13 +482,28 @@ function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewC
   if (collapsed) {
     return (
       <div className="flex w-[56px] flex-shrink-0 flex-col items-center gap-1 border-r border-[var(--border)] bg-[var(--surface-muted)] py-3">
-        <button onClick={onToggle} aria-label="Expand sidebar" className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]">
+        <button
+          onClick={onToggle}
+          aria-label="Expand sidebar"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+        >
           <PanelIcon />
         </button>
-        <button onClick={onNewChat} aria-label="New chat" className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]">
+        <button
+          onClick={onNewChat}
+          aria-label="New chat"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+        >
           <ComposeIcon />
         </button>
-        <button onClick={() => { onToggle(); setSearching(true); }} aria-label="Search chats" className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]">
+        <button
+          onClick={() => {
+            onToggle();
+            setSearching(true);
+          }}
+          aria-label="Search chats"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+        >
           <SearchIcon />
         </button>
       </div>
@@ -383,21 +511,33 @@ function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewC
   }
 
   return (
-    <div className={`flex ${mobile ? "h-full w-full" : "w-[260px]"} flex-shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-muted)] pt-3 pb-3`}>
+    <div
+      className={`flex ${mobile ? "h-full w-full" : "w-[260px]"} flex-shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-muted)] pt-3 pb-3`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <div className="flex items-center gap-2">
           <JojoAvatar size={26} />
-          <span className="text-[14px] font-semibold text-[var(--foreground)]">JoJo</span>
+          <span className="text-[14px] font-semibold text-[var(--foreground)]">
+            JoJo
+          </span>
         </div>
-        <button onClick={onToggle} aria-label="Collapse sidebar" title="Collapse sidebar" className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]">
+        <button
+          onClick={onToggle}
+          aria-label="Collapse sidebar"
+          title="Collapse sidebar"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+        >
           <PanelIcon size={17} />
         </button>
       </div>
 
       {/* Actions */}
       <div className="flex flex-col px-2 pt-1">
-        <button onClick={onNewChat} className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface)]">
+        <button
+          onClick={onNewChat}
+          className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-[14px] text-[var(--foreground)] transition-colors hover:bg-[var(--surface)]"
+        >
           <ComposeIcon />
           New chat
         </button>
@@ -424,7 +564,9 @@ function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewC
 
       {/* Chats list */}
       <div className="mt-3 flex-1 overflow-y-auto px-2 pb-3">
-        <p className="px-2.5 pb-1 text-[12px] font-medium text-[var(--muted)]">Chats</p>
+        <p className="px-2.5 pb-1 text-[12px] font-medium text-[var(--muted)]">
+          Chats
+        </p>
         {list.length === 0 ? (
           <p className="px-2.5 py-2 text-[12.5px] italic text-[var(--muted)]">
             {query ? "No matching chats." : "No chats yet."}
@@ -434,11 +576,21 @@ function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewC
             {list.map((c) => {
               const isActive = c.id === activeId;
               return (
-                <div key={c.id} className={`group flex items-center rounded-lg pr-1 ${isActive ? "bg-[var(--surface)]" : "hover:bg-[var(--surface)]"}`}>
-                  <button onClick={() => onSelect(c.id)} className="flex-1 truncate px-2.5 py-2 text-left text-[13.5px] text-[var(--foreground)]">
+                <div
+                  key={c.id}
+                  className={`group flex items-center rounded-lg pr-1 ${isActive ? "bg-[var(--surface)]" : "hover:bg-[var(--surface)]"}`}
+                >
+                  <button
+                    onClick={() => onSelect(c.id)}
+                    className="flex-1 truncate px-2.5 py-2 text-left text-[13.5px] text-[var(--foreground)]"
+                  >
                     {c.title || "New chat"}
                   </button>
-                  <button onClick={() => onDelete(c.id)} aria-label="Delete chat" className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--muted)] opacity-0 transition-all hover:bg-[var(--surface-muted)] hover:text-red-500 group-hover:opacity-100">
+                  <button
+                    onClick={() => onDelete(c.id)}
+                    aria-label="Delete chat"
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-[var(--muted)] opacity-0 transition-all hover:bg-[var(--surface-muted)] hover:text-red-500 group-hover:opacity-100"
+                  >
                     <TrashIcon />
                   </button>
                 </div>
@@ -467,8 +619,14 @@ function ChatSidebar({ collapsed, onToggle, sessions, activeId, onSelect, onNewC
 }
 
 // ── Sign-up gate (shown after the free trial turn is used) ───────────────────
+//
+// This is intentionally NOT the full account pipeline. Per product, a guest who
+// has used their free turn just leaves lightweight contact info — email OR phone
+// is enough; name, child info and zip are optional — so the team can invite them
+// later. It reuses the same form as the standalone /chatbot/signup page; on
+// success the JoJo identity is set and the guest keeps chatting.
 
-function SignupGate({ open, onClose }) {
+function SignupGate({ open, onClose, onSuccess }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
@@ -487,7 +645,7 @@ function SignupGate({ open, onClose }) {
 
   return (
     <div
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm  "
+      className="absolute inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -495,36 +653,34 @@ function SignupGate({ open, onClose }) {
         aria-modal="true"
         aria-labelledby="jojo-signup-gate-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 text-center shadow-2xl"
+        className="my-auto w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl"
       >
-        <div className="mx-auto mb-4 flex justify-center">
+        <div className="mb-4 flex flex-col items-center text-center">
           <JojoAvatar size={48} />
+          <h2
+            id="jojo-signup-gate-title"
+            className="mt-3 text-[19px] font-semibold tracking-tight text-[var(--foreground)]"
+          >
+            Keep chatting with JoJo
+          </h2>
+          <p className="mt-1.5 text-[13.5px] leading-relaxed text-[var(--muted)]">
+            You&apos;ve used your free trial message. Leave your contact info to
+            keep chatting — we&apos;ll send you an invite when the full
+            Guardiané app is ready.
+          </p>
         </div>
-        <h2
-          id="jojo-signup-gate-title"
-          className="mb-2 text-[19px] font-semibold tracking-tight text-[var(--foreground)]"
-        >
-          Sign up to keep chatting with JoJo
-        </h2>
-        <p className="mb-6 text-[14px] leading-relaxed text-[var(--muted)]">
-          You&apos;ve used your free trial message. Create a free account to
-          continue the conversation and unlock saved chat history, mood boards,
-          screen-time insights and alerts.
+
+        <ChatbotAuthForm mode="signup" onSuccess={onSuccess} />
+
+        <p className="mt-4 text-center text-[12px] text-[var(--muted)]">
+          Already have an account?{" "}
+          <Link
+            href="/chatbot/login"
+            className="font-medium text-[var(--accent)] hover:underline"
+          >
+            Log in
+          </Link>
         </p>
-        <div className="flex flex-col gap-2.5">
-          <Link
-            href="/signup"
-            className="w-full rounded-full bg-[var(--accent)] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
-          >
-            Sign up free
-          </Link>
-          <Link
-            href="/login"
-            className="w-full rounded-full px-5 py-2.5 text-[14px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
-          >
-            I already have an account
-          </Link>
-        </div>
       </div>
     </div>
   );
@@ -544,10 +700,17 @@ export default function ChatbotPage() {
     sendMessage,
   } = useGuestJojoChat();
 
+  // The JoJo identity ("registered" guest) is owned by the auth context.
+  const { user } = useJojoAuth();
+  const registered = !!user;
+
   const [input, setInput] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [triesUsed, setTriesUsed] = useState(0);
   const [showSignupGate, setShowSignupGate] = useState(false);
+  // Message the guest was trying to send when the gate opened, so we can deliver
+  // it automatically once they've left their contact info.
+  const pendingTextRef = useRef("");
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
 
@@ -569,14 +732,17 @@ export default function ChatbotPage() {
   }
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current)
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isSending]);
 
   function handleSend(text) {
     const trimmed = (text || "").trim();
     if (!trimmed || isSending) return;
-    // Free trial is one turn — any further send opens the sign-up gate.
-    if (triesUsed >= TRIAL_LIMIT) {
+    // Free trial is one turn. Once it's used, an unregistered guest hits the
+    // contact-info gate; registered guests chat freely.
+    if (!registered && triesUsed >= TRIAL_LIMIT) {
+      pendingTextRef.current = trimmed;
       setShowSignupGate(true);
       return;
     }
@@ -585,6 +751,18 @@ export default function ChatbotPage() {
     const next = triesUsed + 1;
     setTriesUsed(next);
     writeTries(next);
+  }
+
+  // Called after the guest leaves their contact info (the auth context has now
+  // set their identity). Close the gate and deliver the message that triggered it.
+  function handleGateSuccess() {
+    setShowSignupGate(false);
+    const pending = pendingTextRef.current;
+    pendingTextRef.current = "";
+    if (pending) {
+      sendMessage(pending);
+      setInput("");
+    }
   }
 
   function handleNewChat() {
@@ -602,7 +780,11 @@ export default function ChatbotPage() {
 
   return (
     <div className="relative flex h-dvh overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
-      <SignupGate open={showSignupGate} onClose={() => setShowSignupGate(false)} />
+      <SignupGate
+        open={showSignupGate}
+        onClose={() => setShowSignupGate(false)}
+        onSuccess={handleGateSuccess}
+      />
 
       {/* Desktop: inline sidebar (full panel or 56px rail) */}
       {!isMobile && (
@@ -632,8 +814,14 @@ export default function ChatbotPage() {
               onToggle={closeDrawer}
               sessions={sessions}
               activeId={activeId}
-              onSelect={(id) => { selectSession(id); closeDrawer(); }}
-              onNewChat={() => { handleNewChat(); closeDrawer(); }}
+              onSelect={(id) => {
+                selectSession(id);
+                closeDrawer();
+              }}
+              onNewChat={() => {
+                handleNewChat();
+                closeDrawer();
+              }}
               onDelete={deleteSession}
             />
           </div>
@@ -653,25 +841,35 @@ export default function ChatbotPage() {
                 <MenuIcon />
               </button>
             )}
-            <span className="text-[15px] font-semibold text-[var(--foreground)]">JoJo Chatbot</span>
-            <span className="hidden rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-medium text-[var(--muted)] sm:inline-block">
-              Guest
+            <span className="text-[15px] font-semibold text-[var(--foreground)]">
+              JoJo Chatbot
             </span>
+            {!registered && (
+              <span className="hidden rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] font-medium text-[var(--muted)] sm:inline-block">
+                Guest
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2.5">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="focus-visible-ring rounded-full px-3 py-1.5 text-[0.78rem] font-medium text-[var(--muted)] transition-all duration-200 hover:bg-white/5 hover:text-[var(--foreground)] sm:px-4 sm:py-2"
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="focus-visible-ring rounded-full bg-[var(--background)] px-3.5 py-1.5 text-[0.78rem] font-semibold text-[var(--background)] shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.02] sm:px-5 sm:py-2"
-            >
-              Sign up
-            </Link>
+            {registered ? (
+              <JojoUserMenu />
+            ) : (
+              <>
+                <Link
+                  href="/chatbot/login"
+                  className="focus-visible-ring rounded-full px-3 py-1.5 text-[0.78rem] font-medium text-[var(--muted)] transition-all duration-200 hover:bg-white/5 hover:text-[var(--foreground)] sm:px-4 sm:py-2"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/chatbot/signup"
+                  className="focus-visible-ring rounded-full bg-[var(--accent)] px-3.5 py-1.5 text-[0.78rem] font-semibold text-white shadow-sm shadow-black/10 transition-all duration-200 hover:scale-[1.02] hover:bg-[var(--accent-hover)] sm:px-5 sm:py-2"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -705,7 +903,10 @@ export default function ChatbotPage() {
           </div>
         ) : (
           <>
-            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-7">
+            <div
+              ref={scrollRef}
+              className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-7"
+            >
               <div className="mx-auto flex max-w-3xl flex-col gap-6">
                 {messages.map((m, i) => (
                   <Message key={i} message={m} />
@@ -722,7 +923,8 @@ export default function ChatbotPage() {
                   disabled={isSending}
                 />
                 <p className="mt-2 text-center text-[11px] text-[var(--muted)]">
-                  JoJo offers general guidance, not medical or legal advice. In an emergency, call your local services.
+                  JoJo offers general guidance, not medical or legal advice. In
+                  an emergency, call your local services.
                 </p>
               </div>
             </div>

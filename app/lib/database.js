@@ -26,6 +26,39 @@ export const COLLECTIONS = {
   MOOD_ENTRIES: 'moodEntries',
   MODULES: 'modules',
   LEARNING_PROGRESS: 'learning_progress',
+  JOJO_LEADS: 'jojoLeads',
+}
+
+// ─── JoJo guest leads ──────────────────────────────────────────────────────────
+
+/**
+ * Capture a guest's contact info from the public JoJo chatbot. This is NOT an
+ * account — it's a lightweight lead so the team can follow up with an invite to
+ * the full product. Writes are allowed for unauthenticated visitors (see the
+ * `jojoLeads` rule in firestore.rules), so the shape is kept minimal and the
+ * rule validates it. Either email or phone must be present; the rest is
+ * optional. Empty optional fields are stored as "" to keep the doc shape — and
+ * the rule's hasOnly() check — stable.
+ *
+ * Returns the new lead document id.
+ */
+export async function createJojoLead({ email, phone, name, childInfo, zip } = {}) {
+  const clean = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+  const data = {
+    email: clean(email, 254),
+    phone: clean(phone, 32),
+    name: clean(name, 100),
+    childInfo: clean(childInfo, 500),
+    zip: clean(zip, 20),
+    source: 'chatbot',
+    createdAt: serverTimestamp(),
+  }
+  if (!data.email && !data.phone) {
+    throw new Error('Please enter an email address or phone number.')
+  }
+  const ref = doc(collection(db, COLLECTIONS.JOJO_LEADS))
+  await setDoc(ref, data)
+  return ref.id
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
