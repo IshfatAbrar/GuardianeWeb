@@ -14,6 +14,7 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
+  Timestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
@@ -89,29 +90,32 @@ export async function getUserProfile(uid) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-/**
- * Generate the registration QR code string for a child. Matches the iOS
- * format from OnboardingViewModel.generateChildQRCode:
- *   guardiane:{parentUid}:{kebab-name}:{4-char-uuid}
- */
-export function generateChildQRCode(parentUid, childName) {
-  const slug = String(childName || '')
+// The Guardiané child app scanner REQUIRES the QR payload to be a
+// `guardiane:<parentId>:<slug>:<suffix>` string. QRScannerViewModel splits the
+// scanned text on ':', asserts components[0] === 'guardiane', reads
+// components[1] as the parentId, then verifies that parentId is in the child
+// doc's `parentIds` before linking. A bare document id (the old web format) is
+// rejected with "Invalid QR code format". The stored `qrCode` field must equal
+// the encoded string verbatim, because the kid app looks the child up via
+// where('qrCode', '==', scannedString).
+function slugifyName(name) {
+  const s = (typeof name === 'string' ? name : '')
     .toLowerCase()
-    .replace(/\s+/g, '-')
-  let suffix
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    suffix = crypto.randomUUID().slice(0, 4)
-  } else {
-    suffix = Math.random().toString(16).slice(2, 6)
-  }
-  return `guardiane:${parentUid}:${slug}:${suffix}`
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return s || 'child'
+}
+
+function buildChildQrCode(parentUid, childId, name) {
+  return `guardiane:${parentUid}:${slugifyName(name)}:${childId.slice(0, 4)}`
 }
 
 /**
  * Return every child profile linked to this parent (children where
- * parentIds array-contains uid). Backfills `qrCode` for any child missing it
- * — iOS auto-generates one at child creation, so this brings legacy/web-
- * created docs into parity.
+ * parentIds array-contains uid). Backfills the `qrCode` for any child that is
+ * missing it OR still carries the legacy bare-doc-id format, so older web-
+ * created docs become scannable by the iOS child app.
  */
 export async function getChildrenForParent(parentUid) {
   const q = query(
@@ -121,14 +125,15 @@ export async function getChildrenForParent(parentUid) {
   const snap = await getDocs(q)
   const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 
-  // Backfill missing qrCode in the background — don't block the read.
+  // Backfill QR codes that are missing or in the rejected legacy format. The
+  // iOS-parent-created codes already start with 'guardiane:', so they're left
+  // untouched. Fire-and-forget; the parent child-update rule permits this write.
   const needsBackfill = rows.filter(
-    (c) => typeof c.qrCode !== 'string' || c.qrCode.length === 0,
+    (c) => typeof c.qrCode !== 'string' || !c.qrCode.startsWith('guardiane:'),
   )
   for (const child of needsBackfill) {
-    const qrCode = generateChildQRCode(parentUid, child.name)
+    const qrCode = buildChildQrCode(parentUid, child.id, child.name)
     child.qrCode = qrCode
-    // Fire-and-forget; if rules deny the write we just won't have a QR yet.
     updateDoc(doc(db, COLLECTIONS.CHILDREN, child.id), {
       qrCode,
       updatedAt: serverTimestamp(),
@@ -145,6 +150,20 @@ function toBirthDateString(input) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input)
   if (m) return `${m[2]}/${m[3]}/${m[1]}`
   return input
+}
+
+// Convert "YYYY-MM-DD" to a Firestore Timestamp for the `dob` field. iOS
+// decodes children's `dob` as a Timestamp (and ValidationService requires it),
+// so web-created children are invisible/invalid in the iOS apps without it.
+// Returns null when there's no parseable date — callers omit the field rather
+// than writing a null Timestamp.
+function toDobTimestamp(yyyyMmDd) {
+  if (!yyyyMmDd) return null
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd)
+  if (!m) return null
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  if (Number.isNaN(d.getTime())) return null
+  return Timestamp.fromDate(d)
 }
 
 // Compute age in whole years from "YYYY-MM-DD". Rules require 0–18 ints.
@@ -179,6 +198,11 @@ export async function provisionParentAndFamily({ uid, email, fullName, children 
 
   const userRef = doc(db, COLLECTIONS.USERS, uid)
   batch1.set(userRef, {
+    // `type` mirrors the iOS parent app, which writes type:"parent" and whose
+    // UserType model keys off it. Web omitted it; iOS tolerates the absence
+    // today (defaults to parent) but any future role-gating would silently lock
+    // out every web-created account, so we write it explicitly for parity.
+    type: 'parent',
     email,
     fullName,
     isActive: true,
@@ -206,19 +230,22 @@ export async function provisionParentAndFamily({ uid, email, fullName, children 
   childrenArr.forEach((c) => {
     const childRef = doc(collection(db, COLLECTIONS.CHILDREN))
     childIds.push(childRef.id)
-    batch2.set(childRef, {
+    const childData = {
       name: c.name,
       age: computeAge(c.bday),
       birthDate: toBirthDateString(c.bday),
       gender: c.gender || null,
       grade: c.grade || null,
-      qrCode: generateChildQRCode(uid, c.name),
+      qrCode: buildChildQrCode(uid, childRef.id, c.name),
       familyId,
       parentIds: [uid],
       isActive: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    })
+    }
+    const dob = toDobTimestamp(c.bday)
+    if (dob) childData.dob = dob
+    batch2.set(childRef, childData)
   })
 
   if (childIds.length > 0) {
@@ -250,19 +277,22 @@ export async function createChild({ parentUid, familyId, name, bday, gender, gra
   if (!name) throw new Error('Child name is required')
 
   const childRef = doc(collection(db, COLLECTIONS.CHILDREN))
-  await setDoc(childRef, {
+  const childData = {
     name: name.trim(),
     age: computeAge(bday),
     birthDate: toBirthDateString(bday),
     gender: gender || null,
     grade: grade || null,
-    qrCode: generateChildQRCode(parentUid, name),
+    qrCode: buildChildQrCode(parentUid, childRef.id, name),
     familyId,
     parentIds: [parentUid],
     isActive: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  })
+  }
+  const dob = toDobTimestamp(bday)
+  if (dob) childData.dob = dob
+  await setDoc(childRef, childData)
   await updateDoc(doc(db, COLLECTIONS.FAMILIES, familyId), {
     childIds: arrayUnion(childRef.id),
     updatedAt: serverTimestamp(),

@@ -9,6 +9,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth'
@@ -44,6 +45,14 @@ export async function signUp(email, password, displayName, extras = {}) {
   if (fullName) {
     await updateProfile(credential.user, { displayName: fullName })
   }
+
+  // Send the verification email. The iOS parent app REQUIRES `isEmailVerified`
+  // to log in (AuthViewModel.login blocks otherwise), so a web-created account
+  // is unusable on iOS until the user clicks this link. Best-effort — a send
+  // failure must not abort signup; the user can re-trigger from login if needed.
+  try {
+    await sendEmailVerification(credential.user)
+  } catch (_) {}
 
   const { children = [] } = extras
   let familyId = null
