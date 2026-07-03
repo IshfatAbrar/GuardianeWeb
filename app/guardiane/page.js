@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faApple, faGooglePlay } from "@fortawesome/free-brands-svg-icons";
 import { APP_STORE_URL, PLAY_STORE_URL } from "../../lib/storeLinks";
+import { supportPath } from "../../lib/siteConfig";
 
 const features = [
   {
@@ -407,6 +408,15 @@ export default function GuardianePage() {
               ·
             </span>
             Guardiané product page.
+            <span className="mx-2 text-[var(--border)]" aria-hidden>
+              ·
+            </span>
+            <Link
+              href={supportPath}
+              className="focus-visible-ring font-medium text-[var(--foreground)] underline-offset-2 hover:underline"
+            >
+              Support
+            </Link>
           </p>
           <p className="mt-4 text-xs">
             © {new Date().getFullYear()} Guardiané. All rights reserved.
