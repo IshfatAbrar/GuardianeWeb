@@ -296,13 +296,19 @@ export function SiteHeader() {
 
           <div className="flex items-center gap-10">
             <ul className="hidden items-center gap-7 lg:flex">
-              {mainNavLinks.map(([label, href]) => (
+              {mainNavLinks.map(([label, href, badge]) => (
                 <li key={href}>
                   <Link
                     href={href}
-                    className="group relative text-[0.82rem] font-medium text-[var(--muted)] transition-colors duration-200 hover:text-[var(--foreground)]"
+                    className="group relative inline-flex items-center gap-1.5 text-[0.82rem] font-medium text-[var(--muted)] transition-colors duration-200 hover:text-[var(--foreground)]"
                   >
                     {label}
+
+                    {badge && (
+                      <span className="rounded-full border border-[var(--border)] bg-white/5 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase leading-none tracking-wide text-[var(--muted)] transition-colors duration-200 group-hover:border-[var(--foreground)]/30 group-hover:text-[var(--foreground)]">
+                        {badge}
+                      </span>
+                    )}
 
                     <span className="absolute -bottom-1 left-0 h-px w-0 bg-[var(--foreground)] transition-all duration-300 group-hover:w-full" />
                   </Link>
