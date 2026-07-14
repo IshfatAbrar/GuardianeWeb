@@ -87,7 +87,7 @@ export function RequestDetailView({ request, childName, onBack, onChanged }) {
     setBusy(true);
     setErrorMessage(null);
     try {
-      await deleteAccessRequest(request.id);
+      await deleteAccessRequest(request);
       onChanged?.();
       onBack?.();
     } catch (err) {

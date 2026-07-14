@@ -218,7 +218,23 @@ service cloud.firestore {
       allow delete: if false; // Use soft delete (isActive = false) instead
     }
     
-    // ACCESS REQUESTS COLLECTION
+    // ACCESS REQUESTS — per-child subcollection.
+    // The iOS Kid app writes requests to children/{childId}/accessRequests/{id}
+    // (LearningModuleModels.swift), NOT the top-level collection below. Without
+    // this block those writes were default-denied and the parent could never
+    // see them. The linked kid device creates; the parent reads and responds.
+    match /children/{childId}/accessRequests/{requestId} {
+      allow read: if isAuthenticated() &&
+                     (isParentOfChild(get(/databases/$(database)/documents/children/$(childId))) ||
+                      isChildDevice(childId));
+      allow create: if isAuthenticated() && isChildDevice(childId);
+      allow update: if isAuthenticated() &&
+                       isParentOfChild(get(/databases/$(database)/documents/children/$(childId)));
+      allow delete: if isAuthenticated() &&
+                       isParentOfChild(get(/databases/$(database)/documents/children/$(childId)));
+    }
+
+    // ACCESS REQUESTS COLLECTION (legacy top-level)
     match /accessRequests/{requestId} {
       allow read: if isAuthenticated() &&
                      (isOwner(resource.data.parentId) ||

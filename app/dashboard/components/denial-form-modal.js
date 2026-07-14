@@ -68,7 +68,7 @@ function DenialContent({ request, childName, onClose, onDenied }) {
     setSubmitting(true);
     setErrorMessage(null);
     try {
-      await denyAccessRequest(request.id, { reason });
+      await denyAccessRequest(request, { reason });
       onDenied?.();
       onClose();
     } catch (err) {

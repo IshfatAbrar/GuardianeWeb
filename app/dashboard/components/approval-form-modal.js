@@ -85,7 +85,7 @@ function ApprovalContent({ request, childName, onClose, onApproved }) {
     setSubmitting(true);
     setErrorMessage(null);
     try {
-      await approveAccessRequest(request.id, {
+      await approveAccessRequest(request, {
         timeLimitSeconds: timeLimit,
         reason,
       });

@@ -1,14 +1,21 @@
 // JS port of iOS access-request handling
 // (Services/FirebaseService.swift + ViewModels/AccessRequestViewModel.swift).
 //
-// Collection: `accessRequests`. Document shape mirrors AccessRequest.swift:
+// Document shape mirrors AccessRequest.swift:
 //   { childId, parentId, moduleId, requestedApp, requestedAt, status,
 //     approvedAt?, deniedAt?, timeLimit?, expiresAt?, reason? }
 //
-// The listener queries by `parentId` (matches iOS + likely security rules).
-// We then apply an additional client-side filter so only requests whose
-// `childId` belongs to the parent's current family are surfaced — extra safety
-// for the "only the family's children, not other children" guarantee.
+// STORAGE — requests can live in TWO places:
+//   1. Legacy top-level `accessRequests` collection (queried by `parentId`).
+//   2. `children/{childId}/accessRequests/{id}` subcollection — this is where
+//      the iOS Kid app actually writes them (LearningModuleModels.swift). The
+//      old web listener only read (1), so kid-originated requests never showed
+//      up on the parent dashboard. We now merge both.
+//
+// Rows are tagged with `_source` ('top' | 'sub') and `childId` so the mutation
+// helpers can resolve the correct document reference. We also apply a
+// client-side family filter so only requests for the parent's current children
+// are surfaced ("only the family's children, not other children").
 
 import {
   collection,
@@ -39,6 +46,20 @@ function tsMillis(value) {
   return 0
 }
 
+// Resolve the Firestore document reference for a request. Accepts either a
+// request row (preferred — carries `_source` + `childId`) or a bare id string
+// (treated as a legacy top-level doc for backwards compatibility).
+function requestRef(requestOrId) {
+  if (requestOrId && typeof requestOrId === 'object') {
+    const { id, childId, _source } = requestOrId
+    if (_source === 'sub' && childId) {
+      return doc(db, 'children', childId, ACCESS_REQUESTS, id)
+    }
+    return doc(db, ACCESS_REQUESTS, id)
+  }
+  return doc(db, ACCESS_REQUESTS, requestOrId)
+}
+
 /**
  * Real-time listener — mirrors iOS `FirebaseService.listenToAccessRequests`.
  * Filters by `parentId`. The optional `familyChildIds` list further restricts
@@ -56,23 +77,64 @@ export function listenToAccessRequests({
   onError,
 }) {
   if (!parentId) return () => {}
-  const q = query(
-    collection(db, ACCESS_REQUESTS),
-    where('parentId', '==', parentId),
-  )
+
+  const childIds = Array.isArray(familyChildIds) ? familyChildIds : []
   const allow = Array.isArray(familyChildIds) ? new Set(familyChildIds) : null
-  return onSnapshot(
-    q,
-    (snap) => {
-      let rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      if (allow) {
-        rows = rows.filter((r) => allow.has(r.childId))
-      }
-      rows.sort((a, b) => tsMillis(b.requestedAt) - tsMillis(a.requestedAt))
-      onUpdate?.(rows)
-    },
-    (err) => onError?.(err),
+
+  // Each source (the top-level query + one per child subcollection) writes its
+  // latest snapshot into `buckets`; `emit` merges, de-dupes, filters and sorts.
+  const buckets = new Map()
+  const unsubs = []
+  let started = false
+
+  function emit() {
+    const merged = new Map()
+    for (const rows of buckets.values()) {
+      for (const r of rows) merged.set(`${r.childId || 'top'}:${r.id}`, r)
+    }
+    let out = Array.from(merged.values())
+    if (allow) out = out.filter((r) => allow.has(r.childId))
+    out.sort((a, b) => tsMillis(b.requestedAt) - tsMillis(a.requestedAt))
+    onUpdate?.(out)
+  }
+
+  // (1) Legacy top-level collection, keyed by parentId.
+  unsubs.push(
+    onSnapshot(
+      query(collection(db, ACCESS_REQUESTS), where('parentId', '==', parentId)),
+      (snap) => {
+        buckets.set(
+          'top',
+          snap.docs.map((d) => ({ ...d.data(), id: d.id, _source: 'top' })),
+        )
+        if (started) emit()
+      },
+      (err) => onError?.(err),
+    ),
   )
+
+  // (2) Per-child subcollections — where the iOS Kid app writes requests.
+  for (const childId of childIds) {
+    unsubs.push(
+      onSnapshot(
+        collection(db, 'children', childId, ACCESS_REQUESTS),
+        (snap) => {
+          buckets.set(
+            `sub:${childId}`,
+            snap.docs.map((d) => ({ ...d.data(), id: d.id, childId, _source: 'sub' })),
+          )
+          if (started) emit()
+        },
+        (err) => onError?.(err),
+      ),
+    )
+  }
+
+  started = true
+  emit()
+  return () => {
+    for (const unsub of unsubs) unsub()
+  }
 }
 
 /**
@@ -80,7 +142,7 @@ export function listenToAccessRequests({
  * `timeLimitSeconds` defaults to 1 hour. `expiresAt` is computed as
  * now + timeLimit. Optional `reason` is attached if non-empty.
  */
-export async function approveAccessRequest(requestId, { timeLimitSeconds = 3600, reason = '' } = {}) {
+export async function approveAccessRequest(request, { timeLimitSeconds = 3600, reason = '' } = {}) {
   const now = new Date()
   const expires = new Date(now.getTime() + timeLimitSeconds * 1000)
   const data = {
@@ -91,27 +153,29 @@ export async function approveAccessRequest(requestId, { timeLimitSeconds = 3600,
   }
   const trimmedReason = (reason || '').trim()
   if (trimmedReason) data.reason = trimmedReason
-  await updateDoc(doc(db, ACCESS_REQUESTS, requestId), data)
+  await updateDoc(requestRef(request), data)
 }
 
 /**
  * Deny a pending request. Matches iOS `denyRequest(_:reason:)`.
+ * `request` is the request row (preferred) or a legacy id string.
  */
-export async function denyAccessRequest(requestId, { reason = '' } = {}) {
+export async function denyAccessRequest(request, { reason = '' } = {}) {
   const data = {
     status: REQUEST_STATUS.DENIED,
     deniedAt: serverTimestamp(),
   }
   const trimmedReason = (reason || '').trim()
   if (trimmedReason) data.reason = trimmedReason
-  await updateDoc(doc(db, ACCESS_REQUESTS, requestId), data)
+  await updateDoc(requestRef(request), data)
 }
 
 /**
  * Hard-delete a request. Matches iOS `deleteAccessRequest(requestId:)`.
+ * `request` is the request row (preferred) or a legacy id string.
  */
-export async function deleteAccessRequest(requestId) {
-  await deleteDoc(doc(db, ACCESS_REQUESTS, requestId))
+export async function deleteAccessRequest(request) {
+  await deleteDoc(requestRef(request))
 }
 
 /**
