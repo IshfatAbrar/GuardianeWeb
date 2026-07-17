@@ -10,6 +10,15 @@ export const sideNavItems = [
     ),
   },
   {
+    id: 'messaging',
+    label: 'Messages',
+    icon: (
+      <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+      </svg>
+    ),
+  },
+  {
     id: 'learning',
     label: 'Learning Hub',
     icon: (
@@ -30,19 +39,10 @@ export const sideNavItems = [
       </svg>
     ),
   },
-  {
-    id: 'access',
-    label: 'Access Requests',
-    badge: 1,
-    icon: (
-      <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-        <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/>
-        <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/>
-        <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/>
-        <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>
-      </svg>
-    ),
-  },
+  // Access Requests is hidden: neither Android app has any access-request flow.
+  // The child device never asks for permission and never reads a response, so
+  // the tab could only ever show an empty list. Restore it here once
+  // Guardiane_Android can actually raise a request.
   {
     id: 'emergency',
     label: 'Emergency',
@@ -105,9 +105,9 @@ export const quickActions = [
 
 // Static labels used by PlaceholderTab when a non-overview sidebar item is active
 export const placeholderTabLabels = {
+  messaging: ['Messages', 'Chat with your children'],
   learning: ['Learning Hub', 'Browse educational modules'],
   modules: ['Module Assignments', "Track your children's progress"],
-  access: ['Access Requests', 'Review pending requests'],
   chatbot: ['Jojo Chatbot', 'AI-powered support for your family'],
   emergency: ['Emergency', 'Quick access to emergency contacts'],
   settings: ['Settings', 'Manage your account and preferences'],

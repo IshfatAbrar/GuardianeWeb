@@ -65,7 +65,6 @@ export function ModuleDetailView({
   moduleId,
   childList = [],
   parentId,
-  familyId,
   onBack,
   onAssigned,
   onOpenLesson,
@@ -99,10 +98,6 @@ export function ModuleDetailView({
 
   async function handleAssign(childId) {
     if (!module_ || !parentId) return;
-    if (!familyId) {
-      setAssignError("Family not set up yet — finish onboarding first.");
-      return;
-    }
     setAssigningChildId(childId);
     setAssignError(null);
     try {
@@ -110,7 +105,7 @@ export function ModuleDetailView({
         moduleId: module_.id,
         childId,
         parentId,
-        familyId,
+        category: module_.category,
       });
       onAssigned?.();
     } catch (err) {
@@ -166,13 +161,26 @@ export function ModuleDetailView({
               </p>
             )}
 
-            <div className="grid grid-cols-3 gap-2">
+            {/*
+              `estimatedDuration` and `difficulty` only exist on modules this
+              web app created. The Android built-ins carry neither, and showing
+              "0 min" / "Difficulty 1" for them is worse than showing nothing.
+            */}
+            <div
+              className={`grid gap-2 ${
+                module_.estimatedDuration || module_.difficulty ? "grid-cols-3" : "grid-cols-1"
+              }`}
+            >
               <StatPill label="Lessons" value={module_.lessonCount ?? lessons.length} />
-              <StatPill
-                label="Duration"
-                value={`${Math.round((module_.estimatedDuration || 0) / 60)} min`}
-              />
-              <StatPill label="Difficulty" value={module_.difficulty ?? 1} />
+              {module_.estimatedDuration > 0 && (
+                <StatPill
+                  label="Duration"
+                  value={`${Math.round(module_.estimatedDuration / 60)} min`}
+                />
+              )}
+              {module_.difficulty != null && (
+                <StatPill label="Difficulty" value={module_.difficulty} />
+              )}
             </div>
 
             {!isParentModule && (

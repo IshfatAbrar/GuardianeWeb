@@ -8,26 +8,29 @@ import { PlaceholderTab } from "./components/placeholder-tab";
 import { JojoChatTab } from "./components/jojo-chat-tab";
 import { LearningTab } from "./components/learning-tab";
 import { ModulesTab } from "./components/modules-tab";
-import { AccessTab } from "./components/access-tab";
+import { MessagingTab } from "./components/messaging-tab";
 import { EmergencyTab } from "./components/emergency-tab";
 import { SettingsTab } from "./components/settings-tab";
 import { placeholderTabLabels } from "./data/nav";
 import { AuthGuard } from "../../components/auth-guard";
 import { useDashboardData } from "./_lib/useDashboardData";
 
+// "access" is intentionally absent — see the note in data/nav.js. A stale
+// ?tab=access link now falls back to the overview rather than opening a tab
+// that can never have anything in it.
 const VALID_TABS = new Set([
   "overview",
+  "messaging",
   "chatbot",
   "learning",
   "modules",
-  "access",
   "emergency",
   "settings",
 ]);
 
 function userInitialFrom(profile, user) {
   const source =
-    profile?.fullName || user?.displayName || user?.email || "";
+    profile?.name || user?.displayName || user?.email || "";
   const first = source.trim()[0];
   return first ? first.toUpperCase() : "Y";
 }
@@ -121,8 +124,8 @@ function DashboardContent() {
           onInitialModuleConsumed={() => setPendingModuleId(null)}
         />
       );
+    if (activeNav === "messaging") return <MessagingTab data={data} />;
     if (activeNav === "modules") return <ModulesTab data={data} />;
-    if (activeNav === "access") return <AccessTab data={data} />;
     if (activeNav === "emergency") return <EmergencyTab data={data} />;
     if (activeNav === "settings") return <SettingsTab data={data} />;
     const [title, subtitle] = placeholderTabLabels[activeNav] || ["Page", ""];

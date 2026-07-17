@@ -10,7 +10,6 @@ import { Stepper } from './_components/Stepper'
 import { StepAccount } from './_components/steps/StepAccount'
 import { StepAddChild } from './_components/steps/StepAddChild'
 import { StepManageChildren } from './_components/steps/StepManageChildren'
-import { StepAppBlocking } from './_components/steps/StepAppBlocking'
 import { StepDeviceSetup } from './_components/steps/StepDeviceSetup'
 import { StepDone } from './_components/steps/StepDone'
 
@@ -22,7 +21,7 @@ const WHY_FEATURES = [
 ]
 
 export default function SignupPage() {
-  const [step, setStep] = useState(0)        // 0–4, then 'done'
+  const [step, setStep] = useState(0)        // 0–3, then 'done'
   const [account, setAccount] = useState(null) // { fullName, email, password, agreed }
   const [children, setChildren] = useState([])
   const [submitting, setSubmitting] = useState(false)
@@ -81,12 +80,10 @@ export default function SignupPage() {
           />
         )
       case 3:
-        return <StepAppBlocking onNext={() => setStep(4)} onBack={() => setStep(2)} />
-      case 4:
         return (
           <StepDeviceSetup
             onFinish={handleFinish}
-            onBack={() => setStep(3)}
+            onBack={() => setStep(2)}
             submitting={submitting}
             error={submitError}
           />

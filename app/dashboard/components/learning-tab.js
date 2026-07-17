@@ -377,7 +377,7 @@ export function LearningTab({ data, initialModuleId, onInitialModuleConsumed }) 
 
   const uid = user?.uid;
   const creatorName =
-    userProfile?.fullName || user?.displayName || user?.email || "Parent";
+    userProfile?.name || user?.displayName || user?.email || "Parent";
   const childList = useMemo(() => data?.children || [], [data?.children]);
 
   const filtered = useMemo(() => {
@@ -456,7 +456,6 @@ export function LearningTab({ data, initialModuleId, onInitialModuleConsumed }) 
           moduleId={activeModuleId}
           childList={childList}
           parentId={uid}
-          familyId={userProfile?.familyId}
           onBack={backToHub}
           onAssigned={refresh}
           onOpenLesson={openLesson}

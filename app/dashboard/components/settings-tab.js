@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { usePreference, useDarkMode } from "../../lib/preferences";
+import { ageFromBirthDate } from "../../lib/database";
 import { ChildFormModal } from "./child-form-modal";
 import { EditNameModal } from "./edit-name-modal";
 import { DeleteAccountModal } from "./delete-account-modal";
 import { SupportModal } from "./support-modal";
-import { AppBlockManagerModal } from "./app-block-manager-modal";
 
 const APP_VERSION = "1.0.0 (web)";
 
@@ -18,6 +18,13 @@ const AVATAR_PALETTE = [
   { fg: "#EC4899", bg: "rgba(236, 72, 153, 0.18)" },
   { fg: "#10B981", bg: "rgba(16, 185, 129, 0.18)" },
 ];
+
+// Children created in GuardParent have no `grade` and no `age` — just a
+// birthDate string — so derive the age rather than showing a bare dash.
+function childAgeLabel(child) {
+  const age = ageFromBirthDate(child?.birthDate);
+  return age === null ? "—" : `Age ${age}`;
+}
 
 function colorForName(name = "") {
   let hash = 0;
@@ -196,10 +203,9 @@ export function SettingsTab({ data }) {
   const user = data?.user || null;
   const profile = data?.userProfile || null;
   const children = data?.children || [];
-  const familyId = profile?.familyId || null;
 
   const accountName =
-    profile?.fullName || user?.displayName || user?.email?.split("@")[0] || "";
+    profile?.name || user?.displayName || user?.email?.split("@")[0] || "";
   const accountEmail = user?.email || "";
 
   const [section, setSection] = useState("general");
@@ -216,19 +222,12 @@ export function SettingsTab({ data }) {
   );
   const [darkMode, setDarkMode] = useDarkMode();
 
-  // Total apps blocked across all children — drives the App blocking summary.
-  const totalBlockedApps = children.reduce(
-    (sum, c) => sum + (Array.isArray(c.blockedApps) ? c.blockedApps.length : 0),
-    0,
-  );
-
   // Modals
   const [editName, setEditName] = useState(false);
   const [addChildOpen, setAddChildOpen] = useState(false);
   const [editChild, setEditChild] = useState(null);
   const [supportMode, setSupportMode] = useState(null); // "help" | "contact" | null
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [appBlockOpen, setAppBlockOpen] = useState(false);
 
   async function handleLogout() {
     try {
@@ -319,7 +318,7 @@ export function SettingsTab({ data }) {
                 trailing={
                   <ActionButton
                     onClick={() => setAddChildOpen(true)}
-                    disabled={!familyId}
+                    disabled={!user?.uid}
                   >
                     Add
                   </ActionButton>
@@ -343,8 +342,7 @@ export function SettingsTab({ data }) {
                         {c.name}
                       </p>
                       <p className="text-[12.5px] text-[var(--muted)]">
-                        {c.grade ||
-                          (typeof c.age === "number" ? `Age ${c.age}` : "—")}
+                        {c.grade || childAgeLabel(c)}
                       </p>
                     </div>
                   </div>
@@ -358,7 +356,7 @@ export function SettingsTab({ data }) {
               <button
                 type="button"
                 onClick={() => setAddChildOpen(true)}
-                disabled={!familyId}
+                disabled={!user?.uid}
                 className="inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -399,22 +397,15 @@ export function SettingsTab({ data }) {
                 />
               }
             />
-            <FieldRow
-              label="App blocking"
-              value={
-                totalBlockedApps > 0
-                  ? `${totalBlockedApps} app${totalBlockedApps === 1 ? "" : "s"} blocked across your children`
-                  : "Block distracting apps on your children's devices"
-              }
-              trailing={
-                <ActionButton
-                  onClick={() => setAppBlockOpen(true)}
-                  disabled={children.length === 0}
-                >
-                  Manage
-                </ActionButton>
-              }
-            />
+            {/*
+              App blocking is hidden: it cannot work against the Android child
+              app. That app keeps its per-app time limits in local AsyncStorage,
+              set by the child, and enforces them through an on-device
+              accessibility service — it reads no restriction config from
+              Firestore at all. A parent's choices here would write fields
+              nothing would ever consume. Restore this once the child app reads
+              a blocked-apps policy from the child's users/{id} doc.
+            */}
             <FieldRow
               label="Export my data"
               value="Download a JSON copy of your family's data"
@@ -536,7 +527,6 @@ export function SettingsTab({ data }) {
         open={addChildOpen}
         onClose={() => setAddChildOpen(false)}
         parentUid={user?.uid}
-        familyId={familyId}
         onSaved={() => {
           // useDashboardData re-fetches children on next render of the tab,
           // but it's also fine to leave stale — listener will reconcile.
@@ -548,7 +538,6 @@ export function SettingsTab({ data }) {
         onClose={() => setEditChild(null)}
         child={editChild}
         parentUid={user?.uid}
-        familyId={familyId}
         onSaved={() => setEditChild(null)}
       />
 
@@ -562,15 +551,8 @@ export function SettingsTab({ data }) {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         uid={user?.uid}
-        familyId={familyId}
         childList={children}
         onDeleted={() => router.push("/login")}
-      />
-
-      <AppBlockManagerModal
-        open={appBlockOpen}
-        onClose={() => setAppBlockOpen(false)}
-        childList={children}
       />
     </div>
   );

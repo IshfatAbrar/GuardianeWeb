@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { sideNavItems, sideHighlightItems } from "../data/nav";
+import { childQrPayload } from "../../lib/database";
 import { ChildQrModal } from "./child-qr-modal";
 
 function initialsFromName(name) {
@@ -81,7 +82,9 @@ export function Sidebar({
           ) : (
             childList.map((child) => {
               const isSelected = selectedChildId === child.id;
-              const hasQr = typeof child.qrCode === "string" && child.qrCode.length > 0;
+              // The pairing payload is the child's document id, so every child
+              // is always pairable — there is no stored qrCode field to await.
+              const hasQr = !!childQrPayload(child);
 
               if (collapsed) {
                 return (
@@ -211,7 +214,7 @@ export function Sidebar({
         open={!!qrChild}
         onClose={() => setQrChild(null)}
         childName={qrChild?.name}
-        qrCode={qrChild?.qrCode}
+        qrCode={qrChild ? childQrPayload(qrChild) : ""}
       />
     </aside>
   );

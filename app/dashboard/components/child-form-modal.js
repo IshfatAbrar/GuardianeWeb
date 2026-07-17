@@ -26,7 +26,6 @@ export function ChildFormModal({
   onSaved,
   child = null,
   parentUid,
-  familyId,
 }) {
   if (!open || typeof document === "undefined") return null;
   return (
@@ -35,12 +34,11 @@ export function ChildFormModal({
       onSaved={onSaved}
       child={child}
       parentUid={parentUid}
-      familyId={familyId}
     />
   );
 }
 
-function Content({ onClose, onSaved, child, parentUid, familyId }) {
+function Content({ onClose, onSaved, child, parentUid }) {
   const editing = !!child?.id;
 
   const [name, setName] = useState(child?.name || "");
@@ -72,32 +70,25 @@ function Content({ onClose, onSaved, child, parentUid, familyId }) {
     setErrorMessage(null);
     try {
       if (editing) {
+        // Empty strings, not nulls: GuardParent's own edit form writes "" for
+        // blank optional fields, and its screens render the value directly.
         const patch = {
           name: name.trim(),
-          gender: gender || null,
-          grade: grade || null,
+          gender: gender || "",
+          grade: grade || "",
         };
         if (bday) {
           const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bday);
-          if (m) {
-            patch.birthDate = `${m[2]}/${m[3]}/${m[1]}`;
-            const dob = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-            const now = new Date();
-            let age = now.getFullYear() - dob.getFullYear();
-            const md = now.getMonth() - dob.getMonth();
-            if (md < 0 || (md === 0 && now.getDate() < dob.getDate())) age--;
-            patch.age = Math.max(0, Math.min(18, age));
-          }
+          if (m) patch.birthDate = `${m[2]}/${m[3]}/${m[1]}`;
         }
         await updateChild(child.id, patch);
       } else {
         await createChild({
           parentUid,
-          familyId,
           name,
           bday,
-          gender: gender || null,
-          grade: grade || null,
+          gender: gender || "",
+          grade: grade || "",
         });
       }
       onSaved?.();
@@ -114,7 +105,7 @@ function Content({ onClose, onSaved, child, parentUid, familyId }) {
     setSubmitting(true);
     setErrorMessage(null);
     try {
-      await deleteChild(child.id, familyId);
+      await deleteChild(child.id, parentUid);
       onSaved?.();
       onClose();
     } catch (err) {

@@ -4,24 +4,23 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { deleteUser } from "firebase/auth";
 import { auth } from "../../lib/firebase";
-import { softDeleteAccountData } from "../../lib/database";
+import { deleteAccountData } from "../../lib/database";
 
 const CONFIRM_PHRASE = "DELETE";
 
-export function DeleteAccountModal({ open, onClose, onDeleted, uid, familyId, childList }) {
+export function DeleteAccountModal({ open, onClose, onDeleted, uid, childList }) {
   if (!open || typeof document === "undefined") return null;
   return (
     <Content
       onClose={onClose}
       onDeleted={onDeleted}
       uid={uid}
-      familyId={familyId}
       childList={childList}
     />
   );
 }
 
-function Content({ onClose, onDeleted, uid, familyId, childList }) {
+function Content({ onClose, onDeleted, uid, childList }) {
   const [confirmText, setConfirmText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -48,9 +47,9 @@ function Content({ onClose, onDeleted, uid, familyId, childList }) {
     try {
       if (!auth.currentUser) throw new Error("Not signed in");
       // Tear down Firestore data while still authenticated (rules require it),
-      // then remove the auth user. softDeleteAccountData is idempotent, so a
-      // retry after re-login is safe.
-      await softDeleteAccountData({ uid, familyId, children: childList });
+      // then remove the auth user. deleteAccountData is idempotent — a missing
+      // doc is not an error — so a retry after re-login is safe.
+      await deleteAccountData({ uid, children: childList });
       await deleteUser(auth.currentUser);
       onDeleted?.();
     } catch (err) {

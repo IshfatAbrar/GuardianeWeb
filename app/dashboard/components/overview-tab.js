@@ -5,6 +5,7 @@ import { JojoBanner } from "./jojo-banner";
 import { StatsGrid } from "./stats-grid";
 import { TodaysMoodCard } from "./todays-mood-card";
 import { QuickActionsCard } from "./quick-actions-card";
+import { ScreenTimeCard } from "./screen-time-card";
 import { LearningModulesCarousel } from "./learning-modules-carousel";
 import { RecentActivityCard } from "./recent-activity-card";
 import { ChildFormModal } from "./child-form-modal";
@@ -12,7 +13,7 @@ import { EmergencyCallModal } from "./emergency-call-modal";
 import { MoodAnalyticsModal } from "./mood-analytics-modal";
 
 function firstName(profile, user) {
-  const full = profile?.fullName || user?.displayName || "";
+  const full = profile?.name || user?.displayName || "";
   const head = full.trim().split(/\s+/)[0];
   if (head) return head;
   if (user?.email) return user.email.split("@")[0];
@@ -29,12 +30,12 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
   const {
     user,
     userProfile,
-    familyId,
     children,
     alerts,
     activeAlerts,
     modules,
     todaysMood,
+    latestScreenTime,
     completedAssignmentsCount,
     inProgressAssignmentsCount,
     selectedChildId,
@@ -75,16 +76,17 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         inProgressCount={inProgressAssignmentsCount}
       />
 
-      <div className="grid grid-cols-2 gap-4 pt-2">
+      <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-3">
         <TodaysMoodCard
           mood={todaysMood}
           childName={selectedChild?.name}
           onFullReport={openReport}
         />
+        <ScreenTimeCard entry={latestScreenTime} childName={selectedChild?.name} />
         <QuickActionsCard
           onAddChild={() => setAddChildOpen(true)}
           onReports={openReport}
-          onMessages={() => go("chatbot")}
+          onMessages={() => go("messaging")}
           onEmergency={() => setEmergencyOpen(true)}
         />
       </div>
@@ -104,7 +106,6 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         open={addChildOpen}
         onClose={() => setAddChildOpen(false)}
         parentUid={user?.uid}
-        familyId={familyId}
       />
 
       <EmergencyCallModal

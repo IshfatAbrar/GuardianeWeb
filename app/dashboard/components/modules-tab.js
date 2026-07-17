@@ -9,6 +9,9 @@ import {
   ASSIGNMENT_STATUS,
   effectiveAssignmentStatus,
   isAssignmentOverdue,
+  isAssignmentCompleted,
+  progressFor,
+  fetchLearningProgressForChildren,
 } from "../../lib/learningModules";
 import { AssignmentFormModal } from "./assignment-form-modal";
 import { AssignmentDetailView } from "./assignment-detail-view";
@@ -111,13 +114,14 @@ function ProgressBar({ value }) {
   );
 }
 
-function AssignmentCard({ assignment, childName, moduleTitle, onOpen }) {
-  const effStatus = effectiveAssignmentStatus(assignment);
+function AssignmentCard({ assignment, childName, moduleTitle, progressById, onOpen }) {
+  const effStatus = effectiveAssignmentStatus(assignment, progressById);
   const statusMeta = STATUS_META[effStatus] || STATUS_META[ASSIGNMENT_STATUS.ASSIGNED];
   const priorityDot = PRIORITY_DOT[assignment.priority] || PRIORITY_DOT[ASSIGNMENT_PRIORITY.MEDIUM];
-  const overdue = isAssignmentOverdue(assignment);
+  const overdue = isAssignmentOverdue(assignment, progressById);
   const dueText = assignment.dueDate ? formatDate(assignment.dueDate) : null;
-  const pct = Math.round((assignment.progress || 0) * 100);
+  const progress = progressFor(assignment, progressById);
+  const pct = Math.round(progress * 100);
 
   return (
     <button
@@ -159,7 +163,7 @@ function AssignmentCard({ assignment, childName, moduleTitle, onOpen }) {
             </span>
           )}
         </div>
-        <ProgressBar value={assignment.progress || 0} />
+        <ProgressBar value={progress} />
       </div>
     </button>
   );
@@ -199,11 +203,13 @@ function EmptyState({ onAssign, hasFilters, onClear }) {
 }
 
 export function ModulesTab({ data }) {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const parentId = user?.uid;
-  const familyId = userProfile?.familyId;
 
   const [assignments, setAssignments] = useState([]);
+  // Progress lives in a separate collection written by the child's device, so
+  // it is joined in by assignment key rather than read off the assignment row.
+  const [progressById, setProgressById] = useState(() => new Map());
   const [modules, setModules] = useState([]);
   const [listenerErr, setListenerErr] = useState(null);
 
@@ -250,6 +256,24 @@ export function ModulesTab({ data }) {
     return unsub;
   }, [parentId]);
 
+  // Progress for every child, keyed by `{childId}_{moduleId}`. Keyed on a
+  // joined id string so re-fetching children with the same ids doesn't refetch.
+  const childIdsKey = (data?.children || []).map((c) => c.id).sort().join(",");
+  useEffect(() => {
+    if (!childIdsKey) return undefined;
+    let cancelled = false;
+    fetchLearningProgressForChildren(childIdsKey.split(","))
+      .then((map) => {
+        if (!cancelled) setProgressById(map);
+      })
+      .catch((err) => console.error("[modules-tab] failed to fetch progress", err));
+    return () => {
+      cancelled = true;
+    };
+    // assignments.length: a just-assigned module can already have progress from
+    // an earlier assignment, so re-read when the assignment set changes.
+  }, [childIdsKey, assignments.length]);
+
   const childList = useMemo(() => data?.children || [], [data?.children]);
   const childById = useMemo(() => {
     const m = new Map();
@@ -265,25 +289,25 @@ export function ModulesTab({ data }) {
   const filtered = useMemo(() => {
     return assignments.filter((a) => {
       if (statusFilter) {
-        if (effectiveAssignmentStatus(a) !== statusFilter) return false;
+        if (effectiveAssignmentStatus(a, progressById) !== statusFilter) return false;
       }
       if (priorityFilter && a.priority !== priorityFilter) return false;
       if (childFilter && a.childId !== childFilter) return false;
       return true;
     });
-  }, [assignments, statusFilter, priorityFilter, childFilter]);
+  }, [assignments, progressById, statusFilter, priorityFilter, childFilter]);
 
   // Stats — from unfiltered assignments to match iOS behavior
   const stats = useMemo(() => {
     const total = assignments.length;
-    const completed = assignments.filter((a) => a.isCompleted).length;
+    const completed = assignments.filter((a) => isAssignmentCompleted(a, progressById)).length;
     const pending = total - completed;
-    const overdue = assignments.filter(isAssignmentOverdue).length;
+    const overdue = assignments.filter((a) => isAssignmentOverdue(a, progressById)).length;
     const avgProgress = total === 0
       ? 0
-      : assignments.reduce((sum, a) => sum + (Number(a.progress) || 0), 0) / total;
+      : assignments.reduce((sum, a) => sum + progressFor(a, progressById), 0) / total;
     return { total, completed, pending, overdue, avgProgress };
-  }, [assignments]);
+  }, [assignments, progressById]);
 
   const hasFilters = !!(statusFilter || priorityFilter || childFilter);
   function clearFilters() {
@@ -304,6 +328,7 @@ export function ModulesTab({ data }) {
         assignment={activeAssignment}
         module={moduleById.get(activeAssignment.moduleId)}
         child={childById.get(activeAssignment.childId)}
+        progressById={progressById}
         onBack={() => setActiveAssignmentId(null)}
         onChanged={() => {
           /* listener handles updates automatically */
@@ -327,7 +352,7 @@ export function ModulesTab({ data }) {
         <button
           type="button"
           onClick={() => setAssignOpen(true)}
-          disabled={!parentId || !familyId}
+          disabled={!parentId}
           className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -357,7 +382,7 @@ export function ModulesTab({ data }) {
         <button
           type="button"
           onClick={() => setAssignOpen(true)}
-          disabled={!parentId || !familyId}
+          disabled={!parentId}
           className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--accent-border)] bg-[var(--accent-bg)] p-5 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 [&>div]:hover:[&_p]:text-white"
         >
           <div className="space-y-0.5">
@@ -426,6 +451,7 @@ export function ModulesTab({ data }) {
                 assignment={a}
                 childName={childById.get(a.childId)?.name || "—"}
                 moduleTitle={moduleById.get(a.moduleId)?.title || "—"}
+                progressById={progressById}
                 onOpen={() => setActiveAssignmentId(a.id)}
               />
             ))}
@@ -440,7 +466,6 @@ export function ModulesTab({ data }) {
         childList={childList}
         modules={modules}
         parentId={parentId}
-        familyId={familyId}
       />
     </div>
   );

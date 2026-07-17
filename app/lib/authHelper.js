@@ -14,11 +14,7 @@ import {
   updateProfile,
 } from 'firebase/auth'
 import { auth } from './firebase'
-import {
-  provisionParentAndFamily,
-  rollbackFamilyProvision,
-  getUserProfile,
-} from './database'
+import { provisionParent, getUserProfile } from './database'
 
 /**
  * Sign in. Returns { user, profile } — the Firebase user and the matching
@@ -31,11 +27,11 @@ export async function signIn(email, password) {
 }
 
 /**
- * Create account. Matches the live iOS Firestore schema enforced by security
- * rules: writes `users/{uid}` (parent profile), `families/{auto}` (family doc),
- * and one `children/{auto}` per child, then links familyId and childIds back.
- * `extras` shape: { children: [{ name, bday, gender, grade }] }
- * Returns { user, profile, familyId, childIds }.
+ * Create account. Writes the Android schema: `users/{uid}` with role 'parent',
+ * plus one `users/{auto}` per child with role 'child' and a `parentId` back to
+ * the parent. There is no family document in this schema.
+ * `extras` shape: { children: [{ name, bday, gender, grade }], phone }
+ * Returns { user, profile, childIds }.
  */
 export async function signUp(email, password, displayName, extras = {}) {
   const fullName = (displayName || '').trim()
@@ -46,30 +42,23 @@ export async function signUp(email, password, displayName, extras = {}) {
     await updateProfile(credential.user, { displayName: fullName })
   }
 
-  // Send the verification email. The iOS parent app REQUIRES `isEmailVerified`
-  // to log in (AuthViewModel.login blocks otherwise), so a web-created account
-  // is unusable on iOS until the user clicks this link. Best-effort — a send
-  // failure must not abort signup; the user can re-trigger from login if needed.
+  // Best-effort verification email. Nothing gates on it — neither this app nor
+  // the Android parent app checks `emailVerified`, and the Android app never
+  // sends one at all, so accounts made there are permanently unverified. Do not
+  // start enforcing it here without fixing GuardParent first, or every
+  // Android-created parent would be locked out of the web.
   try {
     await sendEmailVerification(credential.user)
   } catch (_) {}
 
-  const { children = [] } = extras
-  let familyId = null
+  const { children = [], phone } = extras
   try {
-    const result = await provisionParentAndFamily({
-      uid,
-      email,
-      fullName,
-      children,
-    })
-    familyId = result.familyId
+    const result = await provisionParent({ uid, email, name: fullName, phone, children })
     const profile = await getUserProfile(uid)
-    return { user: credential.user, profile, familyId, childIds: result.childIds }
+    return { user: credential.user, profile, childIds: result.childIds }
   } catch (err) {
-    // Best-effort cleanup: family doc (deletable), then Auth user (frees email).
-    // users/{uid} cannot be deleted by rule — orphaned but unreadable.
-    if (familyId) await rollbackFamilyProvision(familyId)
+    // The provision is a single batch, so nothing partial survives a failure.
+    // Drop the Auth user too, otherwise it squats on the email with no profile.
     try { await credential.user.delete() } catch (_) {}
     throw err
   }

@@ -1,13 +1,18 @@
 // Unit tests for the pure mood helpers/analytics in mood.js.
-// These are ported 1:1 from the iOS app, so the tests double as a parity guard:
-// if web scoring/analytics ever drifts from iOS, these fail.
+//
+// These double as a schema guard against the Android child app: it writes
+// mood_entries rows carrying a 0–100 `score` and no emotion label, so anything
+// here that starts depending on a `mood` string is reading a field that does
+// not exist in this project.
 import { describe, it, expect } from "vitest";
 import {
-  moodScore,
+  MOOD_BANDS,
+  entryScore,
+  entryBand,
+  moodBand,
   moodColor,
   moodEmoji,
   moodLabel,
-  entryMood,
   averageScore,
   distribution,
   mostFrequentMood,
@@ -16,99 +21,162 @@ import {
   scoreColor,
 } from "./mood.js";
 
-// Build a moodEntries-shaped doc with a Date timestamp (entryMillis handles Date).
-const entry = (mood, date) => ({ mood, timestamp: date });
+// A mood_entries-shaped doc. entryMillis accepts a plain Date.
+const entry = (score, date) => ({ score, timestamp: date });
 
-describe("scoring + display helpers", () => {
-  it("scores moods on the iOS 1–6 scale", () => {
-    expect(moodScore("happy")).toBe(6);
-    expect(moodScore("calm")).toBe(5);
-    expect(moodScore("neutral")).toBe(4);
-    expect(moodScore("sad")).toBe(3);
-    expect(moodScore("anxious")).toBe(2);
-    expect(moodScore("angry")).toBe(1);
+describe("entryScore", () => {
+  it("reads the 0–100 score off an entry", () => {
+    expect(entryScore({ score: 72 })).toBe(72);
+    expect(entryScore({ score: 0 })).toBe(0);
   });
 
-  it("is case-insensitive and falls back to neutral (4) for unknown moods", () => {
-    expect(moodScore("HAPPY")).toBe(6);
-    expect(moodScore("banana")).toBe(4);
-    expect(moodScore(undefined)).toBe(4);
+  it("clamps out-of-range scores into 0–100", () => {
+    expect(entryScore({ score: 140 })).toBe(100);
+    expect(entryScore({ score: -20 })).toBe(0);
   });
 
-  it("returns the neutral grey color / generic emoji for unknown moods", () => {
-    expect(moodColor("happy")).toBe("#2ECC71");
-    expect(moodColor("banana")).toBe("#95A5A6");
-    expect(moodEmoji("calm")).toBe("😌");
-    expect(moodEmoji("banana")).toBe("🙂");
+  it("returns null when there is no usable score", () => {
+    expect(entryScore({})).toBeNull();
+    expect(entryScore(null)).toBeNull();
+    expect(entryScore({ score: "80" })).toBeNull();
+    expect(entryScore({ score: NaN })).toBeNull();
   });
 
-  it("labels capitalize, with — for empty", () => {
-    expect(moodLabel("sad")).toBe("Sad");
-    expect(moodLabel("")).toBe("—");
-  });
-
-  it("reads the mood key from either `mood` or legacy `label`", () => {
-    expect(entryMood({ mood: "Happy" })).toBe("happy");
-    expect(entryMood({ label: "Sad" })).toBe("sad");
-    expect(entryMood({})).toBe("");
+  it("ignores a legacy emotion label — this project has no such field", () => {
+    expect(entryScore({ mood: "happy" })).toBeNull();
   });
 });
 
-describe("analytics", () => {
-  it("averageScore is 0 on empty and the mean otherwise", () => {
-    expect(averageScore([])).toBe(0);
-    // happy(6) + angry(1) => mean 3.5
-    expect(averageScore([entry("happy"), entry("angry")])).toBe(3.5);
+describe("moodBand", () => {
+  it("bands each score range", () => {
+    expect(moodBand(95)).toBe("great");
+    expect(moodBand(70)).toBe("good");
+    expect(moodBand(50)).toBe("okay");
+    expect(moodBand(30)).toBe("low");
+    expect(moodBand(5)).toBe("struggling");
   });
 
-  it("distribution counts moods and sorts by count descending", () => {
-    const d = distribution([
-      entry("happy"),
-      entry("happy"),
-      entry("sad"),
+  it("puts each boundary in the higher band", () => {
+    expect(moodBand(80)).toBe("great");
+    expect(moodBand(79)).toBe("good");
+    expect(moodBand(60)).toBe("good");
+    expect(moodBand(59)).toBe("okay");
+    expect(moodBand(40)).toBe("okay");
+    expect(moodBand(39)).toBe("low");
+    expect(moodBand(20)).toBe("low");
+    expect(moodBand(19)).toBe("struggling");
+    expect(moodBand(0)).toBe("struggling");
+  });
+
+  it("falls back to okay for unusable input", () => {
+    expect(moodBand(undefined)).toBe("okay");
+    expect(moodBand("70")).toBe("okay");
+  });
+
+  it("has a color, emoji and label for every band", () => {
+    for (const band of MOOD_BANDS) {
+      expect(moodColor(band)).toMatch(/^#[0-9A-F]{6}$/i);
+      expect(moodEmoji(band)).toBeTruthy();
+      expect(moodLabel(band)).toBeTruthy();
+      expect(moodLabel(band)).not.toBe("—");
+    }
+  });
+
+  it("scoreColor agrees with the band's color", () => {
+    expect(scoreColor(95)).toBe(moodColor("great"));
+    expect(scoreColor(5)).toBe(moodColor("struggling"));
+  });
+});
+
+describe("entryBand", () => {
+  it("bands an entry by its score", () => {
+    expect(entryBand({ score: 85 })).toBe("great");
+    expect(entryBand({ score: 10 })).toBe("struggling");
+  });
+
+  it("is null when the entry has no score, rather than banding it as okay", () => {
+    expect(entryBand({})).toBeNull();
+  });
+});
+
+describe("averageScore", () => {
+  it("means the scores", () => {
+    expect(averageScore([entry(80), entry(60)])).toBe(70);
+  });
+
+  it("is 0 for no entries", () => {
+    expect(averageScore([])).toBe(0);
+  });
+
+  it("skips entries with no score instead of counting them as zero", () => {
+    expect(averageScore([entry(80), {}, entry(60)])).toBe(70);
+  });
+});
+
+describe("distribution", () => {
+  const entries = [entry(90), entry(85), entry(65), entry(10)];
+
+  it("counts entries per band, most frequent first", () => {
+    expect(distribution(entries)).toEqual([
+      { mood: "great", count: 2 },
+      { mood: "good", count: 1 },
+      { mood: "struggling", count: 1 },
     ]);
-    expect(d).toEqual([
-      { mood: "happy", count: 2 },
-      { mood: "sad", count: 1 },
-    ]);
-    expect(mostFrequentMood([entry("sad"), entry("sad"), entry("happy")])).toBe(
-      "sad",
-    );
+  });
+
+  it("omits entries with no score", () => {
+    expect(distribution([entry(90), {}])).toEqual([{ mood: "great", count: 1 }]);
+  });
+
+  it("mostFrequentMood picks the top band, and is null when empty", () => {
+    expect(mostFrequentMood(entries)).toBe("great");
     expect(mostFrequentMood([])).toBeNull();
   });
+});
 
-  it("dailyAverages groups entries by calendar day, ascending", () => {
-    const day1 = new Date(2026, 0, 1, 9, 0);
-    const day1pm = new Date(2026, 0, 1, 21, 0);
-    const day2 = new Date(2026, 0, 2, 12, 0);
+describe("dailyAverages", () => {
+  const day1 = new Date(2026, 0, 1, 9);
+  const day1Later = new Date(2026, 0, 1, 21);
+  const day2 = new Date(2026, 0, 2, 9);
+
+  it("averages entries within a calendar day, ascending by date", () => {
     const result = dailyAverages([
-      entry("angry", day2), // intentionally out of order
-      entry("happy", day1), // 6
-      entry("neutral", day1pm), // 4  -> day1 avg = 5
+      entry(60, day1Later),
+      entry(80, day1),
+      entry(30, day2),
     ]);
     expect(result).toHaveLength(2);
-    expect(result[0].score).toBe(5); // day1 first (ascending)
-    expect(result[1].score).toBe(1); // day2 = angry
+    expect(result[0].score).toBe(70);
+    expect(result[1].score).toBe(30);
+    expect(result[0].date.getTime()).toBeLessThan(result[1].date.getTime());
   });
 
-  it("trend compares first vs second half of days", () => {
-    const d = (n) => new Date(2026, 0, n, 12, 0);
-    // first half low, second half high => Improving
-    const improving = [
-      entry("angry", d(1)),
-      entry("angry", d(2)),
-      entry("happy", d(3)),
-      entry("happy", d(4)),
-    ];
-    expect(trend(improving)).toBe("Improving");
-    expect(trend([entry("happy", d(1))])).toBe("Stable"); // <2 days
+  it("drops entries missing a timestamp or a score", () => {
+    expect(dailyAverages([entry(80), { timestamp: day1 }])).toEqual([]);
+  });
+});
+
+describe("trend", () => {
+  const at = (dayOfMonth) => new Date(2026, 0, dayOfMonth, 9);
+
+  it("is Stable with fewer than two days", () => {
+    expect(trend([])).toBe("Stable");
+    expect(trend([entry(90, at(1))])).toBe("Stable");
   });
 
-  it("scoreColor buckets averaged daily scores", () => {
-    expect(scoreColor(5.5)).toBe("#2ECC71");
-    expect(scoreColor(4)).toBe("#3399DB");
-    expect(scoreColor(3)).toBe("#95A5A6");
-    expect(scoreColor(2)).toBe("#F39C12");
-    expect(scoreColor(1)).toBe("#E74C3C");
+  it("reports Improving when the second half gains more than 10 points", () => {
+    expect(
+      trend([entry(30, at(1)), entry(35, at(2)), entry(80, at(3)), entry(85, at(4))]),
+    ).toBe("Improving");
+  });
+
+  it("reports Declining when the second half loses more than 10 points", () => {
+    expect(
+      trend([entry(85, at(1)), entry(80, at(2)), entry(35, at(3)), entry(30, at(4))]),
+    ).toBe("Declining");
+  });
+
+  it("holds Stable for a shift of 10 points or less", () => {
+    expect(trend([entry(50, at(1)), entry(60, at(2))])).toBe("Stable");
   });
 });

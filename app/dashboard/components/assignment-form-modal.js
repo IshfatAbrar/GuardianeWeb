@@ -129,7 +129,6 @@ export function AssignmentFormModal({
   childList = [],
   modules = [],
   parentId,
-  familyId,
   initialModuleId = "",
 }) {
   if (!open || typeof document === "undefined") return null;
@@ -140,7 +139,6 @@ export function AssignmentFormModal({
       childList={childList}
       modules={modules}
       parentId={parentId}
-      familyId={familyId}
       initialModuleId={initialModuleId}
     />
   );
@@ -152,7 +150,6 @@ function FormContent({
   childList,
   modules,
   parentId,
-  familyId,
   initialModuleId,
 }) {
   const [childId, setChildId] = useState(childList[0]?.id || "");
@@ -185,7 +182,7 @@ function FormContent({
     [modules, moduleId],
   );
 
-  const canAssign = !!(childId && moduleId && parentId && familyId && !submitting);
+  const canAssign = !!(childId && moduleId && parentId && !submitting);
 
   async function handleSubmit() {
     if (!canAssign) return;
@@ -197,7 +194,6 @@ function FormContent({
         moduleId,
         childId,
         parentId,
-        familyId,
         priority,
         dueDate: parsed,
       });

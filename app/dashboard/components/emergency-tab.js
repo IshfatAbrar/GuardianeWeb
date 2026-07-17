@@ -1,26 +1,49 @@
 "use client";
 
+// Crisis management.
+//
+// This used to read a `safety_incidents` collection. Nothing in the Android
+// schema writes that — it is empty in the live project — so the incident feed
+// could only ever show zero. Two real sources replaced it:
+//   • emergency contacts  → `emergency_contacts`, which the child app reads
+//   • risk alerts         → `messages` rows the child's classifier flagged
+//                           (data.alerts, already merged by useDashboardData)
+
 import { useEffect, useMemo, useState } from "react";
-import {
-  listenToSafetyIncidents,
-  markIncidentResolved,
-  severityFor,
-  isCritical,
-  isHighRisk,
-  formatRelativeTime,
-  SEVERITY,
-  SAFETY_CLASS,
-  DEFAULT_ESCALATION_CHAIN,
-} from "../../lib/safetyIncidents";
+import { listenToEmergencyContacts } from "../../lib/emergencyContacts";
+import { EmergencyContactsCard } from "./emergency-contacts-card";
+import { EmergencyContactFormModal } from "./emergency-contact-form-modal";
 import { EmergencyCallModal } from "./emergency-call-modal";
 import { LiveChatModal } from "./live-chat-modal";
 
+// Was iOS's AlertCenterViewModel.escalationChain, previously re-exported from
+// the deleted safetyIncidents module. It is static presentation — nothing
+// drives or persists it.
+const DEFAULT_ESCALATION_CHAIN = [
+  { level: 1, role: "AI Detection", active: true },
+  { level: 2, role: "Guardian Notified", active: true },
+  { level: 3, role: "Service Provider", active: false },
+];
+
 const SEVERITY_META = {
-  [SEVERITY.CRITICAL]: { label: "Critical", color: "#EF4444", bg: "rgba(239, 68, 68, 0.16)" },
-  [SEVERITY.HIGH]: { label: "High", color: "#F97316", bg: "rgba(249, 115, 22, 0.16)" },
-  [SEVERITY.MEDIUM]: { label: "Medium", color: "#F59E0B", bg: "rgba(245, 158, 11, 0.16)" },
-  [SEVERITY.LOW]: { label: "Low", color: "#10B981", bg: "rgba(16, 185, 129, 0.16)" },
+  critical: { label: "Critical", color: "#EF4444", bg: "rgba(239, 68, 68, 0.16)" },
+  warning: { label: "Warning", color: "#F59E0B", bg: "rgba(245, 158, 11, 0.16)" },
+  info: { label: "Info", color: "#3B82F6", bg: "rgba(59, 130, 246, 0.16)" },
 };
+
+function relativeTime(ts) {
+  const ms = ts?.toMillis?.();
+  if (typeof ms !== "number") return "—";
+  const diff = Date.now() - ms;
+  if (diff < 60_000) return "just now";
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 
 function SectionCard({ children, className = "" }) {
   return (
@@ -224,194 +247,109 @@ function EscalationProtocol({ steps }) {
   );
 }
 
-function AlertItem({ incident, childName, onResolve }) {
-  const severity = severityFor(incident);
-  const meta = SEVERITY_META[severity];
-  const critical = isCritical(incident);
-  const highRisk = isHighRisk(incident);
-  const className = incident.safetyClass || "Alert";
-
+function RiskAlertItem({ alert, childName, isLast }) {
+  const meta = SEVERITY_META[alert.severity] ?? SEVERITY_META.info;
   return (
-    <div
-      className={`flex items-start gap-3 rounded-xl border p-4 ${
-        critical
-          ? "border-rose-500/40 bg-rose-500/5"
-          : "border-[var(--border)] bg-[var(--surface-muted)]"
+    <li
+      className={`flex items-start gap-3 px-4 py-3 ${
+        isLast ? "" : "border-b border-[var(--border)]"
       }`}
     >
       <span
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+        className="mt-0.5 flex-shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
         style={{ backgroundColor: meta.bg, color: meta.color }}
       >
-        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-          <line x1="12" y1="9" x2="12" y2="13" />
-          <line x1="12" y1="17" x2="12.01" y2="17" />
-        </svg>
+        {meta.label}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-[14px] font-semibold text-[var(--foreground)]">
-            {className}
-          </p>
-          <span className="whitespace-nowrap text-[11px] text-[var(--muted)]">
-            {formatRelativeTime(incident.firestoreTimestamp)}
-          </span>
-        </div>
-        {childName && (
-          <p className="mt-0.5 text-[11.5px] text-[var(--muted)]">
-            {childName}
-          </p>
-        )}
-        {incident.message && (
-          <p className="mt-1 line-clamp-3 text-[12.5px] leading-relaxed text-[var(--foreground)]">
-            “{incident.message}”
-          </p>
-        )}
-        {incident.explanation && (
-          <p className="mt-1 text-[12px] leading-relaxed text-[var(--muted)]">
-            {incident.explanation}
-          </p>
-        )}
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span
-              className="inline-flex items-center rounded-md px-2 py-0.5 text-[10.5px] font-semibold"
-              style={{ backgroundColor: meta.bg, color: meta.color }}
-            >
-              {meta.label}
-            </span>
-            {highRisk && (
-              <span className="inline-flex items-center rounded-md bg-rose-500/15 px-2 py-0.5 text-[10.5px] font-semibold text-rose-500">
-                High risk
-              </span>
-            )}
-            {typeof incident.confidence === "number" && (
-              <span className="text-[11px] text-[var(--muted)]">
-                {(incident.confidence * 100).toFixed(0)}% confidence
-              </span>
-            )}
-            {incident.wasBlocked && (
-              <span className="inline-flex items-center rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10.5px] font-semibold text-emerald-500">
-                Blocked
-              </span>
-            )}
-          </div>
-          {!incident.isResolved ? (
-            <button
-              type="button"
-              onClick={onResolve}
-              className="text-[11.5px] font-semibold text-[var(--accent)] hover:underline"
-            >
-              Mark as resolved
-            </button>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500">
-              <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14.5-4-4 1.5-1.5 2.5 2.5 5.5-5.5 1.5 1.5z" />
-              </svg>
-              Resolved
-            </span>
-          )}
-        </div>
+        <p className="text-[13px] font-semibold text-[var(--foreground)]">{alert.type}</p>
+        {/* The child app composes a long "Risk detected: X (0.92): SMS: ..."
+            line; clamp it rather than letting one alert dominate the card. */}
+        <p className="line-clamp-2 text-[11.5px] text-[var(--muted)]">{alert.message}</p>
+        <p className="mt-0.5 text-[11px] text-[var(--muted)]">
+          {[childName, relativeTime(alert.timestamp)].filter(Boolean).join(" · ")}
+        </p>
       </div>
-    </div>
+    </li>
   );
 }
 
-function AllAlerts({ incidents, childById, onResolve }) {
+function RecentRiskAlerts({ alerts, childById }) {
   return (
-    <SectionCard>
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold tracking-tight text-[var(--foreground)]">
-          All Alerts
-        </h2>
-        <span className="text-[12px] text-[var(--muted)]">
-          {incidents.length} {incidents.length === 1 ? "alert" : "alerts"}
-        </span>
+    <SectionCard className="p-0">
+      <div className="border-b border-[var(--border)] px-4 py-3">
+        <h2 className="text-[14px] font-bold text-[var(--foreground)]">Risk alerts</h2>
+        <p className="text-[11.5px] text-[var(--muted)]">
+          Flagged on your child&apos;s device by on-device analysis
+        </p>
       </div>
-      {incidents.length === 0 ? (
-        <div className="mt-4 flex flex-col items-center gap-3 rounded-xl bg-[var(--surface-muted)] py-10 text-center">
-          <svg width="40" height="40" fill="none" stroke="#10B981" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6l-8-4z" />
-            <polyline points="9 12 11 14 15 10" />
-          </svg>
-          <div className="space-y-0.5">
-            <p className="text-[14px] font-semibold text-[var(--foreground)]">
-              No Alerts
-            </p>
-            <p className="text-[12px] text-[var(--muted)]">
-              No alerts from child app at this time.
-            </p>
-          </div>
-        </div>
+      {alerts.length === 0 ? (
+        <p className="px-4 py-8 text-center text-[13px] text-[var(--muted)]">
+          No risk alerts.
+        </p>
       ) : (
-        <div className="mt-4 flex flex-col gap-2.5">
-          {incidents.map((incident) => (
-            <AlertItem
-              key={incident.id}
-              incident={incident}
-              childName={childById.get(incident.childId)?.name}
-              onResolve={() => onResolve(incident.id)}
+        <ul>
+          {alerts.map((a, i) => (
+            <RiskAlertItem
+              key={a.id}
+              alert={a}
+              childName={childById.get(a.childId)?.name}
+              isLast={i === alerts.length - 1}
             />
           ))}
-        </div>
+        </ul>
       )}
     </SectionCard>
   );
 }
 
 export function EmergencyTab({ data }) {
+  const user = data?.user || null;
+  const parentUid = user?.uid || null;
   const childList = useMemo(() => data?.children || [], [data?.children]);
-  const childIds = useMemo(() => childList.map((c) => c.id), [childList]);
   const childById = useMemo(() => {
     const m = new Map();
     for (const c of childList) m.set(c.id, c);
     return m;
   }, [childList]);
 
-  const [incidents, setIncidents] = useState([]);
-  const [listenerErr, setListenerErr] = useState(null);
-  const [callOpen, setCallOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-
-  // Subscribe to the safety_incidents collection, filtered to this family's
-  // children only. Wait for `data.children` to arrive before subscribing to
-  // avoid a first-paint "no alerts" flash before the filter is known.
-  useEffect(() => {
-    if (!data?.children) return undefined;
-    const unsub = listenToSafetyIncidents({
-      familyChildIds: childIds,
-      onUpdate: (rows) => {
-        setIncidents(rows);
-        setListenerErr(null);
-      },
-      onError: (err) =>
-        setListenerErr(err.message || "Failed to load safety incidents"),
-    });
-    return unsub;
-  }, [data?.children, childIds]);
-
-  const unresolved = useMemo(
-    () => incidents.filter((i) => !i.isResolved),
-    [incidents],
-  );
+  const alerts = useMemo(() => data?.alerts || [], [data?.alerts]);
+  const activeAlerts = useMemo(() => data?.activeAlerts || [], [data?.activeAlerts]);
   const critical = useMemo(
-    () => unresolved.filter((i) => isCritical(i)),
-    [unresolved],
+    () => activeAlerts.filter((a) => a.severity === "critical"),
+    [activeAlerts],
   );
   const activeSOS = critical.length > 0;
 
-  function handleResolve(id) {
-    markIncidentResolved(id).catch((err) =>
-      setListenerErr(err.message || "Failed to mark resolved"),
-    );
-  }
+  const [contacts, setContacts] = useState([]);
+  const [contactsLoading, setContactsLoading] = useState(true);
+  const [callOpen, setCallOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [formContact, setFormContact] = useState(null); // contact being edited
+  const [formOpen, setFormOpen] = useState(false);
+
+  useEffect(() => {
+    if (!parentUid) return undefined;
+    return listenToEmergencyContacts(parentUid, (rows) => {
+      setContacts(rows);
+      setContactsLoading(false);
+    });
+  }, [parentUid]);
 
   function placeEmergencyCall() {
     if (typeof window !== "undefined") {
       window.location.href = "tel:911";
     }
+  }
+
+  function openAdd() {
+    setFormContact(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(contact) {
+    setFormContact(contact);
+    setFormOpen(true);
   }
 
   return (
@@ -430,13 +368,6 @@ export function EmergencyTab({ data }) {
       <div className="h-px w-full bg-[var(--border)]" />
 
       <div className="flex flex-col gap-4 p-6">
-        {listenerErr && (
-          <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-4 text-[12.5px] text-[var(--danger)]">
-            {listenerErr}
-          </div>
-        )}
-
-        
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <EmergencyStatusCard
             activeSOS={activeSOS}
@@ -449,12 +380,15 @@ export function EmergencyTab({ data }) {
             onCall={() => setCallOpen(true)}
           />
 
-          <EscalationProtocol steps={DEFAULT_ESCALATION_CHAIN} />
-          <AllAlerts
-            incidents={incidents}
-            childById={childById}
-            onResolve={handleResolve}
+          <EmergencyContactsCard
+            contacts={contacts}
+            loading={contactsLoading}
+            onAdd={openAdd}
+            onEdit={openEdit}
           />
+          <RecentRiskAlerts alerts={alerts} childById={childById} />
+
+          <EscalationProtocol steps={DEFAULT_ESCALATION_CHAIN} />
         </div>
       </div>
 
@@ -464,6 +398,12 @@ export function EmergencyTab({ data }) {
         onConfirm={placeEmergencyCall}
       />
       <LiveChatModal open={chatOpen} onClose={() => setChatOpen(false)} />
+      <EmergencyContactFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        parentUid={parentUid}
+        contact={formContact}
+      />
     </div>
   );
 }

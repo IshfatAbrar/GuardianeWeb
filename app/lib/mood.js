@@ -1,92 +1,121 @@
-// Shared mood color / emoji / score / label helpers and analytics.
-// Ported 1:1 from the iOS app so web and iOS render identical mood data:
-//   • MoodHelpers.swift   → colors, emoji, score (1–6 scale), labels
-//   • MoodViewModel.swift → distribution, averageScore, dailyAverages, trend
+// Mood colors / emoji / labels and analytics.
 //
-// The child app writes moodEntries documents with a `mood` string field
-// (one of MOODS below) and a Firestore `timestamp`.
+// The child app (Guardiane_Android, MoodService) writes `mood_entries` rows
+// holding a single wellbeing SCORE from 0–100 (higher is better), derived from
+// a four-part survey it keeps in `responses` { emotional, energy, stress,
+// outlook }. There is no emotion label on the entry.
+//
+// This replaces the web's previous model, which assumed the child picked one of
+// six emotions (happy/calm/neutral/sad/anxious/angry) scored 1–6. That model
+// came from the SwiftUI apps and has no counterpart in the Android schema —
+// nothing writes a `mood` string to this project. A 0–100 wellbeing score can't
+// be honestly reconstituted into "angry" vs "anxious", so instead of inventing
+// an emotion we band the score. The charts are unchanged: they only need a
+// categorical key plus a color, which a band provides.
 
-// Canonical mood keys, in the order iOS lists them (best → worst).
-export const MOODS = ["happy", "calm", "neutral", "sad", "anxious", "angry"];
+// Band keys, best → worst. `distribution()` and friends emit these.
+export const MOOD_BANDS = ["great", "good", "okay", "low", "struggling"];
+
+// Inclusive lower bound for each band, checked high → low.
+const BAND_MIN = {
+  great: 80,
+  good: 60,
+  okay: 40,
+  low: 20,
+  struggling: 0,
+};
 
 const COLOR = {
-  happy: "#2ECC71",
-  calm: "#3399DB",
-  neutral: "#95A5A6",
-  sad: "#8E8EF0",
-  anxious: "#F39C12",
-  angry: "#E74C3C",
+  great: "#2ECC71",
+  good: "#3399DB",
+  okay: "#95A5A6",
+  low: "#F39C12",
+  struggling: "#E74C3C",
 };
 
 const EMOJI = {
-  happy: "😊",
-  calm: "😌",
-  neutral: "😐",
-  sad: "😢",
-  anxious: "😰",
-  angry: "😠",
+  great: "😄",
+  good: "🙂",
+  okay: "😐",
+  low: "😟",
+  struggling: "😞",
 };
 
-const SCORE = {
-  happy: 6,
-  calm: 5,
-  neutral: 4,
-  sad: 3,
-  anxious: 2,
-  angry: 1,
+const LABEL = {
+  great: "Great",
+  good: "Good",
+  okay: "Okay",
+  low: "Low",
+  struggling: "Struggling",
 };
 
-function normalize(mood) {
-  return String(mood || "").toLowerCase();
+/** Clamp anything to a 0–100 score, or null when it isn't a usable number. */
+function clampScore(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) return null;
+  return Math.max(0, Math.min(100, value));
 }
 
-export function moodColor(mood) {
-  return COLOR[normalize(mood)] ?? "#95A5A6";
+/** The 0–100 score on a mood_entries doc, or null if absent/malformed. */
+export function entryScore(entry) {
+  return clampScore(entry?.score);
 }
 
-export function moodEmoji(mood) {
-  return EMOJI[normalize(mood)] ?? "🙂";
+/** Band key for a 0–100 score. Unknown scores band as "okay". */
+export function moodBand(score) {
+  const s = clampScore(score);
+  if (s === null) return "okay";
+  return MOOD_BANDS.find((band) => s >= BAND_MIN[band]) ?? "okay";
 }
 
-/** Score on the iOS 1–6 scale. Unknown moods score 4 (neutral), matching iOS. */
-export function moodScore(mood) {
-  return SCORE[normalize(mood)] ?? 4;
+/** Band key for a mood_entries doc, or null when it carries no score. */
+export function entryBand(entry) {
+  const s = entryScore(entry);
+  return s === null ? null : moodBand(s);
 }
 
-export function moodLabel(mood) {
-  const m = normalize(mood);
-  if (!m) return "—";
-  return m.charAt(0).toUpperCase() + m.slice(1);
+export function moodColor(band) {
+  return COLOR[band] ?? COLOR.okay;
 }
 
-/** The mood key for a moodEntries doc (handles `mood` or legacy `label`). */
-export function entryMood(entry) {
-  return normalize(entry?.mood || entry?.label);
+export function moodEmoji(band) {
+  return EMOJI[band] ?? "🙂";
+}
+
+export function moodLabel(band) {
+  return LABEL[band] ?? "—";
+}
+
+/** Color for a raw 0–100 score (used by the day-by-day timeline). */
+export function scoreColor(score) {
+  return moodColor(moodBand(score));
 }
 
 function entryMillis(entry) {
-  const ms = entry?.timestamp?.toMillis?.();
+  const ms = entry?.timestamp?.toMillis?.() ?? entry?.createdAt?.toMillis?.();
   if (typeof ms === "number") return ms;
   if (entry?.timestamp instanceof Date) return entry.timestamp.getTime();
   return null;
 }
 
-// ─── Analytics (mirror MoodViewModel computed properties) ────────────────────
+// ─── Analytics ───────────────────────────────────────────────────────────────
 
-/** Mean score across all entries, 0 when empty. */
+/** Mean 0–100 score across entries that have one. 0 when there are none. */
 export function averageScore(entries) {
-  if (!entries.length) return 0;
-  const total = entries.reduce((sum, e) => sum + moodScore(entryMood(e)), 0);
-  return total / entries.length;
+  const scores = entries.map(entryScore).filter((s) => s !== null);
+  if (!scores.length) return 0;
+  return scores.reduce((sum, s) => sum + s, 0) / scores.length;
 }
 
-/** [{ mood, count }] sorted by count descending. */
+/**
+ * [{ mood, count }] sorted by count descending, where `mood` is a band key.
+ * The key stays named `mood` so the chart components need no changes.
+ */
 export function distribution(entries) {
   const counts = new Map();
   for (const e of entries) {
-    const m = entryMood(e);
-    if (!m) continue;
-    counts.set(m, (counts.get(m) || 0) + 1);
+    const band = entryBand(e);
+    if (!band) continue;
+    counts.set(band, (counts.get(band) || 0) + 1);
   }
   return Array.from(counts, ([mood, count]) => ({ mood, count })).sort(
     (a, b) => b.count - a.count,
@@ -97,18 +126,19 @@ export function mostFrequentMood(entries) {
   return distribution(entries)[0]?.mood ?? null;
 }
 
-/** [{ date, score }] — average score per calendar day, ascending by date. */
+/** [{ date, score }] — average 0–100 score per calendar day, ascending. */
 export function dailyAverages(entries) {
   const byDay = new Map();
   for (const e of entries) {
     const ms = entryMillis(e);
-    if (ms == null) continue;
+    const score = entryScore(e);
+    if (ms == null || score === null) continue;
     const day = new Date(ms);
     day.setHours(0, 0, 0, 0);
     const key = day.getTime();
     if (!byDay.has(key)) byDay.set(key, { total: 0, count: 0 });
     const slot = byDay.get(key);
-    slot.total += moodScore(entryMood(e));
+    slot.total += score;
     slot.count += 1;
   }
   return Array.from(byDay, ([key, { total, count }]) => ({
@@ -117,26 +147,19 @@ export function dailyAverages(entries) {
   })).sort((a, b) => a.date - b.date);
 }
 
+// A shift worth calling a trend: 10 points on the 0–100 scale. That's 10% of
+// the range, matching the sensitivity of the old 1–6 model's 0.5 threshold.
+const TREND_THRESHOLD = 10;
+
 /** "Improving" | "Declining" | "Stable" — compares first vs second half of days. */
 export function trend(entries) {
   const averages = dailyAverages(entries);
   if (averages.length < 2) return "Stable";
   const mid = Math.floor(averages.length / 2);
-  const first = averages.slice(0, mid);
-  const second = averages.slice(mid);
   const avg = (arr) => arr.reduce((s, x) => s + x.score, 0) / arr.length;
-  const f = avg(first);
-  const s = avg(second);
-  if (s - f > 0.5) return "Improving";
-  if (f - s > 0.5) return "Declining";
+  const first = avg(averages.slice(0, mid));
+  const second = avg(averages.slice(mid));
+  if (second - first > TREND_THRESHOLD) return "Improving";
+  if (first - second > TREND_THRESHOLD) return "Declining";
   return "Stable";
-}
-
-/** Color for an averaged daily score (MoodWeekTimelineView.scoreColor). */
-export function scoreColor(score) {
-  if (score >= 5) return "#2ECC71";
-  if (score >= 4) return "#3399DB";
-  if (score >= 3) return "#95A5A6";
-  if (score >= 2) return "#F39C12";
-  return "#E74C3C";
 }

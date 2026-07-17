@@ -2,7 +2,6 @@ export const STEPS = [
   { label: 'Account' },
   { label: 'Add child' },
   { label: 'Manage' },
-  { label: 'App blocking' },
   { label: 'Device setup' },
 ]
 
@@ -10,16 +9,6 @@ export const GRADES = [
   'Kindergarten',
   ...Array.from({ length: 12 }, (_, i) => `Grade ${i + 1}`),
 ]
-
-export const APP_SUGGESTIONS = ['TikTok', 'Instagram', 'Snapchat', 'YouTube', 'Roblox']
-
-export const APP_ICONS = {
-  tiktok: '🎵',
-  instagram: '📸',
-  snapchat: '👻',
-  youtube: '▶️',
-  roblox: '🎮',
-}
 
 export const STRENGTH_META = [
   { label: 'Weak', color: 'bg-red-400' },

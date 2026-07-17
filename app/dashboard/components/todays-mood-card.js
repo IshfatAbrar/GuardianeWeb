@@ -1,17 +1,19 @@
-const MOOD_META = {
-  happy:    { emoji: '😊', label: 'Happy',    color: 'text-emerald-500' },
-  positive: { emoji: '🙂', label: 'Positive', color: 'text-emerald-500' },
-  neutral:  { emoji: '😐', label: 'Neutral',  color: 'text-amber-500' },
-  okay:     { emoji: '😐', label: 'Okay',     color: 'text-amber-500' },
-  sad:      { emoji: '😔', label: 'Sad',      color: 'text-blue-500' },
-  anxious:  { emoji: '😟', label: 'Anxious',  color: 'text-orange-500' },
-  angry:    { emoji: '😠', label: 'Angry',    color: 'text-red-500' },
-}
+import { entryScore, entryBand, moodEmoji, moodLabel, moodColor } from '../../lib/mood'
 
+// A mood_entries row carries a 0–100 wellbeing score, not an emotion name, so
+// show the score and the band it falls in. Returns null when the child hasn't
+// logged today, or logged a row with no usable score.
 function moodMeta(mood) {
   if (!mood) return null
-  const key = String(mood.mood || mood.label || '').toLowerCase()
-  return MOOD_META[key] || { emoji: '🙂', label: mood.mood || mood.label || 'Logged', color: 'text-[var(--accent)]' }
+  const score = entryScore(mood)
+  const band = entryBand(mood)
+  if (score === null || !band) return null
+  return {
+    emoji: moodEmoji(band),
+    label: moodLabel(band),
+    color: moodColor(band),
+    score: Math.round(score),
+  }
 }
 
 export function TodaysMoodCard({ mood, childName, onFullReport }) {
@@ -33,7 +35,12 @@ export function TodaysMoodCard({ mood, childName, onFullReport }) {
         {meta ? (
           <>
             <span className="text-4xl" aria-hidden>{meta.emoji}</span>
-            <span className={`text-[14px] font-semibold ${meta.color}`}>{meta.label}</span>
+            <span className="text-[14px] font-semibold" style={{ color: meta.color }}>
+              {meta.label}
+            </span>
+            <span className="text-[12px] font-medium text-[var(--muted)]">
+              {meta.score}/100
+            </span>
             {childFirst && (
               <span className="text-[11px] text-[var(--muted)]">{childFirst}</span>
             )}

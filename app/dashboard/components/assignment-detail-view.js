@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ProgressUpdateModal } from "./progress-update-modal";
 import {
-  updateAssignmentProgress,
-  softDeleteAssignment,
+  unassignModule,
+  progressFor,
+  isAssignmentCompleted,
+  assignmentKey,
   ASSIGNMENT_PRIORITY,
   ASSIGNMENT_STATUS,
   isAssignmentOverdue,
@@ -53,40 +54,28 @@ export function AssignmentDetailView({
   assignment,
   module: assignedModule,
   child,
+  progressById,
   onBack,
   onChanged,
 }) {
-  const [showProgress, setShowProgress] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
   if (!assignment) return null;
 
-  const effStatus = effectiveAssignmentStatus(assignment);
-  const overdue = isAssignmentOverdue(assignment);
+  const effStatus = effectiveAssignmentStatus(assignment, progressById);
+  const overdue = isAssignmentOverdue(assignment, progressById);
   const priorityMeta = PRIORITY_META[assignment.priority] || PRIORITY_META[ASSIGNMENT_PRIORITY.MEDIUM];
   const statusMeta = STATUS_META[effStatus] || STATUS_META[ASSIGNMENT_STATUS.ASSIGNED];
-  const progressPct = Math.round((assignment.progress || 0) * 100);
-
-  async function handleMarkComplete() {
-    setBusy(true);
-    setErrorMessage(null);
-    try {
-      await updateAssignmentProgress(assignment.id, 1);
-      onChanged?.();
-    } catch (err) {
-      setErrorMessage(err.message || "Failed to update");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const progressPct = Math.round(progressFor(assignment, progressById) * 100);
+  const progressRow = progressById?.get(assignmentKey(assignment.childId, assignment.moduleId));
 
   async function handleUnassign() {
     setBusy(true);
     setErrorMessage(null);
     try {
-      await softDeleteAssignment(assignment.id);
+      await unassignModule(assignment.childId, assignment.moduleId);
       onChanged?.();
       onBack?.();
     } catch (err) {
@@ -163,15 +152,9 @@ export function AssignmentDetailView({
             <p className="text-[14px] font-semibold tracking-tight text-[var(--foreground)]">
               Progress
             </p>
-            {!assignment.isCompleted && (
-              <button
-                type="button"
-                onClick={() => setShowProgress(true)}
-                className="text-[12px] font-semibold text-[var(--accent)] hover:underline"
-              >
-                Update
-              </button>
-            )}
+            {/* No "Update" control: progress is reported by the child's
+                device via learning_progress, not set by the parent. */}
+            <span className="text-[11px] text-[var(--muted)]">Reported by device</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-muted)]">
             <div
@@ -183,7 +166,7 @@ export function AssignmentDetailView({
             <span className="font-semibold text-[var(--foreground)]">
               {progressPct}% complete
             </span>
-            {assignment.isCompleted && (
+            {isAssignmentCompleted(assignment, progressById) && (
               <span className="inline-flex items-center gap-1 text-emerald-500">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14.5-4-4 1.5-1.5 2.5 2.5 5.5-5.5 1.5 1.5z" />
@@ -221,29 +204,37 @@ export function AssignmentDetailView({
                 {statusMeta.label}
               </span>
             </div>
-            {assignment.quizScore != null && (
+            {/*
+              `quizScore` and `completedAt` were fields of the old `assignments`
+              collection and don't exist in module_assignments — they'd render
+              nothing forever. The child app reports lesson counts and a
+              lastUpdated stamp instead, so show those.
+            */}
+            {progressRow?.totalLessons > 0 && (
               <DetailRow
-                label="Quiz score"
-                value={`${Math.round(Number(assignment.quizScore) * 100)}%`}
+                label="Lessons"
+                value={`${progressRow.lessonsCompleted ?? 0} of ${progressRow.totalLessons}`}
               />
             )}
-            {assignment.completedAt && (
-              <DetailRow label="Completed" value={formatDate(assignment.completedAt)} />
+            {progressRow?.lastUpdated && (
+              <DetailRow label="Last activity" value={formatDate(progressRow.lastUpdated)} />
             )}
           </div>
         </div>
 
-        {/* Actions */}
+        {/*
+          There is deliberately no "Mark as Complete" here any more. Progress
+          lives in `learning_progress`, written by the child's device as it
+          finishes lessons — a parent marking it complete would write a claim
+          about work the child hasn't done, into a doc the child app also
+          writes. Completion is reported, not granted.
+        */}
         <div className="space-y-2">
-          {!assignment.isCompleted && (
-            <button
-              type="button"
-              onClick={handleMarkComplete}
-              disabled={busy}
-              className="w-full rounded-2xl bg-emerald-500 px-4 py-3.5 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {busy ? "Working…" : "Mark as Complete"}
-            </button>
+          {!isAssignmentCompleted(assignment, progressById) && (
+            <p className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-[12.5px] text-[var(--muted)]">
+              Progress updates automatically as {child?.name || "your child"} completes
+              lessons on their device.
+            </p>
           )}
 
           {!confirmDelete ? (
@@ -286,12 +277,6 @@ export function AssignmentDetailView({
         </div>
       </div>
 
-      <ProgressUpdateModal
-        open={showProgress}
-        onClose={() => setShowProgress(false)}
-        assignment={assignment}
-        onUpdated={onChanged}
-      />
     </div>
   );
 }

@@ -1,3 +1,19 @@
+// Firestore data layer.
+//
+// SCHEMA CONTRACT — this file must match what the two Android apps read/write:
+//   • GuardParent        (/Users/han/GuardParent)        — the Android parent app
+//   • Guardiane_Android  (/Users/han/Guardiane_Android)  — the child's device app
+// Both live in Firebase project `gurdiane-75091` (note: "gurdiane", no "a" —
+// it is NOT the old `guardianeusf` project the web/iOS used).
+//
+// The convention is deliberately mixed and easy to get wrong:
+//   collection names are snake_case  (`mood_entries`, `screen_time_entries`)
+//   field names are camelCase        (`childId`, `dateString`)
+//
+// Parents AND children are both documents in the single `users` collection,
+// distinguished only by `role`. Children have no Firebase Auth account at all —
+// the child device is unauthenticated and identifies itself by holding the
+// child's document id (see the QR notes on childQrPayload below).
 
 import {
   collection,
@@ -14,17 +30,13 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
-  Timestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
 export const COLLECTIONS = {
   USERS: 'users',
-  FAMILIES: 'families',
-  CHILDREN: 'children',
-  ALERTS: 'alerts',
-  ASSIGNMENTS: 'assignments',
-  MOOD_ENTRIES: 'moodEntries',
+  MOOD_ENTRIES: 'mood_entries',
+  SCREEN_TIME_ENTRIES: 'screen_time_entries',
   MODULES: 'modules',
   LEARNING_PROGRESS: 'learning_progress',
   JOJO_LEADS: 'jojoLeads',
@@ -35,11 +47,8 @@ export const COLLECTIONS = {
 /**
  * Capture a guest's contact info from the public JoJo chatbot. This is NOT an
  * account — it's a lightweight lead so the team can follow up with an invite to
- * the full product. Writes are allowed for unauthenticated visitors (see the
- * `jojoLeads` rule in firestore.rules), so the shape is kept minimal and the
- * rule validates it. Either email or phone must be present; the rest is
- * optional. Empty optional fields are stored as "" to keep the doc shape — and
- * the rule's hasOnly() check — stable.
+ * the full product. Either email or phone must be present; the rest is
+ * optional. Empty optional fields are stored as "" to keep the doc shape stable.
  *
  * Returns the new lead document id.
  */
@@ -62,18 +71,14 @@ export async function createJojoLead({ email, phone, name, childInfo, zip } = {}
   return ref.id
 }
 
-// ─── Users ───────────────────────────────────────────────────────────────────
+// ─── Users (parents and children both live here) ─────────────────────────────
 
 /** Create or overwrite a user profile document at users/{uid}. */
 export async function createUserProfile(uid, data) {
   const ref = doc(db, COLLECTIONS.USERS, uid)
   await setDoc(
     ref,
-    {
-      ...data,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
+    { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
     { merge: true },
   )
 }
@@ -90,334 +95,237 @@ export async function getUserProfile(uid) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-// The Guardiané child app scanner REQUIRES the QR payload to be a
-// `guardiane:<parentId>:<slug>:<suffix>` string. QRScannerViewModel splits the
-// scanned text on ':', asserts components[0] === 'guardiane', reads
-// components[1] as the parentId, then verifies that parentId is in the child
-// doc's `parentIds` before linking. A bare document id (the old web format) is
-// rejected with "Invalid QR code format". The stored `qrCode` field must equal
-// the encoded string verbatim, because the kid app looks the child up via
-// where('qrCode', '==', scannedString).
-function slugifyName(name) {
-  const s = (typeof name === 'string' ? name : '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-  return s || 'child'
-}
+// ─── Children ────────────────────────────────────────────────────────────────
 
-function buildChildQrCode(parentUid, childId, name) {
-  return `guardiane:${parentUid}:${slugifyName(name)}:${childId.slice(0, 4)}`
+/**
+ * The QR payload the child app scans to pair a device.
+ *
+ * It is the child's raw Firestore document id — nothing else. No prefix, no
+ * JSON, no expiry. Guardiane_Android's LoginScreen.onQRCodeRead passes the
+ * scanned string straight to `doc(db, 'users', <scanned>)` and only checks that
+ * the doc exists and its `role` is not something other than 'child'. Anything
+ * fancier (e.g. the old web `guardiane:<parent>:<slug>:<id>` format, which the
+ * SwiftUI kid app wanted) is rejected as "No user found for this ID".
+ *
+ * GuardParent renders exactly this, via `<QRCode value={child.id} />`.
+ *
+ * SECURITY NOTE: because the payload is just the document id and the child app
+ * is unauthenticated, anyone who learns a child's id can pair as that child.
+ * That is the Android apps' existing design; the web only mirrors it.
+ */
+export function childQrPayload(child) {
+  return typeof child?.id === 'string' ? child.id : ''
 }
 
 /**
- * Return every child profile linked to this parent (children where
- * parentIds array-contains uid). Backfills the `qrCode` for any child that is
- * missing it OR still carries the legacy bare-doc-id format, so older web-
- * created docs become scannable by the iOS child app.
+ * Every child linked to this parent.
+ *
+ * The canonical link is `parentId` + `role`, matching GuardParent's
+ * `getChildrenByParentId`. The parent's `linkedChildren` array is a
+ * denormalized cache that GuardParent overwrites (rather than appends) whenever
+ * a child is added, so it silently drops earlier children — never read it.
+ *
+ * Two equality filters need no composite index; Firestore merges single-field
+ * indexes. Sorted by `childIndex` to match GuardParent's ordering.
  */
 export async function getChildrenForParent(parentUid) {
+  if (!parentUid) return []
   const q = query(
-    collection(db, COLLECTIONS.CHILDREN),
-    where('parentIds', 'array-contains', parentUid),
+    collection(db, COLLECTIONS.USERS),
+    where('parentId', '==', parentUid),
+    where('role', '==', 'child'),
   )
   const snap = await getDocs(q)
-  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-
-  // Backfill QR codes that are missing or in the rejected legacy format. The
-  // iOS-parent-created codes already start with 'guardiane:', so they're left
-  // untouched. Fire-and-forget; the parent child-update rule permits this write.
-  const needsBackfill = rows.filter(
-    (c) => typeof c.qrCode !== 'string' || !c.qrCode.startsWith('guardiane:'),
-  )
-  for (const child of needsBackfill) {
-    const qrCode = buildChildQrCode(parentUid, child.id, child.name)
-    child.qrCode = qrCode
-    updateDoc(doc(db, COLLECTIONS.CHILDREN, child.id), {
-      qrCode,
-      updatedAt: serverTimestamp(),
-    }).catch(() => {})
-  }
-
-  return rows
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0))
 }
 
-// Convert "YYYY-MM-DD" (HTML <input type="date">) to "MM/DD/YYYY" so the iOS
-// app's existing string-based reads keep working.
+// Convert "YYYY-MM-DD" (HTML <input type="date">) to the "MM/DD/YYYY" string
+// GuardParent writes and reads. Android stores this as a plain string, not a
+// Timestamp, so it must round-trip verbatim.
 function toBirthDateString(input) {
   if (!input) return ''
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input)
-  if (m) return `${m[2]}/${m[3]}/${m[1]}`
-  return input
+  return m ? `${m[2]}/${m[3]}/${m[1]}` : input
 }
 
-// Convert "YYYY-MM-DD" to a Firestore Timestamp for the `dob` field. iOS
-// decodes children's `dob` as a Timestamp (and ValidationService requires it),
-// so web-created children are invisible/invalid in the iOS apps without it.
-// Returns null when there's no parseable date — callers omit the field rather
-// than writing a null Timestamp.
-function toDobTimestamp(yyyyMmDd) {
-  if (!yyyyMmDd) return null
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd)
+/**
+ * Whole years since an "MM/DD/YYYY" birthDate string, or null if unparseable.
+ * Children created in GuardParent carry no `age` field — only this string — so
+ * anything showing an age has to derive it.
+ */
+export function ageFromBirthDate(birthDate) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(birthDate ?? ''))
   if (!m) return null
-  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  if (Number.isNaN(d.getTime())) return null
-  return Timestamp.fromDate(d)
-}
-
-// Compute age in whole years from "YYYY-MM-DD". Rules require 0–18 ints.
-function computeAge(yyyyMmDd) {
-  if (!yyyyMmDd) return 0
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd)
-  if (!m) return 0
-  const dob = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  if (Number.isNaN(dob.getTime())) return 0
+  const dob = new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]))
+  if (Number.isNaN(dob.getTime())) return null
   const now = new Date()
   let age = now.getFullYear() - dob.getFullYear()
   const monthDelta = now.getMonth() - dob.getMonth()
   if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) age--
-  return Math.max(0, Math.min(18, age))
+  return age >= 0 && age <= 120 ? age : null
+}
+
+/** Build a child document in GuardParent's exact shape. */
+function buildChildDoc({ parentUid, name, bday, gender, grade, notes, childIndex }) {
+  return {
+    parentId: parentUid,
+    name: (name || '').trim(),
+    birthDate: toBirthDateString(bday),
+    gender: gender || '',
+    notes: notes || '',
+    // `grade` has no counterpart in the Android apps — they ignore unknown
+    // fields, so keeping it is additive and safe for the web's own form.
+    grade: grade || '',
+    role: 'child',
+    childIndex,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
 }
 
 /**
- * Provision a brand-new parent: writes users/{uid}, families/{auto}, one
- * children/{auto} per child, then links them via families.childIds and
- * users.familyId. Sequenced into two batches because the rules' `get()` on
- * the family doc only sees committed state — children create must happen
- * after the family is committed.
+ * Provision a brand-new parent account: writes users/{uid} with role 'parent'
+ * and one users/{auto} per child with role 'child'.
  *
- * Shapes match the iOS rule helpers (validUserData/validFamilyData/validChildData).
- * Returns { familyId, childIds }.
+ * Shape mirrors GuardParent's `createParentUser` + `createChildren`. There is no
+ * `families` collection in this schema — the parent↔child link is the child's
+ * `parentId` field alone.
+ *
+ * Single batch: unlike the old guardianeusf project, `gurdiane-75091` has no
+ * rules that `get()` a sibling doc mid-write, so nothing needs sequencing.
+ * Returns { childIds }.
  */
-export async function provisionParentAndFamily({ uid, email, fullName, children }) {
+export async function provisionParent({ uid, email, name, phone, children }) {
   const childrenArr = Array.isArray(children) ? children : []
-
-  // ── Batch 1: parent profile + family doc ──────────────────────────────────
-  const batch1 = writeBatch(db)
+  const batch = writeBatch(db)
 
   const userRef = doc(db, COLLECTIONS.USERS, uid)
-  batch1.set(userRef, {
-    // `type` mirrors the iOS parent app, which writes type:"parent" and whose
-    // UserType model keys off it. Web omitted it; iOS tolerates the absence
-    // today (defaults to parent) but any future role-gating would silently lock
-    // out every web-created account, so we write it explicitly for parity.
-    type: 'parent',
-    email,
-    fullName,
-    isActive: true,
-    hasCompletedOnboarding: false,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  })
-
-  const familyRef = doc(collection(db, COLLECTIONS.FAMILIES))
-  const familyId = familyRef.id
-  batch1.set(familyRef, {
-    name: `${fullName}'s Family`,
-    parentIds: [uid],
-    childIds: [],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  })
-
-  await batch1.commit()
-
-  // ── Batch 2: child docs + link them back to family/user ───────────────────
-  const batch2 = writeBatch(db)
   const childIds = []
 
-  childrenArr.forEach((c) => {
-    const childRef = doc(collection(db, COLLECTIONS.CHILDREN))
+  childrenArr.forEach((c, i) => {
+    const childRef = doc(collection(db, COLLECTIONS.USERS))
     childIds.push(childRef.id)
-    const childData = {
-      name: c.name,
-      age: computeAge(c.bday),
-      birthDate: toBirthDateString(c.bday),
-      gender: c.gender || null,
-      grade: c.grade || null,
-      qrCode: buildChildQrCode(uid, childRef.id, c.name),
-      familyId,
-      parentIds: [uid],
-      isActive: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    }
-    const dob = toDobTimestamp(c.bday)
-    if (dob) childData.dob = dob
-    batch2.set(childRef, childData)
+    batch.set(
+      childRef,
+      buildChildDoc({
+        parentUid: uid,
+        name: c.name,
+        bday: c.bday,
+        gender: c.gender,
+        grade: c.grade,
+        notes: c.notes,
+        childIndex: i + 1,
+      }),
+    )
   })
 
-  if (childIds.length > 0) {
-    batch2.update(familyRef, {
-      childIds,
-      updatedAt: serverTimestamp(),
-    })
-  }
-
-  batch2.update(userRef, {
-    familyId,
-    hasCompletedOnboarding: true,
+  batch.set(userRef, {
+    uid,
+    name: name || '',
+    email,
+    phone: phone || '',
+    role: 'parent',
+    numberOfChildren: childrenArr.length,
+    linkedChildren: childIds,
+    createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
 
-  await batch2.commit()
-
-  return { familyId, childIds }
+  await batch.commit()
+  return { childIds }
 }
 
 /**
- * Add a child to the parent's existing family. Mirrors iOS
- * `OnboardingViewModel.saveChild` for the create path: writes to
- * `children`, appends the id to `families.childIds`, and sets the QR code.
+ * Add a child to an existing parent. `childIndex` continues from the parent's
+ * current child count so GuardParent's ordering stays sensible.
+ *
+ * Unlike GuardParent (which overwrites `linkedChildren` with a one-element
+ * array and thereby drops previously linked children), this appends with
+ * arrayUnion. Nothing reads the field, but leaving correct data is cheap.
+ *
  * Returns the new child id.
  */
-export async function createChild({ parentUid, familyId, name, bday, gender, grade }) {
-  if (!parentUid || !familyId) throw new Error('Missing parentUid or familyId')
+export async function createChild({ parentUid, name, bday, gender, grade, notes }) {
+  if (!parentUid) throw new Error('Missing parentUid')
   if (!name) throw new Error('Child name is required')
 
-  const childRef = doc(collection(db, COLLECTIONS.CHILDREN))
-  const childData = {
-    name: name.trim(),
-    age: computeAge(bday),
-    birthDate: toBirthDateString(bday),
-    gender: gender || null,
-    grade: grade || null,
-    qrCode: buildChildQrCode(parentUid, childRef.id, name),
-    familyId,
-    parentIds: [parentUid],
-    isActive: true,
-    createdAt: serverTimestamp(),
+  const existing = await getChildrenForParent(parentUid)
+  const childRef = doc(collection(db, COLLECTIONS.USERS))
+  await setDoc(
+    childRef,
+    buildChildDoc({
+      parentUid,
+      name,
+      bday,
+      gender,
+      grade,
+      notes,
+      childIndex: existing.length + 1,
+    }),
+  )
+  await updateDoc(doc(db, COLLECTIONS.USERS, parentUid), {
+    linkedChildren: arrayUnion(childRef.id),
+    numberOfChildren: existing.length + 1,
     updatedAt: serverTimestamp(),
-  }
-  const dob = toDobTimestamp(bday)
-  if (dob) childData.dob = dob
-  await setDoc(childRef, childData)
-  await updateDoc(doc(db, COLLECTIONS.FAMILIES, familyId), {
-    childIds: arrayUnion(childRef.id),
-    updatedAt: serverTimestamp(),
-  })
+  }).catch(() => {})
   return childRef.id
 }
 
-/** Patch a child document. */
+/** Patch a child document (children are users docs). */
 export async function updateChild(childId, patch) {
-  await updateDoc(doc(db, COLLECTIONS.CHILDREN, childId), {
+  await updateDoc(doc(db, COLLECTIONS.USERS, childId), {
     ...patch,
     updatedAt: serverTimestamp(),
   })
 }
 
-/**
- * Write the app-restriction policy onto a child document. Mirrors the iOS
- * `Child` model fields `blockedApps: [String]` and `screenTimeLimit: Int`,
- * which the child's device app reads to enforce restrictions (the web can't
- * enforce locally the way iOS ManagedSettings does).
- *   blockedApps      — array of app ids from lib/apps.js
- *   screenTimeLimit  — daily limit in minutes (0 = no limit)
- */
-export async function updateChildRestrictions(childId, { blockedApps, screenTimeLimit }) {
-  if (!childId) throw new Error('Missing childId')
-  const patch = { updatedAt: serverTimestamp() }
-  if (Array.isArray(blockedApps)) patch.blockedApps = blockedApps
-  if (typeof screenTimeLimit === 'number') patch.screenTimeLimit = screenTimeLimit
-  await updateDoc(doc(db, COLLECTIONS.CHILDREN, childId), patch)
-}
-
-/** Delete a child: remove the doc and unlink from family. */
-export async function deleteChild(childId, familyId) {
-  if (familyId) {
-    await updateDoc(doc(db, COLLECTIONS.FAMILIES, familyId), {
-      childIds: arrayRemove(childId),
+/** Delete a child document and unlink it from the parent. */
+export async function deleteChild(childId, parentUid) {
+  if (parentUid) {
+    await updateDoc(doc(db, COLLECTIONS.USERS, parentUid), {
+      linkedChildren: arrayRemove(childId),
       updatedAt: serverTimestamp(),
     }).catch(() => {})
   }
-  await deleteDoc(doc(db, COLLECTIONS.CHILDREN, childId))
+  await deleteDoc(doc(db, COLLECTIONS.USERS, childId))
 }
 
 /**
- * Best-effort cleanup if batch 2 failed but batch 1 succeeded.
- * Deletes the family doc (rules permit owner delete). The user doc cannot
- * be deleted (rules deny it); orphaned docs are unreadable to anyone else.
+ * Permanently delete a parent's data before the Firebase Auth user is deleted.
+ * Must run while still authenticated.
+ *
+ * This is a HARD delete, not the old isActive=false soft delete: the previous
+ * project's rules forbade removing user docs, this project's don't (they must
+ * stay permissive for the unauthenticated child app). Do not reach for this to
+ * "deactivate" an account — nothing here is recoverable.
+ *
+ * Mood/screen-time/message rows are left behind: they're keyed by childId and
+ * unreachable once the children are gone, and purging them from the client
+ * would mean an unbounded fan-out of deletes.
  */
-export async function rollbackFamilyProvision(familyId) {
-  if (!familyId) return
-  try {
-    await deleteDoc(doc(db, COLLECTIONS.FAMILIES, familyId))
-  } catch (_) {}
-}
-
-/**
- * Tear down a parent's data before the Firebase Auth user is deleted. The
- * security rules forbid hard-deleting user/child/mood docs (`delete: if false`)
- * — the schema is soft-delete via `isActive=false`. So this:
- *   • deactivates every child (the parent child-update rule allows it),
- *   • deletes the family doc (owner delete is permitted),
- *   • deactivates the parent profile (`isActive=false`; the doc itself can't
- *     be deleted).
- * Must run while the user is still authenticated. It is idempotent, so it's
- * safe to re-run if the subsequent auth deletion needs a fresh re-login.
- * Mood entries / alerts can't be purged from the client (rules) — a Cloud
- * Function with the Admin SDK is required to fully erase those.
- */
-export async function softDeleteAccountData({ uid, familyId, children }) {
+export async function deleteAccountData({ uid, children }) {
   const kids = Array.isArray(children) ? children : []
   await Promise.all(
-    kids.map((c) =>
-      updateDoc(doc(db, COLLECTIONS.CHILDREN, c.id), {
-        isActive: false,
-        updatedAt: serverTimestamp(),
-      }).catch(() => {}),
-    ),
+    kids.map((c) => deleteDoc(doc(db, COLLECTIONS.USERS, c.id)).catch(() => {})),
   )
-  if (familyId) {
-    await deleteDoc(doc(db, COLLECTIONS.FAMILIES, familyId)).catch(() => {})
-  }
   if (uid) {
-    await updateDoc(doc(db, COLLECTIONS.USERS, uid), {
-      isActive: false,
-      updatedAt: serverTimestamp(),
-    }).catch(() => {})
+    await deleteDoc(doc(db, COLLECTIONS.USERS, uid)).catch(() => {})
   }
 }
 
-// ─── Modules & learning progress ─────────────────────────────────────────────
-
-/** Get every module document. */
-export async function getModules() {
-  const snap = await getDocs(collection(db, COLLECTIONS.MODULES))
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-}
-
-// ── Dashboard reads ──────────────────────────────────────────────────────────
-// All scoped by single-equality where() to avoid needing composite indexes.
-// Client-side filters/sorts handle the rest.
-
-/** Alerts for a family. Returns newest first, optionally only active ones. */
-export async function getAlertsForFamily(familyId, { activeOnly = false, max = 20 } = {}) {
-  if (!familyId) return []
-  const snap = await getDocs(
-    query(collection(db, COLLECTIONS.ALERTS), where('familyId', '==', familyId)),
-  )
-  let rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-  if (activeOnly) rows = rows.filter((a) => a.status === 'active')
-  rows.sort((a, b) => (b.timestamp?.toMillis?.() ?? 0) - (a.timestamp?.toMillis?.() ?? 0))
-  return rows.slice(0, max)
-}
-
-/** Active assignments for a family. Matches iOS `getAssignments(familyId:)` —
- * filtered to isActive=true so soft-deleted rows are excluded. */
-export async function getAssignmentsForFamily(familyId) {
-  if (!familyId) return []
-  const snap = await getDocs(
-    query(
-      collection(db, COLLECTIONS.ASSIGNMENTS),
-      where('familyId', '==', familyId),
-      where('isActive', '==', true),
-    ),
-  )
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-}
+// ─── Mood ────────────────────────────────────────────────────────────────────
+//
+// Written by the child app's MoodService. Each entry is a wellbeing survey:
+//   childId     — the child's users/{id} doc id
+//   score       — 0–100, higher is better (NOT the old 1–6 emotion scale)
+//   responses   — { emotional, energy, stress, outlook }
+//   timestamp / createdAt — serverTimestamp()
+//   dateString  — JS Date.prototype.toDateString(), e.g. "Tue Jun 10 2025"
+//
+// Queried by single-equality childId then filtered client-side, mirroring the
+// child app, so no composite index is required.
 
 /** All mood entries for a child whose timestamp falls inside [fromDate, toDate). */
 export async function getMoodEntriesForChildInRange(childId, fromDate, toDate) {
@@ -427,57 +335,102 @@ export async function getMoodEntriesForChildInRange(childId, fromDate, toDate) {
   )
   const fromMs = fromDate.getTime()
   const toMs = toDate.getTime()
-  const rows = snap.docs
+  return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((r) => {
-      const ms = r.timestamp?.toMillis?.()
+      const ms = entryMillis(r)
       return typeof ms === 'number' && ms >= fromMs && ms < toMs
     })
-  rows.sort((a, b) => (a.timestamp?.toMillis?.() ?? 0) - (b.timestamp?.toMillis?.() ?? 0))
-  return rows
+    .sort((a, b) => (entryMillis(a) ?? 0) - (entryMillis(b) ?? 0))
 }
 
-/**
- * All mood entries for a child within the last `days` (default 7), oldest
- * first. Mirrors iOS MoodViewModel.loadMoodEntries: fetch by childId, then
- * filter client-side by cutoff to avoid a composite index.
- */
+/** All mood entries for a child within the last `days` (default 7), oldest first. */
 export async function getMoodEntriesForChild(childId, days = 7) {
   if (!childId) return []
   const snap = await getDocs(
     query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
   )
   const cutoff = Date.now() - days * 86_400_000
-  const rows = snap.docs
+  return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((r) => {
-      const ms = r.timestamp?.toMillis?.()
+      const ms = entryMillis(r)
       return typeof ms === 'number' && ms >= cutoff
     })
-  rows.sort((a, b) => (a.timestamp?.toMillis?.() ?? 0) - (b.timestamp?.toMillis?.() ?? 0))
-  return rows
+    .sort((a, b) => (entryMillis(a) ?? 0) - (entryMillis(b) ?? 0))
 }
 
-/** Most recent mood entry for a child, restricted to today (or null). */
+/**
+ * Today's most recent mood entry for a child (or null).
+ *
+ * Matches on `dateString` the way the child app does rather than comparing
+ * Timestamps: the child writes `dateString` from its own local clock, so a
+ * device in another timezone would otherwise disagree with the browser about
+ * which entries are "today".
+ */
 export async function getTodaysMoodForChild(childId) {
   if (!childId) return null
   const snap = await getDocs(
     query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
   )
-  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-  rows.sort((a, b) => (b.timestamp?.toMillis?.() ?? 0) - (a.timestamp?.toMillis?.() ?? 0))
-  const latest = rows[0]
-  if (!latest?.timestamp?.toDate) return null
-  const ts = latest.timestamp.toDate()
-  const now = new Date()
-  if (
-    ts.getFullYear() === now.getFullYear() &&
-    ts.getMonth() === now.getMonth() &&
-    ts.getDate() === now.getDate()
-  ) {
-    return latest
-  }
-  return null
+  const today = new Date().toDateString()
+  const rows = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((r) => r.dateString === today)
+    .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0))
+  return rows[0] ?? null
+}
+
+// `timestamp` is the child app's primary ordering field, but entries written
+// through some paths only carry `createdAt`. Prefer timestamp, fall back.
+function entryMillis(entry) {
+  const ts = entry?.timestamp?.toMillis?.() ?? entry?.createdAt?.toMillis?.()
+  return typeof ts === 'number' ? ts : null
+}
+
+// ─── Screen time ─────────────────────────────────────────────────────────────
+//
+// Written by the child app's ScreenTimeService, one row per sync:
+//   childId, totalScreenTime, totalHours, appsUsed, dateString, createdAt,
+//   topApps[]  — [{ appName, packageName, timeSpent, percentage, timeFormatted }]
+//   allApps[]  — [{ appName, packageName, timeSpent, percentage, lastUsed }]
+//
+// The child re-writes today's row on each sync (delete + re-add), so the latest
+// row is the current day's cumulative total rather than a delta.
+
+/** Screen-time entries for a child within the last `days`, newest first. */
+export async function getScreenTimeForChild(childId, days = 7) {
+  if (!childId) return []
+  const snap = await getDocs(
+    query(collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES), where('childId', '==', childId)),
+  )
+  const cutoff = Date.now() - days * 86_400_000
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((r) => {
+      const ms = r.createdAt?.toMillis?.()
+      return typeof ms === 'number' && ms >= cutoff
+    })
+    .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+}
+
+// How far back a sync still counts as "latest": a child who hasn't synced in a
+// month reads as no data, which is the honest answer.
+//
+// COST: this does NOT bound the read. The query filters on childId only and the
+// date cut happens client-side, so every entry for the child is downloaded each
+// time — one real child in this project already has 118, each carrying a full
+// `allApps` array. Narrowing it server-side would mean either an orderBy on
+// createdAt (needs a childId+createdAt composite index, which isn't deployed) or
+// a dateString equality (cheap, but only finds today's row and misses a child
+// who last synced yesterday). Left as-is deliberately; revisit if an index gets
+// deployed.
+const LATEST_SCREEN_TIME_WINDOW_DAYS = 30
+
+/** The child's most recent screen-time entry, or null if they haven't synced recently. */
+export async function getLatestScreenTimeForChild(childId) {
+  const rows = await getScreenTimeForChild(childId, LATEST_SCREEN_TIME_WINDOW_DAYS)
+  return rows[0] ?? null
 }
 
 /** Subscribe to a single Firestore document. Returns the unsubscribe function. */

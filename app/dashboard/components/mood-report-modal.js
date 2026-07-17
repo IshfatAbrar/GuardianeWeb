@@ -3,16 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { getMoodEntriesForChildInRange } from "../../lib/database";
-
-const MOOD_SCORE = {
-  happy: 5,
-  positive: 4,
-  neutral: 3,
-  okay: 3,
-  sad: 2,
-  anxious: 2,
-  angry: 1,
-};
+import { entryScore } from "../../lib/mood";
 
 const WEEKDAY_LONG = [
   "Sunday",
@@ -54,9 +45,10 @@ function formatLongDate(d) {
   });
 }
 
+// 0 stands for "no usable score" throughout this file (it filters on `> 0`),
+// so fold a missing score into 0 rather than propagating null.
 function scoreFor(entry) {
-  const key = String(entry?.mood || entry?.label || "").toLowerCase();
-  return MOOD_SCORE[key] ?? 0;
+  return entryScore(entry) ?? 0;
 }
 
 function summarize(entries, weekStart) {
@@ -220,9 +212,9 @@ function Content({ onClose, child }) {
               </div>
               <div className="text-right">
                 <p className="text-[24px] font-semibold leading-none text-[var(--muted)]">
-                  {summary.average.toFixed(1)}
+                  {Math.round(summary.average)}
                 </p>
-                <p className="mt-1 text-[11px] text-[var(--muted)]">Average</p>
+                <p className="mt-1 text-[11px] text-[var(--muted)]">Average / 100</p>
               </div>
             </div>
 
@@ -346,7 +338,7 @@ function WeekChart({ entries, weekStart }) {
   return (
     <div className="flex h-40 items-end gap-2">
       {dayScores.map((score, i) => {
-        const heightPct = score > 0 ? (score / 5) * 100 : 0;
+        const heightPct = score > 0 ? score : 0;
         return (
           <div key={i} className="flex flex-1 flex-col items-center gap-2">
             <div className="flex h-32 w-full items-end">

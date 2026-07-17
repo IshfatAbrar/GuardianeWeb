@@ -44,7 +44,7 @@ function Content({ onClose, currentName, uid, onSaved }) {
     setErrorMessage(null);
     try {
       const trimmed = name.trim();
-      await updateUserProfile(uid, { fullName: trimmed });
+      await updateUserProfile(uid, { name: trimmed });
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: trimmed }).catch(() => {});
       }

@@ -12,7 +12,7 @@ import { useAuth } from '../app/context/AuthContext'
 import { useNotifications } from '../app/lib/useNotifications'
 
 function getDisplayName(user, profile) {
-  if (profile?.fullName && profile.fullName.trim()) return profile.fullName
+  if (profile?.name && profile.name.trim()) return profile.name
   if (!user) return ''
   if (user.displayName && user.displayName.trim()) return user.displayName
   if (user.email) return user.email.split('@')[0]

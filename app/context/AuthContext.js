@@ -21,8 +21,7 @@ import {
 } from 'firebase/auth'
 import { auth } from '../lib/firebase'
 import {
-  provisionParentAndFamily,
-  rollbackFamilyProvision,
+  provisionParent,
   getUserProfile,
   listenToDoc,
   COLLECTIONS,
@@ -88,24 +87,25 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signUp = useCallback(
-    async (email, password, { fullName, firstName, lastName, children = [] } = {}) => {
+    async (email, password, { fullName, firstName, lastName, phone, children = [] } = {}) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password)
       const displayName = (fullName || [firstName, lastName].filter(Boolean).join(' ')).trim()
       if (displayName) {
         await updateProfile(cred.user, { displayName })
       }
-      let familyId = null
       try {
-        const result = await provisionParentAndFamily({
+        await provisionParent({
           uid: cred.user.uid,
           email,
-          fullName: displayName,
+          name: displayName,
+          phone,
           children,
         })
-        familyId = result.familyId
         return cred.user
       } catch (err) {
-        if (familyId) await rollbackFamilyProvision(familyId)
+        // Provisioning writes parent + children in one batch, so a failure
+        // leaves no Firestore docs behind — only the Auth user, which would
+        // otherwise squat on the email address with no profile to sign in to.
         try { await cred.user.delete() } catch (_) {}
         throw err
       }

@@ -1,7 +1,6 @@
 "use client";
 
-// Summary card: average score, trend, and most frequent mood. Port of
-// MoodSummaryModernCard.swift.
+// Summary card: average score, trend, and most frequent mood band.
 
 import { moodEmoji, moodLabel } from "../../../lib/mood";
 
@@ -22,8 +21,8 @@ export function MoodSummaryCard({ averageScore, trend, mostFrequentMood }) {
     <div className="flex items-stretch rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <SummaryItem
         title="Average"
-        value={averageScore.toFixed(1)}
-        subtitle="out of 6"
+        value={Math.round(averageScore)}
+        subtitle="out of 100"
       />
       <div className="w-px self-stretch bg-[var(--border)]" />
       <SummaryItem title="Trend" value={trend} subtitle="this period" />
