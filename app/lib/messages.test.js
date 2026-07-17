@@ -58,6 +58,21 @@ describe("isAlertMessage", () => {
     ).toBe(true);
   });
 
+  it("does not alert on a message the classifier judged Safe/Neutral", () => {
+    // Live data really does contain child rows classified "Safe/Neutral",
+    // despite the child app supposedly only sending risk labels. GuardParent's
+    // Boolean(classification) test raises a red alarm for these.
+    expect(isAlertMessage(childAlert({ metadata: { classification: "Safe/Neutral" } }))).toBe(
+      false,
+    );
+  });
+
+  it("still alerts on an unrecognised label — missing a real risk is worse", () => {
+    expect(isAlertMessage(childAlert({ metadata: { classification: "Some New Label" } }))).toBe(
+      true,
+    );
+  });
+
   it("rejects ordinary child chat", () => {
     expect(isAlertMessage({ senderType: "child", message: "can I stay out later" })).toBe(
       false,

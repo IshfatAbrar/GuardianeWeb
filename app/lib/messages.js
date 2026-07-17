@@ -54,20 +54,33 @@ export function messageClassification(message) {
   return message?.metadata?.classification || message?.classification || null
 }
 
+// The one label the child's classifier treats as NOT a risk
+// (TextClassifier.isRiskLabel covers the other three). In theory the child only
+// writes a classification when isRiskLabel passes, so this should never appear —
+// but live data has rows carrying it, so it evidently escapes that guard.
+const NON_RISK_CLASSIFICATION = 'Safe/Neutral'
+
 /**
  * Is this message a risk alert rather than ordinary chat?
  *
- * Mirrors GuardParent's `isAlert` exactly: child-sent, AND carrying either a
- * classification or the "Risk detected:" prefix. The senderType check matters —
- * without it a parent replying "Risk detected: ..." would forge an alert.
+ * Follows GuardParent's `isAlert` — child-sent, AND carrying either a
+ * classification or the "Risk detected:" prefix — with one deliberate
+ * divergence: a message the classifier itself labelled 'Safe/Neutral' is NOT an
+ * alert. GuardParent's bare `Boolean(classification)` test flags those as risks,
+ * which raises a red alarm for a message the model judged safe.
  *
- * A bare `Boolean(classification)` is safe here because the child only ever
- * writes a classification when TextClassifier.isRiskLabel() passes, so the
- * benign 'Safe/Neutral' label never reaches Firestore.
+ * Any *unrecognised* label still counts as an alert. The failure modes are not
+ * symmetric: showing a spurious alert is an annoyance, missing a real one is the
+ * thing this product exists to prevent — so only the explicitly-safe label is
+ * excluded, never an unknown one.
+ *
+ * The senderType check matters too: without it a parent replying
+ * "Risk detected: ..." would forge an alert.
  */
 export function isAlertMessage(message) {
   if (message?.senderType !== 'child') return false
-  if (messageClassification(message)) return true
+  const classification = messageClassification(message)
+  if (classification) return classification !== NON_RISK_CLASSIFICATION
   return typeof message?.message === 'string' && message.message.startsWith(RISK_PREFIX)
 }
 
