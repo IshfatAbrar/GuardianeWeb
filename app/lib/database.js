@@ -3,8 +3,8 @@
 // SCHEMA CONTRACT — this file must match what the two Android apps read/write:
 //   • GuardParent        (/Users/han/GuardParent)        — the Android parent app
 //   • Guardiane_Android  (/Users/han/Guardiane_Android)  — the child's device app
-// Both live in Firebase project `gurdiane-75091` (note: "gurdiane", no "a" —
-// it is NOT the old `guardianeusf` project the web/iOS used).
+// Both live in Firebase project `gurdiane-75091` (note the spelling:
+// "gurdiane", no "a").
 //
 // The convention is deliberately mixed and easy to get wrong:
 //   collection names are snake_case  (`mood_entries`, `screen_time_entries`)
@@ -193,8 +193,8 @@ function buildChildDoc({ parentUid, name, bday, gender, grade, notes, childIndex
  * `families` collection in this schema — the parent↔child link is the child's
  * `parentId` field alone.
  *
- * Single batch: unlike the old guardianeusf project, `gurdiane-75091` has no
- * rules that `get()` a sibling doc mid-write, so nothing needs sequencing.
+ * Single batch: `gurdiane-75091` has no rules that `get()` a sibling doc
+ * mid-write, so nothing needs sequencing.
  * Returns { childIds }.
  */
 export async function provisionParent({ uid, email, name, phone, children }) {

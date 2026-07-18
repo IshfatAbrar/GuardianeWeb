@@ -141,7 +141,7 @@ function DashboardContent() {
         </div>
       }
     >
-      <div className="flex  flex-col overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
+      <div className="flex h-dvh flex-col overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
         <div className="flex flex-1 overflow-hidden">
           <Sidebar
             activeNav={activeNav}
@@ -153,8 +153,8 @@ function DashboardContent() {
             collapsed={sidebarCollapsed}
             onToggleCollapsed={() => setSidebarCollapsed((c) => !c)}
           />
-          <main className="flex-1 overflow-y-auto">
-            <div className="mx-auto">{renderContent()}</div>
+          <main className="flex flex-1 flex-col overflow-y-auto">
+            {renderContent()}
           </main>
         </div>
       </div>

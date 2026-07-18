@@ -43,8 +43,8 @@ function toAlertRow(message) {
  *
  * It also owns `selectedChildId` and defaults it to the first fetched child.
  *
- * `assignments` is still returned empty: it existed only in the old
- * guardianeusf `assignments` collection, and the Android parent app assigns work
+ * `assignments` is still returned empty: it existed only in the legacy
+ * `assignments` collection, and the Android parent app assigns work
  * via `module_assignments` instead. Porting that is the remaining parity work;
  * the key stays so the overview components keep rendering their empty states.
  */

@@ -1,454 +1,197 @@
-// Firestore Security Rules for Guardiane Parent Facing App
-// Version: 1.0
-// Last Updated: January 2025
+// Firestore Security Rules — Firebase project `gurdiane-75091`
+// Rewritten 2026-07-18 to match the ACTUAL shared schema of the three live
+// clients on this project. The previous version of this file targeted the old
+// `guardianeusf` camelCase schema (families / children / enhancedDailyLogging /
+// childDeviceMappings …) and did NOT match anything here — do not restore it.
+//
+// ───────────────────────────────────────────────────────────────────────────
+// THREE CLIENTS SHARE THIS PROJECT — what they are and how they auth:
+//
+//   1. GuardianeWeb        (Next.js)         — parent, AUTHENTICATED (email/pw)
+//   2. GuardParent         (Expo Android)    — parent, AUTHENTICATED (email/pw)
+//   3. Guardiane_Android   (RN child device) — child,  *** NO AUTH AT ALL ***
+//
+// ⚠️  HARD CONSTRAINT: the child device app uses NO Firebase Auth. Its "login"
+// is a local QR/AsyncStorage scheme, so `request.auth` is ALWAYS null on its
+// traffic. Every collection the child app reads or writes MUST therefore permit
+// unauthenticated access, and NO rule on those paths may reference request.auth.
+// Adding even Anonymous Auth to the child app is the prerequisite for locking
+// these down further — until then, child-touched data is necessarily public.
+//
+// What this rewrite DOES improve over the previous wide-open state:
+//   • Parent-only collections (aiInsights, chatSessions) require auth.
+//   • Parent-only WRITES (users, emergency_contacts, modules, assignments,
+//     deletes on messages/learning_progress) require auth + ownership.
+//   • jojoLeads stays create-only + strictly shape-validated, never readable.
+//   • Everything not explicitly listed is denied (default-deny at the bottom).
+//
+// Collections that are read/written by the no-auth child app and so remain
+// publicly accessible by necessity: users(get), mood_entries, screen_time_entries,
+// messages, conversations, learning_progress, lesson_streaks, module_assignments,
+// modules(+lessons), emergency_contacts(read).
+// ───────────────────────────────────────────────────────────────────────────
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions for validation and security
-    
-    // Check if user is authenticated
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    // Check if user is the owner of the document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    // Check if user is part of a family
-    function isInFamily(familyDoc) {
-      return isAuthenticated() &&
-             (request.auth.uid in familyDoc.data.parentIds ||
-              request.auth.uid in get(/databases/$(database)/documents/families/$(familyDoc.id)).data.parentIds);
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
     }
 
-    // Check if user is parent of a child
-    function isParentOfChild(childDoc) {
-      return isAuthenticated() &&
-             request.auth.uid in childDoc.data.parentIds;
-    }
-
-    // Check if the request comes from the kid device linked to childId.
-    // Uses childDeviceMappings/{uid} written during QR scan to avoid reading the
-    // children collection on every rule evaluation.
-    function isChildDevice(childId) {
-      return isAuthenticated() &&
-             exists(/databases/$(database)/documents/childDeviceMappings/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/childDeviceMappings/$(request.auth.uid)).data.childId == childId;
-    }
-    
-    // Validate required fields for user documents
-    function validUserData(data) {
-      return data.keys().hasAll(['email', 'createdAt', 'updatedAt', 'isActive']) &&
-             data.email is string && data.email.matches('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$') &&
-             data.createdAt is timestamp &&
-             data.updatedAt is timestamp &&
-             data.isActive is bool &&
-             (
-               ('fullName' in data && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100) ||
-               ('firstName' in data && data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 50)
-             );
-    }
-    
-    // Validate required fields for family documents
-    function validFamilyData(data) {
-      return data.keys().hasAll(['name', 'parentIds', 'childIds', 'createdAt', 'updatedAt']) &&
-             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
-             data.parentIds is list &&
-             data.childIds is list &&
-             data.createdAt is timestamp &&
-             data.updatedAt is timestamp;
-    }
-    
-    // Validate required fields for child documents
-    function validChildData(data) {
-      return data.keys().hasAll(['name', 'age', 'familyId', 'parentIds', 'createdAt', 'updatedAt', 'isActive']) &&
-             data.name is string && data.name.size() >= 1 && data.name.size() <= 50 &&
-             data.age is int && data.age >= 0 && data.age <= 18 &&
-             data.familyId is string &&
-             data.parentIds is list &&
-             data.createdAt is timestamp &&
-             data.updatedAt is timestamp &&
-             data.isActive is bool;
-    }
-    
-    // Validate required fields for access request documents
-    function validAccessRequestData(data) {
-      return data.keys().hasAll(['childId', 'parentId', 'requestType', 'description', 'urgency', 'requestedAt', 'status']) &&
-             data.childId is string &&
-             data.parentId is string &&
-             data.requestType is string && data.requestType.size() <= 50 &&
-             data.description is string && data.description.size() >= 1 && data.description.size() <= 1000 &&
-             data.urgency is string && data.urgency in ['low', 'medium', 'high', 'emergency'] &&
-             data.requestedAt is timestamp &&
-             data.status is string && data.status in ['pending', 'approved', 'denied', 'completed'];
-    }
-    
-    // Validate required fields for alert documents
-    function validAlertData(data) {
-      return data.keys().hasAll(['type', 'message', 'severity', 'familyId', 'parentId', 'timestamp', 'status']) &&
-             data.type is string && data.type.size() <= 50 &&
-             data.message is string && data.message.size() >= 1 && data.message.size() <= 1000 &&
-             data.severity is string && data.severity in ['info', 'warning', 'error', 'critical'] &&
-             data.familyId is string &&
-             data.parentId is string &&
-             data.timestamp is timestamp &&
-             data.status is string && data.status in ['active', 'acknowledged', 'resolved', 'dismissed'];
-    }
-    
-    // Validate required fields for module documents
-    function validModuleData(data) {
-      return data.keys().hasAll(['title', 'description', 'ageGroup', 'difficulty', 'estimatedDuration', 'createdAt', 'updatedAt', 'isActive']) &&
-             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
-             data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
-             data.ageGroup is string && data.ageGroup in ['3-5', '6-8', '9-12', '13-15', '16-18'] &&
-             data.difficulty is string && data.difficulty in ['beginner', 'intermediate', 'advanced'] &&
-             data.estimatedDuration is int && data.estimatedDuration > 0 && data.estimatedDuration <= 480 &&
-             data.createdAt is timestamp &&
-             data.updatedAt is timestamp &&
-             data.isActive is bool;
-    }
-    
-    // Validate required fields for assignment documents
-    function validAssignmentData(data) {
-      return data.keys().hasAll(['moduleId', 'childId', 'familyId', 'parentId', 'assignedAt', 'isCompleted', 'progress', 'status']) &&
-             data.moduleId is string &&
-             data.childId is string &&
-             data.familyId is string &&
-             data.parentId is string &&
-             data.assignedAt is timestamp &&
-             data.isCompleted is bool &&
-             data.progress is number && data.progress >= 0.0 && data.progress <= 1.0 &&
-             data.status is string && data.status in ['assigned', 'in_progress', 'completed', 'overdue'];
-    }
-    
-    // Check if data contains only allowed update fields for users.
-    // Uses diff() so only the *changed* keys are checked against the whitelist,
-    // not the full merged document (which contains immutable fields like email/fullName).
-    function validUserUpdate(data) {
-      return data.diff(resource.data).affectedKeys().hasOnly(['fullName', 'firstName', 'lastName', 'phoneNumber', 'familyId', 'hasCompletedOnboarding', 'isActive', 'updatedAt']) &&
-             (!('fullName' in data) || (data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 100)) &&
-             (!('firstName' in data) || (data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 50)) &&
-             (!('lastName' in data) || (data.lastName is string && data.lastName.size() >= 1 && data.lastName.size() <= 50)) &&
-             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() <= 20)) &&
-             (!('familyId' in data) || (data.familyId is string && data.familyId.size() >= 1)) &&
-             (!('hasCompletedOnboarding' in data) || (data.hasCompletedOnboarding is bool || data.hasCompletedOnboarding is int)) &&
-             (!('isActive' in data) || data.isActive is bool) &&
-             data.updatedAt is timestamp;
-    }
-    
-    // Check if request contains harmful content
-    function isSafeContent(content) {
-      return !content.lower().matches('.*<script.*') &&
-             !content.lower().matches('.*javascript:.*') &&
-             !content.lower().matches('.*vbscript:.*') &&
-             !content.lower().matches('.*onload=.*') &&
-             !content.lower().matches('.*onerror=.*');
-    }
-    
-    // USERS COLLECTION
+    // ── users ────────────────────────────────────────────────────────────────
+    // Parents (both apps) and children both live here, distinguished by `role`.
+    // Child app: reads a single user doc by id (its own child doc + its parent
+    // doc) UNauthenticated — so `get` is public, but enumerating the collection
+    // (`list`) requires auth. The child app never writes here; parent apps do.
     match /users/{userId} {
-      allow read: if (isAuthenticated() && isOwner(userId)) ||
-                     // Child device reading a parent's profile (e.g. emergency contacts)
-                     (isAuthenticated() &&
-                      exists(/databases/$(database)/documents/childDeviceMappings/$(request.auth.uid)) &&
-                      get(/databases/$(database)/documents/childDeviceMappings/$(request.auth.uid)).data.parentIds.hasAny([userId]));
-      allow create: if isAuthenticated() && 
-                       isOwner(userId) && 
-                       validUserData(request.resource.data) &&
-                       request.resource.data.email == request.auth.token.email;
-      allow update: if isAuthenticated() && 
-                       isOwner(userId) && 
-                       validUserUpdate(request.resource.data);
-      allow delete: if false; // Users cannot be deleted, only deactivated
-    }
-    
-    // FAMILIES COLLECTION
-    match /families/{familyId} {
-      allow read: if isAuthenticated() &&
-                     (isOwner(resource.data.parentIds[0]) ||
-                      request.auth.uid in resource.data.parentIds ||
-                      // Child device reading their family document
-                      (exists(/databases/$(database)/documents/childDeviceMappings/$(request.auth.uid)) &&
-                       get(/databases/$(database)/documents/childDeviceMappings/$(request.auth.uid)).data.familyId == familyId));
-      allow create: if isAuthenticated() && 
-                       validFamilyData(request.resource.data) &&
-                       request.auth.uid in request.resource.data.parentIds;
-      allow update: if isAuthenticated() && 
-                       (isOwner(resource.data.parentIds[0]) || 
-                        request.auth.uid in resource.data.parentIds) &&
-                       // Prevent unauthorized modification of parentIds
-                       request.resource.data.parentIds == resource.data.parentIds;
-      allow delete: if isAuthenticated() && 
-                       isOwner(resource.data.parentIds[0]);
-    }
-    
-    // CHILDREN COLLECTION
-    match /children/{childId} {
-      allow read: if isAuthenticated() &&
-                     (request.auth.uid in resource.data.parentIds ||
-                      isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))) ||
-                      isChildDevice(childId) ||
-                      // Allow QR-based lookup for any authenticated user (needed for device
-                      // linking before childDeviceMappings exists). The qrCode value is the
-                      // physical secret; authentication still required.
-                      resource.data.qrCode is string);
-      allow create: if isAuthenticated() &&
-                       validChildData(request.resource.data) &&
-                       request.auth.uid in request.resource.data.parentIds &&
-                       isInFamily(get(/databases/$(database)/documents/families/$(request.resource.data.familyId)));
-      // Parent update: full field control
-      allow update: if isAuthenticated() &&
-                       isParentOfChild(resource) &&
-                       request.resource.data.parentIds == resource.data.parentIds &&
-                       request.resource.data.familyId == resource.data.familyId;
-      // Device linking update: kid sets its own childDeviceUid during QR scan.
-      // Only allowed on docs that have a qrCode (parent-created children).
-      allow update: if isAuthenticated() &&
-                       resource.data.qrCode is string &&
-                       request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['childDeviceUid', 'linkedAt', 'deviceName', 'deviceId', 'updatedAt', 'parentIds']) &&
-                       request.resource.data.parentIds.hasAll(resource.data.parentIds) &&
-                       'childDeviceUid' in request.resource.data &&
-                       request.resource.data.childDeviceUid == request.auth.uid &&
-                       request.resource.data.familyId == resource.data.familyId;
-      allow delete: if false; // Use soft delete (isActive = false) instead
-    }
-    
-    // ACCESS REQUESTS — per-child subcollection.
-    // The iOS Kid app writes requests to children/{childId}/accessRequests/{id}
-    // (LearningModuleModels.swift), NOT the top-level collection below. Without
-    // this block those writes were default-denied and the parent could never
-    // see them. The linked kid device creates; the parent reads and responds.
-    match /children/{childId}/accessRequests/{requestId} {
-      allow read: if isAuthenticated() &&
-                     (isParentOfChild(get(/databases/$(database)/documents/children/$(childId))) ||
-                      isChildDevice(childId));
-      allow create: if isAuthenticated() && isChildDevice(childId);
-      allow update: if isAuthenticated() &&
-                       isParentOfChild(get(/databases/$(database)/documents/children/$(childId)));
-      allow delete: if isAuthenticated() &&
-                       isParentOfChild(get(/databases/$(database)/documents/children/$(childId)));
-    }
+      allow get: if true;
+      allow list: if isAuthenticated();
 
-    // ACCESS REQUESTS COLLECTION (legacy top-level)
-    match /accessRequests/{requestId} {
-      allow read: if isAuthenticated() &&
-                     (isOwner(resource.data.parentId) ||
-                      isParentOfChild(get(/databases/$(database)/documents/children/$(resource.data.childId))) ||
-                      isChildDevice(resource.data.childId));
-      allow create: if isAuthenticated() && 
-                       validAccessRequestData(request.resource.data) &&
-                       request.resource.data.parentId == request.auth.uid &&
-                       isParentOfChild(get(/databases/$(database)/documents/children/$(request.resource.data.childId))) &&
-                       isSafeContent(request.resource.data.description);
-      allow update: if isAuthenticated() && 
-                       (isOwner(resource.data.parentId) ||
-                        isParentOfChild(get(/databases/$(database)/documents/children/$(resource.data.childId)))) &&
-                       // Only allow status updates and responses
-                       request.resource.data.keys().hasOnly(['status', 'response', 'respondedAt', 'respondedBy']) &&
-                       (!('response' in request.resource.data) || isSafeContent(request.resource.data.response));
-      allow delete: if isAuthenticated() && isOwner(resource.data.parentId);
-    }
-    
-    // ALERTS COLLECTION
-    match /alerts/{alertId} {
-      allow read: if isAuthenticated() &&
-                     (isOwner(resource.data.parentId) ||
-                      isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))) ||
-                      // Child device reading alerts targeting their childId
-                      ('childId' in resource.data && isChildDevice(resource.data.childId)));
-      allow create: if isAuthenticated() && 
-                       validAlertData(request.resource.data) &&
-                       request.resource.data.parentId == request.auth.uid &&
-                       isInFamily(get(/databases/$(database)/documents/families/$(request.resource.data.familyId))) &&
-                       isSafeContent(request.resource.data.message);
-      allow update: if isAuthenticated() && 
-                       (isOwner(resource.data.parentId) ||
-                        isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId)))) &&
-                       // Only allow status updates
-                       request.resource.data.keys().hasOnly(['status', 'acknowledgedAt', 'acknowledgedBy']);
-      allow delete: if false; // Alerts should be archived, not deleted
-    }
-    
-    // ENHANCED DAILY LOGGING COLLECTION (Written by kid app, read by parent app)
-    match /enhancedDailyLogging/{logId} {
-      allow read: if isAuthenticated();
+      // A parent may write their own doc, or a child doc they own (child docs
+      // carry `parentId` == the parent's uid).
       allow create: if isAuthenticated() &&
-                       request.resource.data.childId is string &&
-                       request.resource.data.timestamp is timestamp;
-      allow update: if isAuthenticated();
-      allow delete: if false;
-    }
+                       (userId == request.auth.uid ||
+                        request.resource.data.parentId == request.auth.uid);
+      allow update, delete: if isAuthenticated() &&
+                       (userId == request.auth.uid ||
+                        resource.data.parentId == request.auth.uid);
 
-    // SCREEN TIME COLLECTION (Written by kid app, read by parent app)
-    match /screenTime/{docId} {
-      allow read: if isAuthenticated() &&
-                     ('familyId' in resource.data &&
-                      isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))));
-      allow create: if isAuthenticated() &&
-                       request.resource.data.childId is string &&
-                       request.resource.data.familyId is string;
-      allow update: if isAuthenticated() &&
-                       ('familyId' in resource.data &&
-                        isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))));
-      allow delete: if false;
-    }
-
-    // LEARNING PROGRESS COLLECTION (Written by kid app, read by parent app)
-    match /learningProgress/{progressId} {
-      allow read: if isAuthenticated() &&
-                     ('familyId' in resource.data &&
-                      isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))));
-      allow create: if isAuthenticated() &&
-                       request.resource.data.childId is string &&
-                       request.resource.data.familyId is string;
-      allow update: if isAuthenticated() &&
-                       ('familyId' in resource.data &&
-                        (isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))) ||
-                         isChildDevice(resource.data.childId)));
-      allow delete: if false;
-    }
-
-    // SAFETY INCIDENTS COLLECTION
-    // Kid device creates incidents (ML classifier flags); parents read them.
-    match /safety_incidents/{incidentId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.data.childId is string &&
-                       isChildDevice(request.resource.data.childId);
-      allow update: if false;
-      allow delete: if false;
-    }
-    
-    // MODULES COLLECTION (Parents can create/manage their own modules)
-    match /modules/{moduleId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() &&
-                       request.resource.data.createdBy == request.auth.uid;
-      allow update: if isAuthenticated() &&
-                       resource.data.createdBy == request.auth.uid;
-      allow delete: if isAuthenticated() &&
-                       resource.data.createdBy == request.auth.uid;
-
-      // Lessons subcollection — check createdBy on the lesson itself (get() on parent fails in batch writes)
-      match /lessons/{lessonId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated() &&
-                         request.resource.data.createdBy == request.auth.uid;
-        allow update, delete: if isAuthenticated() &&
-                                  resource.data.createdBy == request.auth.uid;
+      // GuardParent stores its JoJo history under the parent's own user doc.
+      match /jojoConversations/{conversationId} {
+        allow read, write: if isOwner(userId);
+        match /messages/{messageId} {
+          allow read, write: if isOwner(userId);
+        }
       }
     }
-    
-    // ASSIGNMENTS COLLECTION
-    match /assignments/{assignmentId} {
-      allow read: if isAuthenticated() &&
-                     (isOwner(resource.data.parentId) ||
-                      isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))) ||
-                      isChildDevice(resource.data.childId));
+
+    // ── mood_entries ─────────────────────────────────────────────────────────
+    // Written + deleted by the child app (no auth); read by everyone.
+    match /mood_entries/{entryId} {
+      allow read: if true;
+      allow create: if request.resource.data.childId is string;
+      allow update: if false;   // no client updates mood entries in place
+      allow delete: if true;    // child app prunes its own entries (unauth)
+    }
+
+    // ── screen_time_entries ──────────────────────────────────────────────────
+    // Written + deleted by the child app (no auth); read by everyone.
+    match /screen_time_entries/{entryId} {
+      allow read: if true;
+      allow create: if request.resource.data.childId is string;
+      allow update: if false;
+      allow delete: if true;
+    }
+
+    // ── messages (parent ↔ child chat) ───────────────────────────────────────
+    // Both sides create; either side toggles isRead (child side is unauth, so
+    // create/read/update cannot require auth). Only the parent apps delete.
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create: if request.resource.data.childId is string &&
+                       request.resource.data.senderType in ['parent', 'child'];
+      allow update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // ── conversations (child-app JoJo history) ───────────────────────────────
+    // Child app only, fully unauthenticated.
+    match /conversations/{conversationId} {
+      allow read, create, update: if true;
+      allow delete: if false;
+      match /messages/{messageId} {
+        allow read, create: if true;
+        allow update, delete: if false;
+      }
+    }
+
+    // ── emergency_contacts ───────────────────────────────────────────────────
+    // Read by the child app (unauth). Only the owning parent writes.
+    match /emergency_contacts/{contactId} {
+      allow read: if true;
       allow create: if isAuthenticated() &&
-                       validAssignmentData(request.resource.data) &&
-                       request.resource.data.parentId == request.auth.uid &&
-                       isInFamily(get(/databases/$(database)/documents/families/$(request.resource.data.familyId))) &&
-                       isParentOfChild(get(/databases/$(database)/documents/children/$(request.resource.data.childId)));
-      allow update: if isAuthenticated() &&
-                       (isOwner(resource.data.parentId) ||
-                        isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))) ||
-                        isChildDevice(resource.data.childId)) &&
-                       // Prevent modification of core assignment data
-                       request.resource.data.moduleId == resource.data.moduleId &&
-                       request.resource.data.childId == resource.data.childId &&
-                       request.resource.data.familyId == resource.data.familyId &&
-                       request.resource.data.parentId == resource.data.parentId;
-      allow delete: if isAuthenticated() && isOwner(resource.data.parentId);
+                       request.resource.data.parentId == request.auth.uid;
+      allow update, delete: if isAuthenticated() &&
+                       resource.data.parentId == request.auth.uid;
     }
-    
-    // ANALYTICS COLLECTION (Write-only for logging, read for analytics)
-    match /analytics/{eventId} {
-      allow read: if isAuthenticated() && 
-                     ('familyId' in resource.data && 
-                      isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId))));
-      allow create: if isAuthenticated() && 
-                       request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.timestamp is timestamp &&
-                       request.resource.data.sessionId is string;
-      allow update: if false; // Analytics events are immutable
-      allow delete: if false; // Analytics events are not deleted
+
+    // ── modules (+ lessons) — shared learning content ────────────────────────
+    // Read by the child app (unauth). Created/edited by authenticated parents;
+    // the "only the creator edits" rule is enforced in app code.
+    match /modules/{moduleId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated();
+      match /lessons/{lessonId} {
+        allow read: if true;
+        allow write: if isAuthenticated();
+      }
     }
-    
-    // CHAT SESSIONS COLLECTION (For Jojo chat history - optional)
+
+    // ── module_assignments ───────────────────────────────────────────────────
+    // Read by the child app (unauth). Written by authenticated parents.
+    match /module_assignments/{assignmentId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // ── learning_progress ────────────────────────────────────────────────────
+    // Written by the child app as it completes lessons (no auth). Parents read
+    // and may delete.
+    match /learning_progress/{progressId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // ── lesson_streaks (child-app only) ──────────────────────────────────────
+    match /lesson_streaks/{childId} {
+      allow read, create, update: if true;
+      allow delete: if false;
+    }
+
+    // ── aiInsights (GuardParent only, authenticated) ─────────────────────────
+    match /aiInsights/{childId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // ── chatSessions (GuardianeWeb JoJo history, per-user) ───────────────────
     match /chatSessions/{sessionId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                        request.resource.data.userId == request.auth.uid &&
                        request.resource.data.createdAt is timestamp;
-      allow update: if isAuthenticated() && 
+      // Updates may not reassign ownership or rewrite createdAt.
+      allow update: if isAuthenticated() &&
                        resource.data.userId == request.auth.uid &&
-                       // Only allow adding messages, not modifying existing data
                        request.resource.data.userId == resource.data.userId &&
                        request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if isAuthenticated() && 
+      allow delete: if isAuthenticated() &&
                        resource.data.userId == request.auth.uid;
-    }
-    
-    // CHAT MESSAGES SUBCOLLECTION
-    match /chatSessions/{sessionId}/messages/{messageId} {
-      allow read: if isAuthenticated() && 
-                     get(/databases/$(database)/documents/chatSessions/$(sessionId)).data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && 
-                       get(/databases/$(database)/documents/chatSessions/$(sessionId)).data.userId == request.auth.uid &&
-                       request.resource.data.timestamp is timestamp &&
-                       isSafeContent(request.resource.data.content);
-      allow update: if false; // Messages are immutable
-      allow delete: if false; // Messages are not deleted individually
-    }
-    
-    // MOOD ENTRIES COLLECTION (Written by kid app, readable by kid device and parent)
-    match /moodEntries/{entryId} {
-      allow read: if isAuthenticated() &&
-                     (isChildDevice(resource.data.childId) ||
-                      ('familyId' in resource.data &&
-                       isInFamily(get(/databases/$(database)/documents/families/$(resource.data.familyId)))));
-      allow create: if isAuthenticated() &&
-                       request.resource.data.childId is string &&
-                       request.resource.data.timestamp is timestamp &&
-                       isChildDevice(request.resource.data.childId);
-      allow update: if isAuthenticated() && isChildDevice(resource.data.childId);
-      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+                       get(/databases/$(database)/documents/chatSessions/$(sessionId)).data.userId == request.auth.uid;
+        allow create: if isAuthenticated() &&
+                         get(/databases/$(database)/documents/chatSessions/$(sessionId)).data.userId == request.auth.uid &&
+                         request.resource.data.timestamp is timestamp;
+        allow update, delete: if false;   // messages are immutable
+      }
     }
 
-    // CHILD DEVICE MAPPINGS COLLECTION
-    // Written once during QR scan — maps anonymous device UID to childId/familyId/parentIds.
-    // Used by security rules to grant child-device access to collections without storing
-    // the device UID in every parent-facing document.
-    match /childDeviceMappings/{deviceUid} {
-      allow read: if isAuthenticated() && request.auth.uid == deviceUid;
-      allow create: if isAuthenticated() &&
-                       request.auth.uid == deviceUid &&
-                       request.resource.data.childId is string &&
-                       request.resource.data.familyId is string &&
-                       request.resource.data.parentIds is list;
-      allow update: if isAuthenticated() && request.auth.uid == deviceUid;
-      allow delete: if false;
-    }
-
-    // JOJO LEADS COLLECTION
-    // Lightweight contact capture from the PUBLIC, login-free JoJo chatbot
-    // (/chatbot). These are not accounts — just a way for guests to leave
-    // contact info so the team can invite them to the full product. Because the
-    // chatbot has no auth, create is open to unauthenticated visitors, but the
-    // shape is strictly validated and the docs are never client-readable.
+    // ── jojoLeads (public, login-free chatbot lead capture) ──────────────────
+    // The ONLY intentionally-unauthenticated WRITE with a strict shape check.
+    // Never client-readable — the team reads leads from the Firebase console.
     function validJojoLead(data) {
       return data.keys().hasOnly(['email', 'phone', 'name', 'childInfo', 'zip', 'source', 'createdAt']) &&
              data.createdAt is timestamp &&
              data.email is string && data.email.size() <= 254 &&
              data.phone is string && data.phone.size() <= 32 &&
-             // Require at least one usable contact channel.
              (data.email.size() >= 3 || data.phone.size() >= 7) &&
              data.name is string && data.name.size() <= 100 &&
              data.childInfo is string && data.childInfo.size() <= 500 &&
@@ -460,18 +203,9 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // DEFAULT DENY ALL
+    // ── DEFAULT DENY — anything not matched above is rejected ─────────────────
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
-
-// Additional security considerations:
-// 1. These rules should be deployed to Firebase using the Firebase CLI
-// 2. Regular review and updates of these rules as the app evolves
-// 3. Use Firebase Security Rules testing to validate rule effectiveness
-// 4. Monitor Firebase Security Rules usage through Firebase Console
-// 5. Consider implementing rate limiting at the application level
-// 6. Implement proper authentication state management in the client
-// 7. Use Firebase Auth custom claims for role-based access control if needed

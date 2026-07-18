@@ -102,7 +102,7 @@ export function MessagingTab({ data }) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 p-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 p-6">
       <Header childName={selectedChild?.name} />
       {/*
         Keyed by child so switching conversations remounts this subtree. That

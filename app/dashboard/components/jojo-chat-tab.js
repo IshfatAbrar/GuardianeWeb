@@ -292,7 +292,7 @@ export function JojoChatTab() {
   const isEmpty = messages.length === 0 && !isSending && !loadingMessages;
 
   return (
-    <div className="flex h-[90vh] overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       <ChatSidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
