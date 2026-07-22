@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import QRCode from "qrcode";
+import { CHILD_PLAY_STORE_URL } from "../../../lib/storeLinks";
 
 export function ChildQrModal({ open, onClose, childName, qrCode }) {
   if (!open || typeof document === "undefined" || !qrCode) return null;
@@ -109,6 +110,21 @@ function Content({ childName, qrCode, onClose }) {
               {qrCode}
             </p>
           </div>
+
+          {/* Matches GuardParent's QR sheet, which offers the same link. */}
+          <a
+            href={CHILD_PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
+          >
+            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download the child app on Google Play
+          </a>
         </div>
       </div>
     </div>

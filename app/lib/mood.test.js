@@ -19,6 +19,7 @@ import {
   dailyAverages,
   trend,
   scoreColor,
+  summarizeMood,
 } from "./mood.js";
 
 // A mood_entries-shaped doc. entryMillis accepts a plain Date.
@@ -178,5 +179,79 @@ describe("trend", () => {
 
   it("holds Stable for a shift of 10 points or less", () => {
     expect(trend([entry(50, at(1)), entry(60, at(2))])).toBe("Stable");
+  });
+});
+
+describe("summarizeMood", () => {
+  const NOW = new Date(2026, 6, 21, 12).getTime(); // Tue Jul 21 2026, midday
+  const daysAgo = (n) => new Date(NOW - n * 86_400_000);
+  const at = (n) => {
+    const d = daysAgo(n);
+    return { score: 60, timestamp: d, dateString: d.toDateString() };
+  };
+  const scored = (score, n) => ({ ...at(n), score });
+
+  it("returns empty state when the child has never logged a mood", () => {
+    expect(summarizeMood([], { now: NOW })).toEqual({
+      latest: null,
+      latestIsToday: false,
+      latestAt: null,
+      average: null,
+    });
+  });
+
+  it("ignores rows that carry no usable score", () => {
+    expect(summarizeMood([{ timestamp: daysAgo(0) }], { now: NOW }).latest).toBeNull();
+  });
+
+  // The whole point of the change: GuardParent shows the newest entry however
+  // old it is, and the web now matches instead of blanking the tile.
+  it("surfaces the newest entry even when it is weeks old", () => {
+    const summary = summarizeMood([scored(77, 74), scored(92, 34)], { now: NOW });
+    expect(summary.latest.score).toBe(92);
+    expect(summary.latestIsToday).toBe(false);
+    expect(summary.average.score).toBe(85); // (77 + 92) / 2
+  });
+
+  it("flags an entry logged today, trusting the child device's dateString", () => {
+    const summary = summarizeMood([scored(80, 0)], { now: NOW });
+    expect(summary.latestIsToday).toBe(true);
+    expect(summary.average).toEqual({
+      score: 80,
+      days: 7,
+      count: 1,
+      since: summary.latestAt,
+    });
+  });
+
+  it("does not call an entry today's when the child's own date disagrees", () => {
+    const row = { score: 80, timestamp: daysAgo(0), dateString: "Mon Jul 20 2026" };
+    expect(summarizeMood([row], { now: NOW }).latestIsToday).toBe(false);
+  });
+
+  it("averages only the window while the child is logging regularly", () => {
+    const summary = summarizeMood([scored(40, 1), scored(60, 3), scored(90, 30)], {
+      now: NOW,
+    });
+    expect(summary.average.score).toBe(50); // the 30-day-old 90 is excluded
+    expect(summary.average.days).toBe(7);
+    expect(summary.average.count).toBe(2);
+  });
+
+  it("falls back to recent entries, and says so, once the window is empty", () => {
+    const summary = summarizeMood([scored(40, 20), scored(60, 40)], { now: NOW });
+    expect(summary.average.score).toBe(50);
+    expect(summary.average.days).toBeNull(); // → the tile labels it "since <date>"
+    expect(summary.average.count).toBe(2);
+    expect(summary.average.since).toEqual(daysAgo(40));
+  });
+
+  it("caps the fallback at the ten most recent entries", () => {
+    // Twelve stale entries: the oldest two (score 0) must not drag the average.
+    const rows = Array.from({ length: 12 }, (_, i) => scored(i < 10 ? 100 : 0, 30 + i));
+    expect(summarizeMood(rows, { now: NOW }).average).toMatchObject({
+      score: 100,
+      count: 10,
+    });
   });
 });

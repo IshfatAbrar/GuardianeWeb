@@ -31,7 +31,9 @@ export function QuickActionsCard({
         </h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Always two per row — the card shares a row with the mood and
+          screen-time cards, so four across squeezes the labels. */}
+      <div className="grid grid-cols-2 gap-4">
         {quickActions.map((qa) => (
           <button
             key={qa.id}

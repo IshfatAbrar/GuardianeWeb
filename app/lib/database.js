@@ -361,24 +361,21 @@ export async function getMoodEntriesForChild(childId, days = 7) {
 }
 
 /**
- * Today's most recent mood entry for a child (or null).
+ * A child's whole mood history, newest first.
  *
- * Matches on `dateString` the way the child app does rather than comparing
- * Timestamps: the child writes `dateString` from its own local clock, so a
- * device in another timezone would otherwise disagree with the browser about
- * which entries are "today".
+ * The per-child query is unfiltered anyway (see the note above — no composite
+ * index exists to range on `timestamp`), so the overview reads the history once
+ * and derives today's entry, the latest entry and the running average from it
+ * rather than issuing the same query twice.
  */
-export async function getTodaysMoodForChild(childId) {
-  if (!childId) return null
+export async function getMoodHistoryForChild(childId) {
+  if (!childId) return []
   const snap = await getDocs(
     query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
   )
-  const today = new Date().toDateString()
-  const rows = snap.docs
+  return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
-    .filter((r) => r.dateString === today)
     .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0))
-  return rows[0] ?? null
 }
 
 // `timestamp` is the child app's primary ordering field, but entries written

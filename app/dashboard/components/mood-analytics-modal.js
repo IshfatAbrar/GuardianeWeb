@@ -1,13 +1,18 @@
 "use client";
 
-// Full mood-analytics screen, shown from the dashboard "Full Report" button.
-// Port of WeeklyMoodChartScreen.swift: a range picker, summary card, donut +
-// legend, distribution breakdown, and a daily timeline — driven by the same
-// 1–6 mood scale and analytics as the iOS MoodViewModel.
+// Full report for one child, shown from the dashboard "Full Report" button.
+//
+// This is the web's counterpart to GuardParent's Report screen (app/report.js):
+// a range picker, mood summary, donut + legend, highest/average/lowest, a
+// breakdown, a daily timeline and the screen-time roll-up for the same range.
+// The scale is the child app's 0–100 wellbeing score throughout.
+//
+// Not carried over from GuardParent: its "Key Insights" panel, which is two
+// hardcoded paragraphs of generic advice dressed up as analysis of this child.
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { getMoodEntriesForChild } from "../../lib/database";
+import { getMoodEntriesForChild, getScreenTimeForChild } from "../../lib/database";
 import {
   averageScore,
   distribution,
@@ -20,11 +25,16 @@ import { MoodDonutChart } from "./mood/mood-donut-chart";
 import { MoodColorLegend } from "./mood/mood-color-legend";
 import { MoodDistributionBars } from "./mood/mood-distribution-bars";
 import { MoodWeekTimeline } from "./mood/mood-week-timeline";
+import { MoodRangeStats } from "./mood/mood-range-stats";
+import { ScreenTimeReport } from "./screen-time-report";
 
+// Week/Month/Year match GuardParent's segmented control; 3 Months is kept
+// because a quarter is the range where a slow decline actually becomes visible.
 const RANGES = [
   { id: "week", label: "Week", days: 7 },
   { id: "month", label: "Month", days: 30 },
   { id: "quarter", label: "3 Months", days: 90 },
+  { id: "year", label: "Year", days: 365 },
 ];
 
 export function MoodAnalyticsModal({ open, onClose, child }) {
@@ -35,9 +45,15 @@ export function MoodAnalyticsModal({ open, onClose, child }) {
 function Content({ onClose, child }) {
   const [rangeId, setRangeId] = useState("week");
   const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [screenTime, setScreenTime] = useState([]);
+  // Which (child, range) the loaded data belongs to. Deriving `loading` from it
+  // means switching range shows the spinner rather than the previous range's
+  // numbers, without setting state synchronously inside the effect.
+  const [loadedKey, setLoadedKey] = useState(null);
 
   const days = RANGES.find((r) => r.id === rangeId)?.days ?? 7;
+  const dataKey = `${child?.id ?? ""}:${days}`;
+  const loading = loadedKey !== dataKey;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -55,6 +71,17 @@ function Content({ onClose, child }) {
   useEffect(() => {
     if (!child?.id) return;
     let cancelled = false;
+
+    // Screen time is fetched alongside mood but must not gate the report: a
+    // child who logs moods and never syncs usage still has a mood report.
+    getScreenTimeForChild(child.id, days)
+      .then((rows) => {
+        if (!cancelled) setScreenTime(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setScreenTime([]);
+      });
+
     getMoodEntriesForChild(child.id, days)
       .then((rows) => {
         if (!cancelled) setEntries(rows);
@@ -63,12 +90,12 @@ function Content({ onClose, child }) {
         if (!cancelled) setEntries([]);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedKey(dataKey);
       });
     return () => {
       cancelled = true;
     };
-  }, [child?.id, days]);
+  }, [child?.id, days, dataKey]);
 
   const stats = useMemo(
     () => ({
@@ -102,7 +129,7 @@ function Content({ onClose, child }) {
             id="mood-analytics-title"
             className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]"
           >
-            {childFirstName}&apos;s Mood
+            {childFirstName}&apos;s Report
           </h1>
           <button
             type="button"
@@ -136,29 +163,39 @@ function Content({ onClose, child }) {
             <div className="flex h-48 items-center justify-center text-[13px] text-[var(--muted)]">
               Loading…
             </div>
-          ) : entries.length === 0 ? (
-            <EmptyState />
           ) : (
             <>
-              <MoodSummaryCard
-                averageScore={stats.average}
-                trend={stats.trend}
-                mostFrequentMood={stats.frequent}
-              />
+              {entries.length === 0 ? (
+                <EmptyState />
+              ) : (
+                <>
+                  <MoodSummaryCard
+                    averageScore={stats.average}
+                    trend={stats.trend}
+                    mostFrequentMood={stats.frequent}
+                  />
 
-              <Section title="Mood Distribution">
-                <div className="flex justify-center py-2">
-                  <MoodDonutChart distribution={stats.dist} />
-                </div>
-                <MoodColorLegend distribution={stats.dist} />
-              </Section>
+                  <MoodRangeStats entries={entries} />
 
-              <Section title="Breakdown">
-                <MoodDistributionBars distribution={stats.dist} />
-              </Section>
+                  <Section title="Mood Distribution">
+                    <div className="flex justify-center py-2">
+                      <MoodDonutChart distribution={stats.dist} />
+                    </div>
+                    <MoodColorLegend distribution={stats.dist} />
+                  </Section>
 
-              <Section title="Daily Timeline">
-                <MoodWeekTimeline dailyAverages={stats.daily} />
+                  <Section title="Breakdown">
+                    <MoodDistributionBars distribution={stats.dist} />
+                  </Section>
+
+                  <Section title="Daily Timeline">
+                    <MoodWeekTimeline dailyAverages={stats.daily} />
+                  </Section>
+                </>
+              )}
+
+              <Section title="Screen Time">
+                <ScreenTimeReport entries={screenTime} days={days} />
               </Section>
             </>
           )}

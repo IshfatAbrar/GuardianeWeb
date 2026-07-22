@@ -1,12 +1,18 @@
 "use client";
 
-// Daily-average timeline as a row of colored bars. Port of
-// MoodWeekTimelineView.swift (score label on top, bar, weekday beneath).
+// Daily-average timeline as a row of colored bars (score label on top, bar,
+// weekday beneath).
+//
+// The bar height is a fraction of the FULL 0–100 wellbeing scale the child app
+// writes — not a fraction of the tallest bar — so a good week and a bad week
+// look different rather than both filling the frame. This used to divide by 6,
+// left over from the retired 1–6 emotion model, which pinned every real score
+// to full height.
 
 import { scoreColor } from "../../../lib/mood";
 
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MAX_SCORE = 6;
+const MAX_SCORE = 100;
 
 export function MoodWeekTimeline({ dailyAverages }) {
   if (!dailyAverages.length) return null;
@@ -21,7 +27,7 @@ export function MoodWeekTimeline({ dailyAverages }) {
             className="flex min-w-[28px] flex-1 flex-col items-center gap-1.5"
           >
             <span className="text-[9px] text-[var(--muted)]">
-              {item.score.toFixed(1)}
+              {Math.round(item.score)}
             </span>
             <div className="flex h-28 w-full items-end justify-center">
               <div

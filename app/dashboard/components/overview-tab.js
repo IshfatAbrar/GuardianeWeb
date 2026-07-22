@@ -8,6 +8,7 @@ import { QuickActionsCard } from "./quick-actions-card";
 import { ScreenTimeCard } from "./screen-time-card";
 import { LearningModulesCarousel } from "./learning-modules-carousel";
 import { RecentActivityCard } from "./recent-activity-card";
+import { AiInsightsCard } from "./ai-insights-card";
 import { ChildFormModal } from "./child-form-modal";
 import { EmergencyCallModal } from "./emergency-call-modal";
 import { MoodAnalyticsModal } from "./mood-analytics-modal";
@@ -34,8 +35,10 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
     alerts,
     activeAlerts,
     modules,
-    todaysMood,
+    mood,
     latestScreenTime,
+    insights,
+    insightsLoading,
     completedAssignmentsCount,
     inProgressAssignmentsCount,
     selectedChildId,
@@ -74,11 +77,13 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         activeAlertsCount={activeAlerts.length}
         completedCount={completedAssignmentsCount}
         inProgressCount={inProgressAssignmentsCount}
+        wellbeing={mood?.average}
+        wellbeingChildName={selectedChild?.name}
       />
 
       <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-3">
         <TodaysMoodCard
-          mood={todaysMood}
+          mood={mood}
           childName={selectedChild?.name}
           onFullReport={openReport}
         />
@@ -90,6 +95,14 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           onEmergency={() => setEmergencyOpen(true)}
         />
       </div>
+
+      {selectedChild && (
+        <AiInsightsCard
+          insights={insights}
+          loading={insightsLoading}
+          childName={selectedChild.name}
+        />
+      )}
 
       <LearningModulesCarousel
         modules={modules}

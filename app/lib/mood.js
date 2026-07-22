@@ -163,3 +163,67 @@ export function trend(entries) {
   if (first - second > TREND_THRESHOLD) return "Declining";
   return "Stable";
 }
+
+// ─── Overview tiles ──────────────────────────────────────────────────────────
+
+// How far back "recent" reaches for the average, and how many entries to fall
+// back to when that window is empty.
+const WELLBEING_WINDOW_DAYS = 7;
+const WELLBEING_FALLBACK_ENTRIES = 10;
+
+/**
+ * What the overview's mood tiles show, from a child's full mood history.
+ *
+ * The child app logs a mood when it feels like it, not daily — live histories
+ * routinely have month-wide gaps. GuardParent's home screen therefore shows the
+ * child's LATEST entry regardless of age (`getLatestChildMood`), and this does
+ * the same, but carries the entry's age so the UI can say when it is stale
+ * rather than passing a five-week-old score off as today's. (GuardParent also
+ * falls back to a hardcoded 89 when a child has no entries at all — that part
+ * is deliberately not copied: an invented score is worse than an empty tile.)
+ *
+ * The average works the same way: the last `windowDays`, or — when the child
+ * logged nothing in that window — their most recent handful of entries, with
+ * `average.since` naming the period so the tile can label what it averaged.
+ *
+ * @param rows mood_entries docs, any order.
+ * @returns {{
+ *   latest: object|null, latestIsToday: boolean, latestAt: Date|null,
+ *   average: { score: number, days: number|null, count: number, since: Date|null }|null,
+ * }}
+ */
+export function summarizeMood(rows, { windowDays = WELLBEING_WINDOW_DAYS, now = Date.now() } = {}) {
+  const scored = (Array.isArray(rows) ? rows : [])
+    .filter((r) => entryScore(r) !== null)
+    .map((r) => ({ row: r, ms: entryMillis(r) }))
+    .sort((a, b) => (b.ms ?? 0) - (a.ms ?? 0));
+
+  if (!scored.length) {
+    return { latest: null, latestIsToday: false, latestAt: null, average: null };
+  }
+
+  const latest = scored[0];
+  const today = new Date(now).toDateString();
+  // Prefer the child app's own `dateString` — it is stamped from the child's
+  // clock, so a device a timezone away still agrees about which day it is.
+  const latestIsToday = latest.row.dateString
+    ? latest.row.dateString === today
+    : latest.ms !== null && new Date(latest.ms).toDateString() === today;
+
+  const cutoff = now - windowDays * 86_400_000;
+  const inWindow = scored.filter((s) => s.ms !== null && s.ms >= cutoff);
+  const used = inWindow.length ? inWindow : scored.slice(0, WELLBEING_FALLBACK_ENTRIES);
+  const oldest = used[used.length - 1];
+
+  return {
+    latest: latest.row,
+    latestIsToday,
+    latestAt: latest.ms === null ? null : new Date(latest.ms),
+    average: {
+      score: Math.round(averageScore(used.map((s) => s.row))),
+      days: inWindow.length ? windowDays : null,
+      count: used.length,
+      since: oldest.ms === null ? null : new Date(oldest.ms),
+    },
+  };
+}

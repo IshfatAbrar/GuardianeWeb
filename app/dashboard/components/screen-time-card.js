@@ -11,17 +11,9 @@
 // child hasn't synced — a parent seeing invented app usage is worse than a
 // parent seeing "no data".
 
-const MAX_APPS = 4;
+import { formatDuration } from "../../lib/screenTime";
 
-// `totalScreenTime` is seconds; `timeSpent` on each app is seconds too.
-function formatDuration(seconds) {
-  const total = Number(seconds);
-  if (!Number.isFinite(total) || total <= 0) return "0m";
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.round((total % 3600) / 60);
-  if (hours === 0) return `${minutes}m`;
-  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
-}
+const MAX_APPS = 4;
 
 function syncedLabel(entry) {
   const date = entry?.createdAt?.toDate?.();
