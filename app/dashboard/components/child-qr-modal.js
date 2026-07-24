@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import QRCode from "qrcode";
-import { CHILD_PLAY_STORE_URL } from "../../../lib/storeLinks";
+import {
+  CHILD_PLAY_STORE_MARKET_URL,
+  CHILD_PLAY_STORE_URL,
+} from "../../../lib/storeLinks";
+import { PlayStoreLink } from "../../../components/play-store-link";
 
 export function ChildQrModal({ open, onClose, childName, qrCode }) {
   if (!open || typeof document === "undefined" || !qrCode) return null;
@@ -112,10 +116,9 @@ function Content({ childName, qrCode, onClose }) {
           </div>
 
           {/* Matches GuardParent's QR sheet, which offers the same link. */}
-          <a
+          <PlayStoreLink
             href={CHILD_PLAY_STORE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+            marketHref={CHILD_PLAY_STORE_MARKET_URL}
             className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
           >
             <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -124,7 +127,7 @@ function Content({ childName, qrCode, onClose }) {
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             Download the child app on Google Play
-          </a>
+          </PlayStoreLink>
         </div>
       </div>
     </div>
