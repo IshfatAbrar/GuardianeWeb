@@ -380,15 +380,20 @@ export function EmergencyTab({ data }) {
             onCall={() => setCallOpen(true)}
           />
 
-          <EmergencyContactsCard
-            contacts={contacts}
-            loading={contactsLoading}
-            onAdd={openAdd}
-            onEdit={openEdit}
-          />
+          <div className="flex flex-col gap-4">
+            <EmergencyContactsCard
+              contacts={contacts}
+              loading={contactsLoading}
+              onAdd={openAdd}
+              onEdit={openEdit}
+            />
+            <EscalationProtocol steps={DEFAULT_ESCALATION_CHAIN} />
+          </div>
+
+          
           <RecentRiskAlerts alerts={alerts} childById={childById} />
 
-          <EscalationProtocol steps={DEFAULT_ESCALATION_CHAIN} />
+          
         </div>
       </div>
 

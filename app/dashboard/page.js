@@ -11,9 +11,11 @@ import { ModulesTab } from "./components/modules-tab";
 import { MessagingTab } from "./components/messaging-tab";
 import { EmergencyTab } from "./components/emergency-tab";
 import { SettingsTab } from "./components/settings-tab";
+import { CriticalAlertPopup } from "./components/critical-alert-popup";
 import { placeholderTabLabels } from "./data/nav";
 import { AuthGuard } from "../../components/auth-guard";
 import { useDashboardData } from "./_lib/useDashboardData";
+import { useNotifications } from "../lib/useNotifications";
 
 // "access" is intentionally absent — see the note in data/nav.js. A stale
 // ?tab=access link now falls back to the overview rather than opening a tab
@@ -60,6 +62,7 @@ function DashboardContent() {
   // whenever the chatbot tab is open.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialTab === "chatbot");
   const data = useDashboardData();
+  const { alerts: unreadAlerts } = useNotifications();
 
   // Sync the URL ?tab= when the user clicks around. replaceState (not push)
   // so the browser-back button still leaves the dashboard rather than walking
@@ -158,6 +161,12 @@ function DashboardContent() {
           </main>
         </div>
       </div>
+
+      <CriticalAlertPopup
+        alerts={unreadAlerts}
+        childList={data.children}
+        onGoToEmergency={() => setActiveNav("emergency")}
+      />
     </AuthGuard>
   );
 }

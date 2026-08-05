@@ -14,39 +14,38 @@
 // categorical key plus a color, which a band provides.
 
 // Band keys, best → worst. `distribution()` and friends emit these.
-export const MOOD_BANDS = ["great", "good", "okay", "low", "struggling"];
+//
+// Matches GuardParent's report.js exactly (calculateMoodStats/getMoodColor/
+// getMoodLabel): 4 bands at 80/60/40, not the web's earlier 5-band model.
+export const MOOD_BANDS = ["great", "good", "fair", "poor"];
 
 // Inclusive lower bound for each band, checked high → low.
 const BAND_MIN = {
   great: 80,
   good: 60,
-  okay: 40,
-  low: 20,
-  struggling: 0,
+  fair: 40,
+  poor: 0,
 };
 
 const COLOR = {
-  great: "#2ECC71",
-  good: "#3399DB",
-  okay: "#95A5A6",
-  low: "#F39C12",
-  struggling: "#E74C3C",
+  great: "#4CAF50",
+  good: "#8BC34A",
+  fair: "#FFC107",
+  poor: "#FF5722",
 };
 
 const EMOJI = {
   great: "😄",
   good: "🙂",
-  okay: "😐",
-  low: "😟",
-  struggling: "😞",
+  fair: "😐",
+  poor: "😟",
 };
 
 const LABEL = {
   great: "Great",
   good: "Good",
-  okay: "Okay",
-  low: "Low",
-  struggling: "Struggling",
+  fair: "Fair",
+  poor: "Poor",
 };
 
 /** Clamp anything to a 0–100 score, or null when it isn't a usable number. */
@@ -60,11 +59,11 @@ export function entryScore(entry) {
   return clampScore(entry?.score);
 }
 
-/** Band key for a 0–100 score. Unknown scores band as "okay". */
+/** Band key for a 0–100 score. Unknown scores band as "fair". */
 export function moodBand(score) {
   const s = clampScore(score);
-  if (s === null) return "okay";
-  return MOOD_BANDS.find((band) => s >= BAND_MIN[band]) ?? "okay";
+  if (s === null) return "fair";
+  return MOOD_BANDS.find((band) => s >= BAND_MIN[band]) ?? "fair";
 }
 
 /** Band key for a mood_entries doc, or null when it carries no score. */
@@ -145,6 +144,38 @@ export function dailyAverages(entries) {
     date: new Date(key),
     score: total / count,
   })).sort((a, b) => a.date - b.date);
+}
+
+/**
+ * [{ date, score|null }] — one entry per calendar day from `start` to `end`
+ * inclusive, ascending, with `score` null on days that have no mood entry.
+ *
+ * Mirrors GuardParent's report.js processMoodData/createEmptyMoodData, which
+ * fills gaps so the "last 7 days" timeline always shows 7 slots — a run of
+ * "no mood logged" days is informative, not something to silently collapse.
+ */
+export function dailySeries(entries, start, end) {
+  const byDay = new Map();
+  for (const { date, score } of dailyAverages(entries)) {
+    const key = new Date(date);
+    key.setHours(0, 0, 0, 0);
+    byDay.set(key.getTime(), score);
+  }
+
+  const out = [];
+  const cursor = new Date(start);
+  cursor.setHours(0, 0, 0, 0);
+  const last = new Date(end);
+  last.setHours(0, 0, 0, 0);
+  while (cursor <= last) {
+    const key = cursor.getTime();
+    out.push({
+      date: new Date(cursor),
+      score: byDay.has(key) ? byDay.get(key) : null,
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return out;
 }
 
 // A shift worth calling a trend: 10 points on the 0–100 scale. That's 10% of

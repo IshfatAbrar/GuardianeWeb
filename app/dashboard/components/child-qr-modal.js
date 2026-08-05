@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import QRCode from "qrcode";
-import { CHILD_PLAY_STORE_URL } from "../../../lib/storeLinks";
+import { CHILD_PLAY_STORE_URL, CHILD_APP_STORE_URL } from "../../../lib/storeLinks";
 
 export function ChildQrModal({ open, onClose, childName, qrCode }) {
   if (!open || typeof document === "undefined" || !qrCode) return null;
@@ -18,7 +18,7 @@ function Content({ childName, qrCode, onClose }) {
     let cancelled = false;
     QRCode.toDataURL(qrCode, {
       errorCorrectionLevel: "M",
-      margin: 2,
+      margin: 4,
       width: 320,
       color: { dark: "#000000", light: "#FFFFFF" },
     })
@@ -111,20 +111,34 @@ function Content({ childName, qrCode, onClose }) {
             </p>
           </div>
 
-          {/* Matches GuardParent's QR sheet, which offers the same link. */}
-          <a
-            href={CHILD_PLAY_STORE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
-          >
-            <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Download the child app on Google Play
-          </a>
+          {/* Matches GuardParent's QR sheet, which offers the same link, plus
+              an iOS storefront link since parents ask for both platforms. */}
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href={CHILD_PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
+            >
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Google Play
+            </a>
+            <a
+              href={CHILD_APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
+            >
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M17.5 2.5c.3 1.3-.2 2.6-1 3.5-.8.9-2.1 1.6-3.3 1.5-.2-1.2.3-2.5 1.1-3.4.8-.9 2.2-1.6 3.2-1.6zM20.9 17c-.5 1.2-.8 1.7-1.5 2.7-1 1.5-2.3 3.3-4 3.3-1.5 0-1.9-1-3.9-1s-2.5 1-4 1c-1.7 0-3-1.6-3.9-3.1-2.7-4.2-3-9.1-1.3-11.7 1.2-1.8 3-2.9 4.8-2.9 1.8 0 3 1 4.5 1 1.5 0 2.4-1 4.5-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.3 9.3z" />
+              </svg>
+              App Store
+            </a>
+          </div>
         </div>
       </div>
     </div>

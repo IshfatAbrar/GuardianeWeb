@@ -5,12 +5,14 @@ export function QuickActionsCard({
   onReports,
   onMessages,
   onEmergency,
+  onAppLimits,
 }) {
   const handlers = {
     addChild: onAddChild,
     reports: onReports,
     messages: onMessages,
     emergency: onEmergency,
+    appLimits: onAppLimits,
   };
 
   return (

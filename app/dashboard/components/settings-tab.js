@@ -216,6 +216,10 @@ export function SettingsTab({ data }) {
     "pref.notificationsEnabled",
     true,
   );
+  const [criticalAlertSound, setCriticalAlertSound] = usePreference(
+    "pref.criticalAlertSound",
+    true,
+  );
   const [biometricEnabled, setBiometricEnabled] = usePreference(
     "pref.biometricEnabled",
     false,
@@ -371,17 +375,29 @@ export function SettingsTab({ data }) {
 
       case "notifications":
         return (
-          <FieldRow
-            label="Enable notifications"
-            value="Get activity updates and safety alerts on this device"
-            trailing={
-              <Toggle
-                checked={notificationsEnabled}
-                onChange={setNotificationsEnabled}
-              />
-            }
-            isLast
-          />
+          <>
+            <FieldRow
+              label="Enable notifications"
+              value="Get activity updates and safety alerts on this device"
+              trailing={
+                <Toggle
+                  checked={notificationsEnabled}
+                  onChange={setNotificationsEnabled}
+                />
+              }
+            />
+            <FieldRow
+              label="Critical alert sound"
+              value="Play a sound when a critical risk alert pop-up appears"
+              trailing={
+                <Toggle
+                  checked={criticalAlertSound}
+                  onChange={setCriticalAlertSound}
+                />
+              }
+              isLast
+            />
+          </>
         );
 
       case "privacy":
@@ -398,13 +414,12 @@ export function SettingsTab({ data }) {
               }
             />
             {/*
-              App blocking is hidden: it cannot work against the Android child
-              app. That app keeps its per-app time limits in local AsyncStorage,
-              set by the child, and enforces them through an on-device
-              accessibility service — it reads no restriction config from
-              Firestore at all. A parent's choices here would write fields
-              nothing would ever consume. Restore this once the child app reads
-              a blocked-apps policy from the child's users/{id} doc.
+              App blocking now lives on the dashboard home page (Quick Actions
+              → App Limits), not here — see app-limits-modal.js and
+              lib/appLimits.js. The child app (Guardiane_Android) reads the
+              parent's Firestore-set caps via ParentAppLimitsService and
+              folds them into its own enforcement, taking the stricter of the
+              two. Nothing settings-shaped belongs here for it yet.
             */}
             <FieldRow
               label="Export my data"

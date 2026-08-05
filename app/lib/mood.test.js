@@ -17,6 +17,7 @@ import {
   distribution,
   mostFrequentMood,
   dailyAverages,
+  dailySeries,
   trend,
   scoreColor,
   summarizeMood,
@@ -52,26 +53,23 @@ describe("moodBand", () => {
   it("bands each score range", () => {
     expect(moodBand(95)).toBe("great");
     expect(moodBand(70)).toBe("good");
-    expect(moodBand(50)).toBe("okay");
-    expect(moodBand(30)).toBe("low");
-    expect(moodBand(5)).toBe("struggling");
+    expect(moodBand(50)).toBe("fair");
+    expect(moodBand(10)).toBe("poor");
   });
 
   it("puts each boundary in the higher band", () => {
     expect(moodBand(80)).toBe("great");
     expect(moodBand(79)).toBe("good");
     expect(moodBand(60)).toBe("good");
-    expect(moodBand(59)).toBe("okay");
-    expect(moodBand(40)).toBe("okay");
-    expect(moodBand(39)).toBe("low");
-    expect(moodBand(20)).toBe("low");
-    expect(moodBand(19)).toBe("struggling");
-    expect(moodBand(0)).toBe("struggling");
+    expect(moodBand(59)).toBe("fair");
+    expect(moodBand(40)).toBe("fair");
+    expect(moodBand(39)).toBe("poor");
+    expect(moodBand(0)).toBe("poor");
   });
 
-  it("falls back to okay for unusable input", () => {
-    expect(moodBand(undefined)).toBe("okay");
-    expect(moodBand("70")).toBe("okay");
+  it("falls back to fair for unusable input", () => {
+    expect(moodBand(undefined)).toBe("fair");
+    expect(moodBand("70")).toBe("fair");
   });
 
   it("has a color, emoji and label for every band", () => {
@@ -85,17 +83,17 @@ describe("moodBand", () => {
 
   it("scoreColor agrees with the band's color", () => {
     expect(scoreColor(95)).toBe(moodColor("great"));
-    expect(scoreColor(5)).toBe(moodColor("struggling"));
+    expect(scoreColor(5)).toBe(moodColor("poor"));
   });
 });
 
 describe("entryBand", () => {
   it("bands an entry by its score", () => {
     expect(entryBand({ score: 85 })).toBe("great");
-    expect(entryBand({ score: 10 })).toBe("struggling");
+    expect(entryBand({ score: 10 })).toBe("poor");
   });
 
-  it("is null when the entry has no score, rather than banding it as okay", () => {
+  it("is null when the entry has no score, rather than banding it as fair", () => {
     expect(entryBand({})).toBeNull();
   });
 });
@@ -121,7 +119,7 @@ describe("distribution", () => {
     expect(distribution(entries)).toEqual([
       { mood: "great", count: 2 },
       { mood: "good", count: 1 },
-      { mood: "struggling", count: 1 },
+      { mood: "poor", count: 1 },
     ]);
   });
 
@@ -154,6 +152,29 @@ describe("dailyAverages", () => {
 
   it("drops entries missing a timestamp or a score", () => {
     expect(dailyAverages([entry(80), { timestamp: day1 }])).toEqual([]);
+  });
+});
+
+describe("dailySeries", () => {
+  const day = (n) => new Date(2026, 0, n, 9);
+
+  it("fills gaps with a null score, ascending", () => {
+    const result = dailySeries([entry(80, day(1)), entry(40, day(3))], day(1), day(3));
+    expect(result).toEqual([
+      { date: expect.any(Date), score: 80 },
+      { date: expect.any(Date), score: null },
+      { date: expect.any(Date), score: 40 },
+    ]);
+    expect(result[0].date.getDate()).toBe(1);
+    expect(result[1].date.getDate()).toBe(2);
+    expect(result[2].date.getDate()).toBe(3);
+  });
+
+  it("returns one slot per day even with no entries at all", () => {
+    expect(dailySeries([], day(1), day(2))).toEqual([
+      { date: expect.any(Date), score: null },
+      { date: expect.any(Date), score: null },
+    ]);
   });
 });
 

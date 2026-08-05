@@ -12,6 +12,7 @@ import { AiInsightsCard } from "./ai-insights-card";
 import { ChildFormModal } from "./child-form-modal";
 import { EmergencyCallModal } from "./emergency-call-modal";
 import { MoodAnalyticsModal } from "./mood-analytics-modal";
+import { AppLimitsModal } from "./app-limits-modal";
 
 function firstName(profile, user) {
   const full = profile?.name || user?.displayName || "";
@@ -47,6 +48,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
   const [addChildOpen, setAddChildOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [appLimitsOpen, setAppLimitsOpen] = useState(false);
 
   const greetingName = firstName(userProfile, user);
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? null;
@@ -93,6 +95,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           onReports={openReport}
           onMessages={() => go("messaging")}
           onEmergency={() => setEmergencyOpen(true)}
+          onAppLimits={() => setAppLimitsOpen(true)}
         />
       </div>
 
@@ -131,6 +134,13 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         open={reportOpen}
         onClose={() => setReportOpen(false)}
         child={selectedChild}
+      />
+
+      <AppLimitsModal
+        open={appLimitsOpen}
+        onClose={() => setAppLimitsOpen(false)}
+        childList={children}
+        initialChildId={selectedChildId}
       />
     </div>
   );

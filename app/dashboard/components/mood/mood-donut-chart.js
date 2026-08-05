@@ -1,17 +1,18 @@
 "use client";
 
-// Donut chart showing the proportion of each mood. Port of MoodDonutChart.swift
-// — an SVG ring of arc segments with the total entry count in the center.
+// Donut chart showing the proportion of each mood band. Port of GuardParent's
+// report.js mood chart: a ring of arc segments with the period's average score
+// in the center (not an entry count — that's what Android shows there).
 
 import { moodColor } from "../../../lib/mood";
 
-const SIZE = 180;
-const STROKE = 28;
+const SIZE = 140;
+const STROKE = 22;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const CENTER = SIZE / 2;
 
-export function MoodDonutChart({ distribution }) {
+export function MoodDonutChart({ distribution, average }) {
   const total = distribution.reduce((sum, d) => sum + d.count, 0);
 
   let offset = 0;
@@ -62,10 +63,10 @@ export function MoodDonutChart({ distribution }) {
         )}
       </svg>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[28px] font-bold leading-none text-[var(--foreground)]">
-          {total}
+        <span className="text-[22px] font-bold leading-none text-[var(--foreground)]">
+          {Math.round(average)}%
         </span>
-        <span className="mt-1 text-[12px] text-[var(--muted)]">entries</span>
+        <span className="mt-1 text-[10.5px] text-[var(--muted)]">Average</span>
       </div>
     </div>
   );

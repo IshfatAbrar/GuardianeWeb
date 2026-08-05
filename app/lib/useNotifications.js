@@ -30,11 +30,15 @@ import {
 } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getChildrenForParent } from './database'
-import { listenToAlerts, alertSeverity, messageClassification } from './messages'
+import {
+  listenToAlerts,
+  alertSeverity,
+  messageClassification,
+  markMessagesReadByIds,
+} from './messages'
 import { readCachedAlerts, writeCachedAlerts } from './notificationsCache'
 
 const MAX_ALERTS = 50
-const READ_AT_KEY = 'guardiane.notifications.readAt'
 const EMPTY_ALERTS = []
 
 const NotificationsContext = createContext({
@@ -61,16 +65,10 @@ function serializeAlert(raw) {
     type: messageClassification(raw) || 'Risk alert',
     message: raw.message ?? null,
     severity: alertSeverity(raw),
+    isRead: raw.isRead === true,
     status: raw.isRead === true ? null : 'new',
     timestampMs: toMillis(raw.timestamp) || toMillis(raw.createdAt),
   }
-}
-
-function readReadAt() {
-  if (typeof window === 'undefined') return 0
-  const raw = window.localStorage.getItem(READ_AT_KEY)
-  const n = Number(raw)
-  return Number.isFinite(n) ? n : 0
 }
 
 export function NotificationsProvider({ children }) {
@@ -82,7 +80,6 @@ export function NotificationsProvider({ children }) {
   const [childIdsKey, setChildIdsKey] = useState(null)
   const [alertsState, setAlertsState] = useState([])
   const [loadingState, setLoadingState] = useState(true)
-  const [readAt, setReadAt] = useState(() => readReadAt())
 
   // Drop the previous account's alerts the moment the user changes, in the same
   // render rather than an effect. Otherwise signing in as another parent would
@@ -148,8 +145,14 @@ export function NotificationsProvider({ children }) {
   }, [parentId, activeChildIdsKey])
 
   // Derive the public view rather than resetting state in the effects above.
+  // Read alerts are dropped here, not just uncounted — the bell shows what's
+  // still outstanding, same as the overview's "active alerts" stat, which
+  // filters on this same `isRead` field.
   const alerts = useMemo(
-    () => (activeChildIdsKey ? alertsState : EMPTY_ALERTS),
+    () =>
+      activeChildIdsKey
+        ? alertsState.filter((a) => !a.isRead)
+        : EMPTY_ALERTS,
     [activeChildIdsKey, alertsState],
   )
 
@@ -164,18 +167,21 @@ export function NotificationsProvider({ children }) {
         ? false
         : loadingState
 
+  // Persists to Firestore (the same isRead flag the overview's alert stats and
+  // the alerts tab read), not just a local "seen at" marker — otherwise this
+  // button silences the bell without clearing the alert anywhere else, and it
+  // comes back on the next snapshot or on another device.
   const markAllRead = useCallback(() => {
-    const now = Date.now()
-    setReadAt(now)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(READ_AT_KEY, String(now))
-    }
-  }, [])
+    const ids = alertsState.filter((a) => !a.isRead).map((a) => a.id)
+    if (ids.length === 0) return
+    // Optimistic: hide immediately rather than waiting on the round trip.
+    setAlertsState((prev) =>
+      prev.map((a) => (ids.includes(a.id) ? { ...a, isRead: true, status: null } : a)),
+    )
+    markMessagesReadByIds(ids).catch(() => {})
+  }, [alertsState])
 
-  const unreadCount = useMemo(
-    () => alerts.filter((a) => a.timestampMs > readAt).length,
-    [alerts, readAt],
-  )
+  const unreadCount = alerts.length
 
   const value = useMemo(
     () => ({ alerts, unreadCount, loading, markAllRead }),

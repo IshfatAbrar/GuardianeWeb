@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sendJojoMessage, JojoChatError } from "../lib/jojoChat";
-import { ThemeToggle } from "../../components/theme-toggle";
 import { useJojoAuth } from "./lib/jojoAuth";
 import { ChatbotAuthForm } from "./components/ChatbotAuthForm";
 import { JojoUserMenu } from "./components/JojoUserMenu";
@@ -851,7 +850,6 @@ export default function ChatbotPage() {
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2.5">
-            <ThemeToggle />
             {registered ? (
               <JojoUserMenu />
             ) : (

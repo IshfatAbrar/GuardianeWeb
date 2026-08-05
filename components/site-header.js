@@ -223,9 +223,10 @@ export function SiteHeader() {
   const pathname = usePathname()
   const { user, userProfile } = useAuth()
 
-  // The standalone /chatbot page is a full-height, login-free chat surface that
-  // renders its own chrome — the site header would only get in its way.
-  if (pathname.startsWith('/chatbot')) return null
+  // The JoJo beta page (/chatbot) shows the normal marketing nav, same as `/`.
+  // Its /login and /signup sub-routes stay chrome-free — a focused, minimal
+  // auth flow is the point there.
+  if (pathname.startsWith('/chatbot/')) return null
 
   const isDashboardPage =
     pathname.startsWith('/dashboard')

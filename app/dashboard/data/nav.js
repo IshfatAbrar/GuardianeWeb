@@ -101,6 +101,15 @@ export const quickActions = [
       </svg>
     ),
   },
+  {
+    id: 'appLimits',
+    label: 'App Limits',
+    icon: (
+      <svg width="26" height="26" fill="none" style={{ stroke: 'var(--accent)' }} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    ),
+  },
 ]
 
 // Static labels used by PlaceholderTab when a non-overview sidebar item is active

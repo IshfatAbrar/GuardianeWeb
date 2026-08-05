@@ -2,39 +2,30 @@
 
 // Full report for one child, shown from the dashboard "Full Report" button.
 //
-// This is the web's counterpart to GuardParent's Report screen (app/report.js):
-// a range picker, mood summary, donut + legend, highest/average/lowest, a
-// breakdown, a daily timeline and the screen-time roll-up for the same range.
-// The scale is the child app's 0–100 wellbeing score throughout.
-//
-// Not carried over from GuardParent: its "Key Insights" panel, which is two
-// hardcoded paragraphs of generic advice dressed up as analysis of this child.
+// This is a deliberately exact port of GuardParent's Report screen
+// (app/report.js): same Week/Month/Year range picker, mood donut with the
+// period average in the center, the day-count legend, highest/average/lowest
+// stat cards, a gap-filled last-7-days timeline, the screen-time roll-up, and
+// the "Key Insights" text panel. The scale is the child app's 0–100 wellbeing
+// score throughout; mood bands are Android's 4 (Great/Good/Fair/Poor), not the
+// web's earlier 5-band model.
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { getMoodEntriesForChild, getScreenTimeForChild } from "../../lib/database";
-import {
-  averageScore,
-  distribution,
-  mostFrequentMood,
-  dailyAverages,
-  trend,
-} from "../../lib/mood";
-import { MoodSummaryCard } from "./mood/mood-summary-card";
+import { averageScore, distribution, dailySeries } from "../../lib/mood";
+import { aggregateApps } from "../../lib/screenTime";
 import { MoodDonutChart } from "./mood/mood-donut-chart";
 import { MoodColorLegend } from "./mood/mood-color-legend";
-import { MoodDistributionBars } from "./mood/mood-distribution-bars";
 import { MoodWeekTimeline } from "./mood/mood-week-timeline";
 import { MoodRangeStats } from "./mood/mood-range-stats";
 import { ScreenTimeReport } from "./screen-time-report";
 
-// Week/Month/Year match GuardParent's segmented control; 3 Months is kept
-// because a quarter is the range where a slow decline actually becomes visible.
+// Matches GuardParent's segmented control exactly: week/month/year, nothing else.
 const RANGES = [
-  { id: "week", label: "Week", days: 7 },
-  { id: "month", label: "Month", days: 30 },
-  { id: "quarter", label: "3 Months", days: 90 },
-  { id: "year", label: "Year", days: 365 },
+  { id: "week", label: "Week", days: 7, subtitle: "Last 7 days" },
+  { id: "month", label: "Month", days: 30, subtitle: "Last 30 days" },
+  { id: "year", label: "Year", days: 365, subtitle: "Last year" },
 ];
 
 export function MoodAnalyticsModal({ open, onClose, child }) {
@@ -97,50 +88,66 @@ function Content({ onClose, child }) {
     };
   }, [child?.id, days, dataKey]);
 
-  const stats = useMemo(
-    () => ({
-      average: averageScore(entries),
-      dist: distribution(entries),
-      frequent: mostFrequentMood(entries),
-      daily: dailyAverages(entries),
-      trend: trend(entries),
-    }),
-    [entries],
+  const dist = useMemo(() => distribution(entries), [entries]);
+  const totalMoodEntries = useMemo(
+    () => dist.reduce((sum, d) => sum + d.count, 0),
+    [dist],
   );
+  // 0 with no entries, same as GuardParent's stat cards and donut center.
+  const average = useMemo(() => averageScore(entries), [entries]);
+
+  // Always the most recent 7 calendar days, gap-filled — independent of the
+  // selected range, same as `moodHistory.slice(-7)` in GuardParent.
+  const timelineDays = useMemo(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6);
+    return dailySeries(entries, start, end);
+  }, [entries]);
+
+  const apps = useMemo(() => aggregateApps(screenTime), [screenTime]);
 
   const childFirstName = child?.name?.split(" ")[0] || "Child";
+  const activeRange = RANGES.find((r) => r.id === rangeId) ?? RANGES[0];
 
   const modal = (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       role="presentation"
       onClick={onClose}
     >
+      {/* Fixed max-height + its own scroll region, rather than relying on the
+          centered overlay to grow/scroll — centering a flex item taller than
+          its container is a classic overflow trap (content renders but can't
+          be scrolled to). Capping height here sidesteps that entirely. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="mood-analytics-title"
         onClick={(e) => e.stopPropagation()}
-        className="relative my-4 w-full max-w-lg overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-elevated)]"
+        className="relative flex max-h-[85vh] max-w-[85vh] flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--background)] shadow-[var(--shadow-elevated)]"
       >
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <span className="w-12" />
-          <h1
-            id="mood-analytics-title"
-            className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]"
-          >
-            {childFirstName}&apos;s Report
-          </h1>
+        <div className="flex flex-shrink-0 items-start justify-between border-b border-[var(--border)] px-4 pt-4 pb-2.5">
+          <span className="w-10" />
+          <div className="text-center">
+            <h1
+              id="mood-analytics-title"
+              className="text-[15px] font-semibold tracking-tight text-[var(--foreground)]"
+            >
+              {childFirstName}&apos;s Report
+            </h1>
+            <p className="text-[11.5px] text-[var(--muted)]">{activeRange.subtitle}</p>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-12 text-right text-[15px] font-semibold text-[var(--accent)] hover:opacity-80"
+            className="w-10 text-right text-[13px] font-semibold text-[var(--accent)] hover:opacity-80"
           >
             Done
           </button>
         </div>
 
-        <div className="space-y-5 px-5 pb-6">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {/* Range picker (segmented control) */}
           <div className="flex rounded-xl bg-[var(--surface-muted)] p-1">
             {RANGES.map((r) => (
@@ -148,7 +155,7 @@ function Content({ onClose, child }) {
                 key={r.id}
                 type="button"
                 onClick={() => setRangeId(r.id)}
-                className={`flex-1 rounded-lg py-1.5 text-[13px] font-semibold transition-colors ${
+                className={`flex-1 rounded-lg py-1.5 text-[12.5px] font-semibold transition-colors ${
                   rangeId === r.id
                     ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
                     : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -165,37 +172,45 @@ function Content({ onClose, child }) {
             </div>
           ) : (
             <>
-              {entries.length === 0 ? (
-                <EmptyState />
-              ) : (
-                <>
-                  <MoodSummaryCard
-                    averageScore={stats.average}
-                    trend={stats.trend}
-                    mostFrequentMood={stats.frequent}
-                  />
-
-                  <MoodRangeStats entries={entries} />
-
-                  <Section title="Mood Distribution">
-                    <div className="flex justify-center py-2">
-                      <MoodDonutChart distribution={stats.dist} />
+              <Section title="Mood Analysis">
+                {dist.length > 0 ? (
+                  <>
+                    <div className="flex justify-center py-1">
+                      <MoodDonutChart distribution={dist} average={average} />
                     </div>
-                    <MoodColorLegend distribution={stats.dist} />
-                  </Section>
+                    <MoodColorLegend distribution={dist} />
+                  </>
+                ) : (
+                  <NoMoodDataCard />
+                )}
 
-                  <Section title="Breakdown">
-                    <MoodDistributionBars distribution={stats.dist} />
-                  </Section>
+                <MoodRangeStats entries={entries} />
 
-                  <Section title="Daily Timeline">
-                    <MoodWeekTimeline dailyAverages={stats.daily} />
-                  </Section>
-                </>
-              )}
+                <div className="space-y-2 rounded-xl bg-[var(--surface-muted)] p-2.5">
+                  <h3 className="text-[12px] font-semibold text-[var(--foreground)]">
+                    Mood Timeline
+                  </h3>
+                  <MoodWeekTimeline days={timelineDays} />
+                </div>
+              </Section>
 
-              <Section title="Screen Time">
+              <Section title="Screen Time Report">
                 <ScreenTimeReport entries={screenTime} days={days} />
+              </Section>
+
+              <Section title="Key Insights">
+                <InsightCard
+                  title="Mood Trends"
+                  text={moodTrendsText(totalMoodEntries, average)}
+                />
+                <InsightCard
+                  title="Screen Time Patterns"
+                  text={
+                    apps.length > 0
+                      ? `Most active app is ${apps[0].appName} with ${Math.round(apps[0].percentage)}% of total screen time.`
+                      : "No screen-time data available for this period."
+                  }
+                />
               </Section>
             </>
           )}
@@ -207,10 +222,25 @@ function Content({ onClose, child }) {
   return createPortal(modal, document.body);
 }
 
+// Mirrors GuardParent's report.js hardcoded copy exactly — these are canned
+// sentences, not real analysis, same caveat GuardParent's own UI doesn't state.
+function moodTrendsText(totalEntries, average) {
+  if (!totalEntries) {
+    return "No mood data available for this period. Encourage your child to log their daily mood for personalized insights.";
+  }
+  if (average >= 80) {
+    return "Your child has been consistently happy and positive this period!";
+  }
+  if (average >= 60) {
+    return "Your child's mood has been generally good with some fluctuations.";
+  }
+  return "Consider having a conversation about your child's wellbeing based on recent mood patterns.";
+}
+
 function Section({ title, children }) {
   return (
-    <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-      <h2 className="text-[14px] font-semibold text-[var(--foreground)]">
+    <div className="space-y-2.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3.5">
+      <h2 className="text-[13px] font-semibold text-[var(--foreground)]">
         {title}
       </h2>
       {children}
@@ -218,29 +248,29 @@ function Section({ title, children }) {
   );
 }
 
-function EmptyState() {
+function InsightCard({ title, text }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl bg-[var(--surface-muted)] p-10 text-center">
-      <svg
-        width="46"
-        height="46"
-        fill="none"
-        stroke="var(--muted)"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        viewBox="0 0 24 24"
-      >
-        <line x1="3" y1="20" x2="21" y2="20" />
-        <rect x="5" y="11" width="3" height="7" />
-        <rect x="11" y="7" width="3" height="11" />
-        <rect x="17" y="13" width="3" height="5" />
-      </svg>
-      <h3 className="text-[16px] font-semibold text-[var(--foreground)]">
-        No mood data yet
+    <div className="space-y-1 rounded-xl bg-[var(--surface-muted)] p-2.5">
+      <h3 className="text-[12px] font-semibold text-[var(--foreground)]">
+        {title}
       </h3>
-      <p className="text-[13px] text-[var(--muted)]">
-        Mood entries from your child&apos;s app will appear here.
+      <p className="text-[12px] leading-relaxed text-[var(--muted)]">{text}</p>
+    </div>
+  );
+}
+
+function NoMoodDataCard() {
+  return (
+    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-[var(--surface-muted)] p-5 text-center">
+      <span className="text-[26px]" aria-hidden>
+        📊
+      </span>
+      <h3 className="text-[13px] font-semibold text-[var(--foreground)]">
+        No Mood Data Available
+      </h3>
+      <p className="text-[12px] leading-relaxed text-[var(--muted)]">
+        No mood entries found for the selected time period. Encourage your
+        child to log their mood daily for better insights.
       </p>
     </div>
   );

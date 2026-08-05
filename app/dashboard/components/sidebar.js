@@ -198,7 +198,7 @@ export function Sidebar({
       <div className="my-3 h-px bg-[var(--border)]" />
 
       {/* Main nav */}
-      <nav className={`flex-1 overflow-y-auto space-y-0.5 ${collapsed ? "px-2" : "px-3"}`}>
+      <nav className={`flex-1 overflow-hidden space-y-0.5 ${collapsed ? "px-2" : "px-3"}`}>
         {sideNavItems.map((item) => (
           <NavButton
             key={item.id}
