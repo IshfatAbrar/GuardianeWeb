@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faApple, faGooglePlay } from "@fortawesome/free-brands-svg-icons";
-import { APP_STORE_URL, PLAY_STORE_URL } from "../../lib/storeLinks";
+import { APP_STORE_URL } from "../../lib/storeLinks";
+import { PlayStoreLink } from "../../components/play-store-link";
 import { supportPath } from "../../lib/siteConfig";
 
 const features = [
@@ -101,10 +102,7 @@ export default function GuardianePage() {
                 />
                 <span className="store-btn-title">App Store</span>
               </a>
-              <a
-                href={PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <PlayStoreLink
                 className="focus-visible-ring store-btn"
                 aria-label="Get it on Google Play"
               >
@@ -114,7 +112,7 @@ export default function GuardianePage() {
                   aria-hidden
                 />
                 <span className="store-btn-title">Google Play</span>
-              </a>
+              </PlayStoreLink>
               <Link
                 href="/chatbot"
                 className="focus-visible-ring accent-btn rounded-full px-6 py-3 text-sm font-medium"
@@ -375,10 +373,7 @@ export default function GuardianePage() {
                   />
                   <span className="store-btn-title">App Store</span>
                 </a>
-                <a
-                  href={PLAY_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <PlayStoreLink
                   className="focus-visible-ring store-btn"
                   aria-label="Get it on Google Play"
                 >
@@ -388,7 +383,7 @@ export default function GuardianePage() {
                     aria-hidden
                   />
                   <span className="store-btn-title">Google Play</span>
-                </a>
+                </PlayStoreLink>
               </div>
             </div>
           </div>
