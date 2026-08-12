@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import QRCode from "qrcode";
+import JsBarcode from "jsbarcode";
 import {
   CHILD_PLAY_STORE_MARKET_URL,
   CHILD_PLAY_STORE_URL,
@@ -10,16 +11,21 @@ import {
 } from "../../../lib/storeLinks";
 import { PlayStoreLink } from "../../../components/play-store-link";
 
+const FORMATS = { QR: "qr", BARCODE: "barcode" };
+
 export function ChildQrModal({ open, onClose, childName, qrCode }) {
   if (!open || typeof document === "undefined" || !qrCode) return null;
   return <Content childName={childName} qrCode={qrCode} onClose={onClose} />;
 }
 
 function Content({ childName, qrCode, onClose }) {
+  const [format, setFormat] = useState(FORMATS.QR);
   const [dataUrl, setDataUrl] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const barcodeRef = useRef(null);
 
   useEffect(() => {
+    if (format !== FORMATS.QR) return;
     let cancelled = false;
     QRCode.toDataURL(qrCode, {
       errorCorrectionLevel: "M",
@@ -28,7 +34,9 @@ function Content({ childName, qrCode, onClose }) {
       color: { dark: "#000000", light: "#FFFFFF" },
     })
       .then((url) => {
-        if (!cancelled) setDataUrl(url);
+        if (cancelled) return;
+        setDataUrl(url);
+        setErrorMessage(null);
       })
       .catch((err) => {
         if (!cancelled) setErrorMessage(err.message || "Failed to render QR code");
@@ -36,7 +44,32 @@ function Content({ childName, qrCode, onClose }) {
     return () => {
       cancelled = true;
     };
-  }, [qrCode]);
+  }, [qrCode, format]);
+
+  // Code128 encodes the same doc-id payload as a 1D barcode — a visual
+  // alternative to the QR code (e.g. for a physical barcode scanner), not a
+  // second pairing method the child app understands. Rendered straight to the
+  // ref'd <svg> rather than through state: JsBarcode draws imperatively.
+  useEffect(() => {
+    if (format !== FORMATS.BARCODE || !barcodeRef.current) return;
+    try {
+      JsBarcode(barcodeRef.current, qrCode, {
+        format: "CODE128",
+        width: 2,
+        height: 90,
+        margin: 12,
+        displayValue: false,
+        background: "#FFFFFF",
+        lineColor: "#000000",
+      });
+      setErrorMessage(null);
+    } catch (err) {
+      // Deferred rather than a direct setState in the effect body: JsBarcode
+      // throws synchronously, and the error state should only flip once
+      // rendering has actually failed, not as an eager reset on every run.
+      queueMicrotask(() => setErrorMessage(err.message || "Failed to render barcode"));
+    }
+  }, [qrCode, format]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -84,11 +117,36 @@ function Content({ childName, qrCode, onClose }) {
             </button>
           </div>
 
+          <div className="flex justify-center gap-1 rounded-xl bg-[var(--surface-muted)] p-1">
+            <button
+              type="button"
+              onClick={() => setFormat(FORMATS.QR)}
+              className={`flex-1 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                format === FORMATS.QR
+                  ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              QR Code
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormat(FORMATS.BARCODE)}
+              className={`flex-1 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
+                format === FORMATS.BARCODE
+                  ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
+                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              Barcode
+            </button>
+          </div>
+
           {errorMessage ? (
             <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-3 text-[12.5px] text-[var(--danger)]">
               {errorMessage}
             </div>
-          ) : (
+          ) : format === FORMATS.QR ? (
             <div className="flex items-center justify-center rounded-2xl border border-[var(--border)] bg-white p-4">
               {dataUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
@@ -103,11 +161,21 @@ function Content({ childName, qrCode, onClose }) {
                 <div className="h-[280px] w-[280px] animate-pulse rounded-lg bg-[var(--surface-muted)]" />
               )}
             </div>
+          ) : (
+            <div className="flex items-center justify-center rounded-2xl border border-[var(--border)] bg-white p-4">
+              <svg
+                ref={barcodeRef}
+                role="img"
+                aria-label={`Barcode to link ${childName || "child"}'s device`}
+                className="h-[120px] w-full max-w-[320px]"
+              />
+            </div>
           )}
 
           <p className="text-center text-[12.5px] text-[var(--muted)]">
-            Scan this permanent QR code from the child&apos;s app to link their
-            device.
+            {format === FORMATS.QR
+              ? "Scan this permanent QR code from the child’s app to link their device."
+              : "This barcode encodes the same pairing code as the QR code above — use it if you’re scanning with a physical barcode reader instead of the child app’s camera."}
           </p>
 
           <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">

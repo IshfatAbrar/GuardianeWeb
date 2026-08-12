@@ -22,7 +22,7 @@
 // Note `mood_insight` is snake_case while everything around it is camelCase.
 // That is what Android writes; do not "fix" it here or the field stops resolving.
 
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase'
 
 const COLLECTION = 'aiInsights'
@@ -46,6 +46,20 @@ function dayGap(fromKey, toKey) {
   return Math.round((to - from) / 86_400_000)
 }
 
+// Shared by the one-shot read and the live listener so freshness is judged
+// identically either way.
+//
+// A negative age is not a bug: `date` is the phone's local day, so a parent
+// whose phone is a timezone ahead of this browser writes tomorrow's date. That
+// insight is the freshest one there is, so floor the age rather than reject it.
+function shapeInsight(id, data) {
+  if (!data) return null
+  const age = typeof data.date === 'string' ? dayGap(data.date, localDateKey(new Date())) : null
+  // No usable date means we can't tell how old it is — treat that as too old.
+  if (age === null || age > MAX_AGE_DAYS) return null
+  return { id, ...data, ageInDays: Math.max(0, age) }
+}
+
 /**
  * The cached insight for a child, or null when there is none recent enough.
  *
@@ -55,18 +69,24 @@ function dayGap(fromKey, toKey) {
 export async function fetchInsightsForChild(childId) {
   if (!childId) return null
   const snap = await getDoc(doc(db, COLLECTION, childId))
-  if (!snap.exists()) return null
+  return snap.exists() ? shapeInsight(snap.id, snap.data()) : null
+}
 
-  const data = snap.data()
-  const age = typeof data.date === 'string' ? dayGap(data.date, localDateKey(new Date())) : null
-
-  // No usable date means we can't tell how old it is — treat that as too old.
-  if (age === null || age > MAX_AGE_DAYS) return null
-
-  // A negative age is not a bug: `date` is the phone's local day, so a parent
-  // whose phone is a timezone ahead of this browser writes tomorrow's date. That
-  // insight is the freshest one there is, so floor the age rather than reject it.
-  return { id: snap.id, ...data, ageInDays: Math.max(0, age) }
+/**
+ * Live counterpart to fetchInsightsForChild — a single-doc listener, so the
+ * card updates the moment GuardParent overwrites today's cached insight
+ * instead of only on the next child switch or page reload.
+ */
+export function listenToInsightsForChild(childId, callback) {
+  if (!childId) {
+    callback(null)
+    return () => {}
+  }
+  return onSnapshot(
+    doc(db, COLLECTION, childId),
+    (snap) => callback(snap.exists() ? shapeInsight(snap.id, snap.data()) : null),
+    () => callback(null),
+  )
 }
 
 /** True when the doc carries at least one insight worth rendering. */

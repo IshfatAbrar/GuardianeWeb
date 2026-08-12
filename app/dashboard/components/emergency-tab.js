@@ -9,7 +9,8 @@
 //   • risk alerts         → `messages` rows the child's classifier flagged
 //                           (data.alerts, already merged by useDashboardData)
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { listenToEmergencyContacts } from "../../lib/emergencyContacts";
 import { EmergencyContactsCard } from "./emergency-contacts-card";
 import { EmergencyContactFormModal } from "./emergency-contact-form-modal";
@@ -247,13 +248,24 @@ function EscalationProtocol({ steps }) {
   );
 }
 
-function RiskAlertItem({ alert, childName, isLast }) {
+function RiskAlertItem({ alert, childName, isLast, highlighted }) {
   const meta = SEVERITY_META[alert.severity] ?? SEVERITY_META.info;
+  const ref = useRef(null);
+
+  // Scrolls the row the notification bell linked to into view once, on the
+  // render where it first becomes the highlighted one — not on every
+  // re-render, or switching children/re-filtering would keep yanking the
+  // page back to it.
+  useEffect(() => {
+    if (highlighted) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlighted]);
+
   return (
     <li
-      className={`flex items-start gap-3 px-4 py-3 ${
+      ref={ref}
+      className={`flex items-start gap-3 px-4 py-3 transition-colors ${
         isLast ? "" : "border-b border-[var(--border)]"
-      }`}
+      } ${highlighted ? "bg-[var(--accent-bg)]" : ""}`}
     >
       <span
         className="mt-0.5 flex-shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
@@ -274,7 +286,7 @@ function RiskAlertItem({ alert, childName, isLast }) {
   );
 }
 
-function RecentRiskAlerts({ alerts, childById }) {
+function RecentRiskAlerts({ alerts, childById, highlightId }) {
   return (
     <SectionCard className="p-0">
       <div className="border-b border-[var(--border)] px-4 py-3">
@@ -295,6 +307,7 @@ function RecentRiskAlerts({ alerts, childById }) {
               alert={a}
               childName={childById.get(a.childId)?.name}
               isLast={i === alerts.length - 1}
+              highlighted={a.id === highlightId}
             />
           ))}
         </ul>
@@ -304,6 +317,8 @@ function RecentRiskAlerts({ alerts, childById }) {
 }
 
 export function EmergencyTab({ data }) {
+  const searchParams = useSearchParams();
+  const highlightAlertId = searchParams.get("alert");
   const user = data?.user || null;
   const parentUid = user?.uid || null;
   const childList = useMemo(() => data?.children || [], [data?.children]);
@@ -391,7 +406,7 @@ export function EmergencyTab({ data }) {
           </div>
 
           
-          <RecentRiskAlerts alerts={alerts} childById={childById} />
+          <RecentRiskAlerts alerts={alerts} childById={childById} highlightId={highlightAlertId} />
 
           
         </div>

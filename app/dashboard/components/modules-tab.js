@@ -11,7 +11,7 @@ import {
   isAssignmentOverdue,
   isAssignmentCompleted,
   progressFor,
-  fetchLearningProgressForChildren,
+  listenToLearningProgressForChildren,
 } from "../../lib/learningModules";
 import { AssignmentFormModal } from "./assignment-form-modal";
 import { AssignmentDetailView } from "./assignment-detail-view";
@@ -256,23 +256,17 @@ export function ModulesTab({ data }) {
     return unsub;
   }, [parentId]);
 
-  // Progress for every child, keyed by `{childId}_{moduleId}`. Keyed on a
-  // joined id string so re-fetching children with the same ids doesn't refetch.
+  // Progress for every child, keyed by `{childId}_{moduleId}`, live — the child
+  // app writes this as lessons are completed, so a listener (rather than a
+  // one-shot fetch re-run only when the assignment count changes) is what lets
+  // a progress bar move here while the parent is actually looking at it. Keyed
+  // on a joined id string so re-fetching children with the same ids doesn't
+  // tear down and resubscribe.
   const childIdsKey = (data?.children || []).map((c) => c.id).sort().join(",");
   useEffect(() => {
     if (!childIdsKey) return undefined;
-    let cancelled = false;
-    fetchLearningProgressForChildren(childIdsKey.split(","))
-      .then((map) => {
-        if (!cancelled) setProgressById(map);
-      })
-      .catch((err) => console.error("[modules-tab] failed to fetch progress", err));
-    return () => {
-      cancelled = true;
-    };
-    // assignments.length: a just-assigned module can already have progress from
-    // an earlier assignment, so re-read when the assignment set changes.
-  }, [childIdsKey, assignments.length]);
+    return listenToLearningProgressForChildren(childIdsKey.split(","), setProgressById);
+  }, [childIdsKey]);
 
   const childList = useMemo(() => data?.children || [], [data?.children]);
   const childById = useMemo(() => {

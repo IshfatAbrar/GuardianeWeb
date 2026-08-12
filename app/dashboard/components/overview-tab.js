@@ -33,7 +33,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
     user,
     userProfile,
     children,
-    alerts,
+    alertsForSelectedChild,
     activeAlerts,
     modules,
     mood,
@@ -116,7 +116,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         }}
       />
 
-      <RecentActivityCard alerts={alerts} childList={children} />
+      <RecentActivityCard alerts={alertsForSelectedChild} childList={children} />
 
       <ChildFormModal
         open={addChildOpen}

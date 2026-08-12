@@ -11,6 +11,7 @@ import {
   isAssignmentOverdue,
   effectiveAssignmentStatus,
 } from "../../lib/learningModules";
+import { useToast } from "../../lib/useToast";
 
 const PRIORITY_META = {
   [ASSIGNMENT_PRIORITY.LOW]: { label: "Low", className: "bg-emerald-500/15 text-emerald-500" },
@@ -61,6 +62,7 @@ export function AssignmentDetailView({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const { showToast } = useToast();
 
   if (!assignment) return null;
 
@@ -77,6 +79,7 @@ export function AssignmentDetailView({
     try {
       await unassignModule(assignment.childId, assignment.moduleId);
       onChanged?.();
+      showToast(`Removed "${assignedModule?.title || "module"}" from ${child?.name || "child"}`);
       onBack?.();
     } catch (err) {
       setErrorMessage(err.message || "Failed to unassign");
