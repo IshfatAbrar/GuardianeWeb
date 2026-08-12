@@ -141,6 +141,34 @@ export async function getChildrenForParent(parentUid) {
     .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0))
 }
 
+/**
+ * Live counterpart to getChildrenForParent — same query (two single-field
+ * equalities, no composite index needed), streamed instead of read once, so a
+ * child added/edited/removed from another tab or device shows up without a
+ * reload. Returns the unsubscribe function.
+ */
+export function listenToChildrenForParent(parentUid, callback) {
+  if (!parentUid) {
+    callback([])
+    return () => {}
+  }
+  const q = query(
+    collection(db, COLLECTIONS.USERS),
+    where('parentId', '==', parentUid),
+    where('role', '==', 'child'),
+  )
+  return onSnapshot(
+    q,
+    (snap) => {
+      const rows = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0))
+      callback(rows)
+    },
+    () => callback([]),
+  )
+}
+
 // Convert "YYYY-MM-DD" (HTML <input type="date">) to the "MM/DD/YYYY" string
 // GuardParent writes and reads. Android stores this as a plain string, not a
 // Timestamp, so it must round-trip verbatim.
@@ -378,6 +406,30 @@ export async function getMoodHistoryForChild(childId) {
     .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0))
 }
 
+/**
+ * Live counterpart to getMoodHistoryForChild — same unfiltered childId query
+ * (see the note above on why there's no server-side range), streamed so a
+ * mood entry the child logs while the parent has the dashboard open appears
+ * without a reload.
+ */
+export function listenToMoodHistoryForChild(childId, callback) {
+  if (!childId) {
+    callback([])
+    return () => {}
+  }
+  const q = query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId))
+  return onSnapshot(
+    q,
+    (snap) => {
+      const rows = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0))
+      callback(rows)
+    },
+    () => callback([]),
+  )
+}
+
 // `timestamp` is the child app's primary ordering field, but entries written
 // through some paths only carry `createdAt`. Prefer timestamp, fall back.
 function entryMillis(entry) {
@@ -428,6 +480,35 @@ const LATEST_SCREEN_TIME_WINDOW_DAYS = 30
 export async function getLatestScreenTimeForChild(childId) {
   const rows = await getScreenTimeForChild(childId, LATEST_SCREEN_TIME_WINDOW_DAYS)
   return rows[0] ?? null
+}
+
+/**
+ * Live counterpart to getScreenTimeForChild — same childId-only query and
+ * client-side date cut (see the COST note above), streamed so a sync the
+ * child's device pushes while the parent is looking at the dashboard shows up
+ * without a reload. Callers wanting "latest" take rows[0].
+ */
+export function listenToScreenTimeForChild(childId, callback, days = LATEST_SCREEN_TIME_WINDOW_DAYS) {
+  if (!childId) {
+    callback([])
+    return () => {}
+  }
+  const cutoff = Date.now() - days * 86_400_000
+  const q = query(collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES), where('childId', '==', childId))
+  return onSnapshot(
+    q,
+    (snap) => {
+      const rows = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((r) => {
+          const ms = r.createdAt?.toMillis?.()
+          return typeof ms === 'number' && ms >= cutoff
+        })
+        .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+      callback(rows)
+    },
+    () => callback([]),
+  )
 }
 
 /** Subscribe to a single Firestore document. Returns the unsubscribe function. */

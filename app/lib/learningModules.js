@@ -320,6 +320,49 @@ export async function fetchLearningProgressForChildren(childIds) {
   return merged
 }
 
+/**
+ * Live counterpart to fetchLearningProgressForChildren.
+ *
+ * One listener per child (the collection only supports a single childId
+ * equality, same constraint as everywhere else in this schema) merged into one
+ * map keyed by assignment id. Streams the child device's progress writes as
+ * lessons are completed, rather than requiring the parent to reopen the tab or
+ * wait for the assignment count to change. Returns an unsubscribe for the
+ * whole set.
+ */
+export function listenToLearningProgressForChildren(childIds, callback) {
+  const ids = Array.isArray(childIds) ? childIds.filter(Boolean) : []
+  if (ids.length === 0) {
+    callback(new Map())
+    return () => {}
+  }
+
+  const byChild = new Map()
+  const emit = () => {
+    const merged = new Map()
+    for (const rows of byChild.values()) {
+      for (const [k, v] of rows) merged.set(k, v)
+    }
+    callback(merged)
+  }
+
+  const unsubs = ids.map((childId) =>
+    onSnapshot(
+      query(collection(db, LEARNING_PROGRESS), where('childId', '==', childId)),
+      (snap) => {
+        byChild.set(childId, new Map(snap.docs.map((d) => [d.id, withId(d)])))
+        emit()
+      },
+      () => {
+        byChild.set(childId, new Map())
+        emit()
+      },
+    ),
+  )
+
+  return () => unsubs.forEach((u) => u())
+}
+
 /** Clamp to 0..1, or null when the input isn't a usable number. */
 function clamp01(value) {
   if (typeof value !== 'number' || Number.isNaN(value)) return null

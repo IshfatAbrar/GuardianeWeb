@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useNotifications } from '../app/lib/useNotifications'
 
 const SEVERITY_DOT = {
@@ -26,6 +27,18 @@ function relativeTime(ms) {
 export function NotificationPanel({ open, onClose }) {
   const { alerts, loading, markAllRead } = useNotifications()
   const ref = useRef(null)
+  const router = useRouter()
+
+  // The bell is a compact preview; the Emergency tab's Risk alerts card is
+  // where the full detail (classification, untruncated message, contacts,
+  // escalation) actually lives. Works from any page — SiteHeader mounts this
+  // panel everywhere, not just inside the dashboard — since /dashboard reads
+  // ?tab= itself on load. The `alert` param lets the Emergency tab scroll to
+  // and highlight this specific one instead of just landing on the tab.
+  function goToAlert(alert) {
+    onClose?.()
+    router.push(`/dashboard?tab=emergency&alert=${encodeURIComponent(alert.id)}`)
+  }
 
   useEffect(() => {
     if (!open) return
@@ -81,18 +94,24 @@ export function NotificationPanel({ open, onClose }) {
             {alerts.map((a) => {
               const dot = SEVERITY_DOT[a.severity] ?? 'bg-[var(--muted)]'
               return (
-                <li key={a.id} className="flex items-start gap-2.5 px-3 py-2.5">
-                  <span
-                    className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${dot}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] font-medium text-[var(--foreground)]">
-                      {a.type || a.message || 'Alert'}
-                    </p>
-                    <p className="text-[10px] text-[var(--muted)]">
-                      {relativeTime(a.timestampMs)}
-                    </p>
-                  </div>
+                <li key={a.id}>
+                  <button
+                    type="button"
+                    onClick={() => goToAlert(a)}
+                    className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-muted)]"
+                  >
+                    <span
+                      className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${dot}`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-medium text-[var(--foreground)]">
+                        {a.type || a.message || 'Alert'}
+                      </p>
+                      <p className="text-[10px] text-[var(--muted)]">
+                        {relativeTime(a.timestampMs)}
+                      </p>
+                    </div>
+                  </button>
                 </li>
               )
             })}

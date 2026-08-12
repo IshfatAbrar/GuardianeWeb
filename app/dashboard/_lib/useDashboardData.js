@@ -2,20 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import {
-  getChildrenForParent,
-  getMoodHistoryForChild,
-  getLatestScreenTimeForChild,
-} from '../../lib/database'
+import { listenToChildrenForParent, listenToMoodHistoryForChild, listenToScreenTimeForChild } from '../../lib/database'
 import { listenToAlerts, alertSeverity, messageClassification } from '../../lib/messages'
 import {
   fetchAllModules,
   listenToAssignments,
-  fetchLearningProgressForChildren,
+  listenToLearningProgressForChildren,
   isAssignmentCompleted,
   progressFor,
 } from '../../lib/learningModules'
-import { fetchInsightsForChild } from '../../lib/aiInsights'
+import { listenToInsightsForChild } from '../../lib/aiInsights'
 import { summarizeMood } from '../../lib/mood'
 
 const MAX_FEED_ALERTS = 10
@@ -44,17 +40,25 @@ function toAlertRow(message) {
 /**
  * Single hook that owns all reads for the dashboard overview.
  *
- * What it fetches:
- *   • parent profile + uid                    (from AuthContext)
- *   • children (users, parentId + role)       → users collection
- *   • modules                                 → modules collection
- *   • mood history for the selected child     → mood_entries collection
- *   • latest screen-time sync for that child  → screen_time_entries collection
- *   • live risk alerts across all children    → messages collection
+ * Everything that can change from the CHILD's device without any action on
+ * the web is a live `onSnapshot` listener, not a one-shot fetch — otherwise
+ * the parent would have to reload the page to see a new mood entry, a
+ * screen-time sync, lesson progress, or a fresh AI insight land. Only
+ * `modules` stays one-shot: it's curated/admin content that changes rarely,
+ * and the one place the web itself can add to it (custom module creation)
+ * already refetches locally on success (see modules-tab.js), so a standing
+ * listener would just be paying for reads nothing needs.
  *
- *   • assignments + child-written progress       → module_assignments,
- *                                                   learning_progress
- *   • cached Gemini insights for that child      → aiInsights
+ * What it subscribes to / fetches:
+ *   • parent profile + uid                    (from AuthContext)
+ *   • children (users, parentId + role)       → users collection (live)
+ *   • modules                                 → modules collection (one-shot)
+ *   • mood history for the selected child     → mood_entries collection (live)
+ *   • latest screen-time sync for that child  → screen_time_entries collection (live)
+ *   • live risk alerts across all children    → messages collection (live)
+ *   • assignments this parent handed out      → module_assignments (live)
+ *   • child-written progress on those         → learning_progress (live)
+ *   • cached Gemini insights for that child   → aiInsights (live)
  *
  * It also owns `selectedChildId` and defaults it to the first fetched child.
  */
@@ -77,26 +81,20 @@ export function useDashboardData() {
   const [latestScreenTime, setLatestScreenTime] = useState(null)
   const [insightState, setInsightState] = useState({ childId: null, data: null })
 
-  // Children
+  // Children, live. Selection is reconciled against every snapshot rather than
+  // only set once: a listener can shrink the list (a child removed from
+  // another tab/device), and leaving selectedChildId pointing at a doc that no
+  // longer exists would blank every per-child section rather than falling back.
   useEffect(() => {
-    if (!uid) return
-    let cancelled = false
-    getChildrenForParent(uid)
-      .then((rows) => {
-        if (cancelled) return
-        setChildren(rows)
-        if (rows.length > 0 && !selectedChildId) {
-          setSelectedChildId(rows[0].id)
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setChildrenLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!uid) return undefined
+    const unsub = listenToChildrenForParent(uid, (rows) => {
+      setChildren(rows)
+      setChildrenLoading(false)
+      setSelectedChildId((prev) =>
+        prev && rows.some((c) => c.id === prev) ? prev : (rows[0]?.id ?? null),
+      )
+    })
+    return unsub
   }, [uid])
 
   // Live risk alerts, merged across every child. Keyed on a joined id string
@@ -116,6 +114,15 @@ export function useDashboardData() {
   // nothing subscribed, so the last-known alerts must not keep showing.
   const visibleAlerts = alertsSubscribed ? alerts : EMPTY_ALERTS
 
+  // Scoped to whichever child is selected, filtered BEFORE the feed cap rather
+  // than after: filtering the already-capped family-wide `alerts` below would
+  // mean a child with older alerts could show fewer than MAX_FEED_ALERTS just
+  // because a sibling's alerts crowded them out of the top 10 merged.
+  const alertsForSelectedChild = useMemo(
+    () => visibleAlerts.filter((a) => a.childId === selectedChildId).slice(0, MAX_FEED_ALERTS),
+    [visibleAlerts, selectedChildId],
+  )
+
   // Modules are readable by any signed-in parent — not scoped to this family.
   useEffect(() => {
     if (!uid) return
@@ -133,10 +140,7 @@ export function useDashboardData() {
     }
   }, [uid])
 
-  // Assignments this parent has handed out, live, plus the progress rows the
-  // CHILD's device writes against them. Progress is a one-shot read: the child
-  // updates it as lessons are finished, which is not something the parent needs
-  // to watch tick over in real time.
+  // Assignments this parent has handed out, live.
   useEffect(() => {
     if (!uid) return undefined
     return listenToAssignments(
@@ -146,60 +150,44 @@ export function useDashboardData() {
     )
   }, [uid])
 
+  // Progress rows the CHILD's device writes against those assignments, live.
   useEffect(() => {
     if (!childIdsKey) return undefined
-    let cancelled = false
-    fetchLearningProgressForChildren(childIdsKey.split(','))
-      .then((map) => {
-        if (!cancelled) setProgressById(map)
-      })
-      .catch(() => {
-        if (!cancelled) setProgressById(EMPTY_PROGRESS)
-      })
-    return () => {
-      cancelled = true
-    }
+    return listenToLearningProgressForChildren(childIdsKey.split(','), setProgressById)
   }, [childIdsKey])
 
-  // Per-child reads for the selected child.
+  // Per-child live listeners for the selected child. Each callback closes over
+  // the `selectedChildId` this effect ran with, and React tears the old
+  // listeners down before the new child's effect runs — so there's no window
+  // where a stale snapshot for the previous child can land tagged as the new
+  // one, the same guarantee the old cancelled-flag version gave by hand.
   useEffect(() => {
-    if (!selectedChildId) return
-    let cancelled = false
+    if (!selectedChildId) return undefined
 
     // Tagged with the child id: the mood tiles name the child they are about,
     // so showing the previous child's scores under the new child's name for a
     // frame would be worse than showing nothing.
-    getMoodHistoryForChild(selectedChildId)
-      .then((rows) => {
-        if (!cancelled) setMoodHistory({ childId: selectedChildId, rows })
-      })
-      .catch(() => {
-        if (!cancelled) setMoodHistory({ childId: selectedChildId, rows: [] })
-      })
+    const unsubMood = listenToMoodHistoryForChild(selectedChildId, (rows) => {
+      setMoodHistory({ childId: selectedChildId, rows })
+    })
 
-    getLatestScreenTimeForChild(selectedChildId)
-      .then((s) => {
-        if (!cancelled) setLatestScreenTime(s)
-      })
-      .catch(() => {
-        if (!cancelled) setLatestScreenTime(null)
-      })
+    const unsubScreenTime = listenToScreenTimeForChild(selectedChildId, (rows) => {
+      setLatestScreenTime(rows[0] ?? null)
+    })
 
     // Read-only: GuardParent generates and caches these. A missing doc is the
     // normal case for a parent who only uses the web, not an error. The child id
     // is stored alongside the result so "loading" can be derived from it rather
     // than flipped by hand — switching child then shows a skeleton instead of
     // the previous child's insight.
-    fetchInsightsForChild(selectedChildId)
-      .then((i) => {
-        if (!cancelled) setInsightState({ childId: selectedChildId, data: i })
-      })
-      .catch(() => {
-        if (!cancelled) setInsightState({ childId: selectedChildId, data: null })
-      })
+    const unsubInsights = listenToInsightsForChild(selectedChildId, (insight) => {
+      setInsightState({ childId: selectedChildId, data: insight })
+    })
 
     return () => {
-      cancelled = true
+      unsubMood()
+      unsubScreenTime()
+      unsubInsights()
     }
   }, [selectedChildId])
 
@@ -247,10 +235,14 @@ export function useDashboardData() {
     // shared data
     modules,
 
-    // Risk alerts, newest first. `activeAlerts` is the unacknowledged set —
-    // the child app writes every alert with isRead:false.
+    // Risk alerts, newest first, family-wide — used by the Emergency tab's
+    // cross-child feed. `activeAlerts` is the unacknowledged set — the child
+    // app writes every alert with isRead:false.
     alerts: visibleAlerts.slice(0, MAX_FEED_ALERTS),
     activeAlerts: visibleAlerts.filter((a) => !a.isRead),
+    // Same alerts, scoped to selectedChildId — used by the Overview's Recent
+    // Activity card so switching children doesn't bleed another child's alerts in.
+    alertsForSelectedChild,
 
     assignments,
     progressById: visibleProgress,

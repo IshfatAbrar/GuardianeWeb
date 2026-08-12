@@ -4,6 +4,7 @@ import { RevealObserver } from "../components/reveal-observer";
 import { SiteHeader } from "../components/site-header";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationsProvider } from "./lib/useNotifications";
+import { ToastProvider } from "./lib/useToast";
 
 const epilogue = Epilogue({
   variable: "--font-epilogue",
@@ -44,9 +45,11 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <NotificationsProvider>
-            <RevealObserver />
-            <SiteHeader />
-            {children}
+            <ToastProvider>
+              <RevealObserver />
+              <SiteHeader />
+              {children}
+            </ToastProvider>
           </NotificationsProvider>
         </AuthProvider>
       </body>

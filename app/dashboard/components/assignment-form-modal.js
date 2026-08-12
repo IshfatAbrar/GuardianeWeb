@@ -6,6 +6,7 @@ import {
   assignModule,
   ASSIGNMENT_PRIORITY,
 } from "../../lib/learningModules";
+import { useToast } from "../../lib/useToast";
 
 const PRIORITIES = [
   { id: ASSIGNMENT_PRIORITY.LOW, label: "Low", dot: "bg-emerald-500" },
@@ -163,6 +164,7 @@ function FormContent({
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -198,6 +200,8 @@ function FormContent({
         dueDate: parsed,
       });
       onAssigned?.();
+      const childName = childList.find((c) => c.id === childId)?.name || "child";
+      showToast(`Assigned "${selectedModule?.title || "module"}" to ${childName}`);
       onClose();
     } catch (err) {
       setErrorMessage(err.message || "Failed to assign module");
