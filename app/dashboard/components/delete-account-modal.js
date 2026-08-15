@@ -91,9 +91,9 @@ function Content({ onClose, onDeleted, uid, childList }) {
           </div>
 
           <p className="text-[13px] leading-relaxed text-[var(--muted)]">
-            This permanently deletes your sign-in and deactivates your family:
-            your children&apos;s profiles are turned off and your family record
-            is removed. This cannot be undone.
+            This permanently deletes your sign-in along with your family
+            record and your children&apos;s profiles. This is not reversible —
+            there is no way to recover this data afterward.
           </p>
 
           {errorMessage && (

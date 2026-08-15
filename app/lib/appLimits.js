@@ -17,23 +17,36 @@
 // is open/foregrounded, or immediately if the child opens their own App Time
 // Limits screen). There is no push channel to a child device in this schema.
 
-import { doc, updateDoc, deleteField } from 'firebase/firestore'
+import { doc, updateDoc, deleteField, FieldPath } from 'firebase/firestore'
 import { db } from './firebase'
 import { COLLECTIONS } from './database'
+
+// Real package names always contain dots (com.instagram.android). A plain
+// dotted-string update key (`parentAppLimits.${packageName}`) makes Firestore
+// split on EVERY dot, silently nesting the write as
+// parentAppLimits.com.instagram.android instead of a flat
+// parentAppLimits["com.instagram.android"] entry — which the Android reader
+// (Object.entries(parentAppLimits)) then never sees. FieldPath treats each
+// argument as one literal segment, dots and all, so this stays a two-level
+// path (parentAppLimits, packageName) no matter what's inside packageName.
 
 /** Set (or replace) a parent-side limit for one app on one child. */
 export async function setParentAppLimit(childId, packageName, minutes, appName) {
   if (!childId || !packageName) throw new Error('Missing childId or packageName')
   if (!Number.isFinite(minutes) || minutes <= 0) throw new Error('Minutes must be > 0')
-  await updateDoc(doc(db, COLLECTIONS.USERS, childId), {
-    [`parentAppLimits.${packageName}`]: { minutes: Math.round(minutes), appName: appName || packageName },
-  })
+  await updateDoc(
+    doc(db, COLLECTIONS.USERS, childId),
+    new FieldPath('parentAppLimits', packageName),
+    { minutes: Math.round(minutes), appName: appName || packageName },
+  )
 }
 
 /** Remove a parent-side limit for one app on one child. */
 export async function removeParentAppLimit(childId, packageName) {
   if (!childId || !packageName) return
-  await updateDoc(doc(db, COLLECTIONS.USERS, childId), {
-    [`parentAppLimits.${packageName}`]: deleteField(),
-  })
+  await updateDoc(
+    doc(db, COLLECTIONS.USERS, childId),
+    new FieldPath('parentAppLimits', packageName),
+    deleteField(),
+  )
 }

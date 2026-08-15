@@ -73,7 +73,7 @@ export function entryBand(entry) {
 }
 
 export function moodColor(band) {
-  return COLOR[band] ?? COLOR.okay;
+  return COLOR[band] ?? COLOR.fair;
 }
 
 export function moodEmoji(band) {

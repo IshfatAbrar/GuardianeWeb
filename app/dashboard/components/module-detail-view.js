@@ -6,6 +6,7 @@ import {
   assignModule,
   MODULE_CATEGORIES,
 } from "../../lib/learningModules";
+import { useToast } from "../../lib/useToast";
 
 function StatPill({ label, value }) {
   return (
@@ -74,6 +75,7 @@ export function ModuleDetailView({
   const [errorMessage, setErrorMessage] = useState(null);
   const [assigningChildId, setAssigningChildId] = useState(null);
   const [assignError, setAssignError] = useState(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (!moduleId) return;
@@ -108,6 +110,8 @@ export function ModuleDetailView({
         category: module_.category,
       });
       onAssigned?.();
+      const childName = childList.find((c) => c.id === childId)?.name || "child";
+      showToast(`Assigned "${module_.title || "module"}" to ${childName}`);
     } catch (err) {
       setAssignError(err.message || "Failed to assign");
     } finally {

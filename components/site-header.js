@@ -223,10 +223,9 @@ export function SiteHeader() {
   const pathname = usePathname()
   const { user, userProfile } = useAuth()
 
-  // The JoJo beta page (/chatbot) shows the normal marketing nav, same as `/`.
-  // Its /login and /signup sub-routes stay chrome-free — a focused, minimal
-  // auth flow is the point there.
-  if (pathname.startsWith('/chatbot/')) return null
+  // The JoJo beta chat and its /login and /signup sub-routes are all
+  // chrome-free — a focused, minimal experience is the point there.
+  if (pathname === '/chatbot' || pathname.startsWith('/chatbot/')) return null
 
   const isDashboardPage =
     pathname.startsWith('/dashboard')

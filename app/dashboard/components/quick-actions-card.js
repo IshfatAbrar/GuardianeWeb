@@ -33,15 +33,17 @@ export function QuickActionsCard({
         </h2>
       </div>
 
-      {/* Always two per row — the card shares a row with the mood and
-          screen-time cards, so four across squeezes the labels. */}
+      {/* Two per row — the card shares a row with the mood and screen-time
+          cards, so four across squeezes the labels. `last:col-span-2` spans
+          the final tile across both columns when the count is odd, so it
+          doesn't sit orphaned alone on the left of its own row. */}
       <div className="grid grid-cols-2 gap-4">
         {quickActions.map((qa) => (
           <button
             key={qa.id}
             type="button"
             onClick={handlers[qa.id]}
-            className="flex flex-col items-center gap-2.5 group"
+            className="flex flex-col items-center gap-2.5 group last:odd:col-span-2"
           >
             <div className="w-16 h-16 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center group-hover:bg-[var(--accent-bg-hover)] transition-colors">
               {qa.icon}

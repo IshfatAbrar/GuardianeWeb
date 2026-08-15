@@ -15,11 +15,6 @@ const HELP_TOPICS = [
       "From Module Assignments → Assign Module, pick a child and a module, set a priority and optional due date, then tap Assign.",
   },
   {
-    title: "Reviewing access requests",
-    body:
-      "When your child asks for app access, the request appears in the Access Requests tab. Tap Approve or Deny — for approvals you can also set a time limit and an optional reason.",
-  },
-  {
     title: "What JoJo can help with",
     body:
       "JoJo is the in-app chatbot for teen safety, mental health, and digital well-being questions. JoJo offers general guidance, not medical or legal advice.",

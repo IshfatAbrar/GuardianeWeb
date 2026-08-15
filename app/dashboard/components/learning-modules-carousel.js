@@ -61,7 +61,12 @@ export function LearningModulesCarousel({ modules = [], onViewAll, onSelectModul
             const color = moduleColors[i % moduleColors.length];
             const title = mod.title || mod.name || 'Untitled module';
             const meta = [mod.ageGroup, mod.difficulty].filter(Boolean).join(' · ');
-            const duration = mod.estimatedDuration ? `${mod.estimatedDuration}m` : null;
+            // estimatedDuration is stored in SECONDS (createModuleWithLesson
+            // multiplies the minutes input by 60) — divide back down, matching
+            // module-detail-view.js / assignment-form-modal.js / assignment-detail-view.js.
+            const duration = mod.estimatedDuration
+              ? `${Math.round(mod.estimatedDuration / 60)}m`
+              : null;
             return (
               <div
                 key={mod.id}
