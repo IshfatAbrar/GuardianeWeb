@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Bell, Lock, Users, Zap } from 'lucide-react'
 import { SiteFooter } from '../../components/site-footer'
 import { AuthGuard } from '../../components/auth-guard'
+import { HeroHalfBox } from '../../components/hero-half-box'
+import { Accordion } from '../../components/accordion'
 import { signUp } from '../lib/authHelper'
 import { Stepper } from './_components/Stepper'
 import { StepAccount } from './_components/steps/StepAccount'
@@ -13,11 +14,31 @@ import { StepManageChildren } from './_components/steps/StepManageChildren'
 import { StepDeviceSetup } from './_components/steps/StepDeviceSetup'
 import { StepDone } from './_components/steps/StepDone'
 
-const WHY_FEATURES = [
-  { Icon: Zap,   title: 'Set up in 2 minutes', desc: 'Guided onboarding gets your first child profile live fast.' },
-  { Icon: Bell,  title: 'Instant alerts',      desc: 'Push notifications for high-risk signals, day or night.' },
-  { Icon: Lock,  title: 'Privacy by design',   desc: 'Your data is never sold. COPPA and GDPR compliant.' },
-  { Icon: Users, title: 'Expert support',      desc: 'Access vetted counselors and child safety specialists.' },
+const whyGuardianeFaqs = [
+  {
+    title: 'Set up in 2 minutes',
+    content: (
+      <p>Guided onboarding gets your first child profile live fast.</p>
+    ),
+  },
+  {
+    title: 'Instant alerts',
+    content: (
+      <p>Push notifications for high-risk signals, day or night.</p>
+    ),
+  },
+  {
+    title: 'Privacy by design',
+    content: (
+      <p>Your data is never sold. COPPA and GDPR compliant.</p>
+    ),
+  },
+  {
+    title: 'Expert support',
+    content: (
+      <p>Access vetted counselors and child safety specialists.</p>
+    ),
+  },
 ]
 
 export default function SignupPage() {
@@ -95,59 +116,67 @@ export default function SignupPage() {
 
   return (
     <AuthGuard mode="public">
-      <div className="clarity-hero text-[var(--foreground)]">
+      {/* TEMP: forced white background for now */}
+      <div className="bg-white text-[var(--foreground)]">
 
         {/* ── HERO / SIGNUP ── */}
-        <section className="border-b border-[var(--border)]">
-          <div className="mx-auto max-w-[960px]  py-14 lg:py-20">
-            <div className="mb-10 text-center" data-reveal>
-              <h1 className="font-serif text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-[2.75rem]">
-                Create your Guardiané account
-              </h1>
-              <p className="mt-3 text-[0.85rem] text-[var(--muted)]">
-                Set up your parent portal in minutes
-              </p>
-            </div>
-
-            <div className="overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_4px_24px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)]">
-              {step !== 'done' && <Stepper current={step} />}
-              <div className=" py-8 sm:px-10">
-                {renderStep()}
+        <section className="bg-white">
+          <HeroHalfBox>
+            <div className="mx-auto max-w-[960px]  py-14 lg:py-20">
+              <div className="mb-10 text-center" data-reveal>
+                <h1 className="font-serif text-3xl font-normal tracking-tight text-[var(--foreground)] sm:text-4xl lg:text-[2.75rem]">
+                  Create your Guardiané account
+                </h1>
+                <p className="mt-3 text-[0.85rem] text-[var(--muted)]">
+                  Set up your parent portal in minutes
+                </p>
               </div>
-            </div>
 
-            {step !== 'done' && (
-              <p className="mt-6 text-center text-[0.78rem] text-[var(--muted)]">
-                Already have an account?{' '}
-                <Link href="/login" className="font-medium text-[var(--accent)] hover:underline">
-                  Log in
-                </Link>
-              </p>
-            )}
-          </div>
+              <div className="overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_4px_24px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)]">
+                {step !== 'done' && <Stepper current={step} />}
+                <div className=" py-8 sm:px-10">
+                  {renderStep()}
+                </div>
+              </div>
+
+              {step !== 'done' && (
+                <p className="mt-6 text-center text-[0.78rem] text-[var(--muted)]">
+                  Already have an account?{' '}
+                  <Link href="/login" className="font-medium text-[var(--accent)] hover:underline">
+                    Log in
+                  </Link>
+                </p>
+              )}
+            </div>
+          </HeroHalfBox>
         </section>
 
         {/* ── WHY GUARDIANE ── */}
-        <section className="border-t border-[var(--border)] bg-[var(--surface)] px-6 py-14 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-[1120px]">
-            <div className="mb-9">
-              <h2 className="mb-2 bg-[var(--foreground)] bg-clip-text text-3xl font-normal leading-[1.08] tracking-tight text-transparent sm:text-4xl">
-                Why families choose Guardiané
-              </h2>
-              <p className="text-[0.85rem] text-[var(--muted)]">
-                Built by child safety researchers, psychologists, and parents — not just engineers.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 gap-px overflow-hidden rounded border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
-              {WHY_FEATURES.map(({ Icon, title, desc }) => (
-                <div key={title} className="bg-[var(--surface)] p-7">
-                  <span className="mb-3.5 block">
-                    <Icon className="h-[28px] w-[28px] text-[var(--accent)]" strokeWidth={1.8} />
-                  </span>
-                  <h4 className="mb-1.5 text-[0.84rem] font-semibold text-[var(--foreground)]">{title}</h4>
-                  <p className="text-[0.76rem] leading-[1.65] text-[var(--muted)]">{desc}</p>
+        <section className="bg-white py-14">
+          <div className="mx-auto max-w-[1120px] px-6 sm:px-6 lg:px-8">
+            <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
+              <div data-reveal>
+                <h2 className="gradient-heading mb-6 text-2xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-3xl">
+                  Why families choose Guardiané
+                </h2>
+                <p className="clarity-prose text-[0.8rem]">
+                  Built by child safety researchers, psychologists, and
+                  parents — not just engineers.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  {["Busy parents", "School nights", "Blended homes", "Teen years"].map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-[0.78rem] font-medium text-[var(--muted)]"
+                    >
+                      {label}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div data-reveal>
+                <Accordion items={whyGuardianeFaqs} />
+              </div>
             </div>
           </div>
         </section>

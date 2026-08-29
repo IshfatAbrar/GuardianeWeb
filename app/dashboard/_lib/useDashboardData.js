@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { listenToChildrenForParent, listenToMoodHistoryForChild, listenToScreenTimeForChild } from '../../lib/database'
-import { listenToAlerts, alertSeverity, messageClassification } from '../../lib/messages'
+import { listenToAlerts, listenToUnreadMessageCount, alertSeverity, messageClassification } from '../../lib/messages'
 import {
   fetchAllModules,
   listenToAssignments,
@@ -69,6 +69,7 @@ export function useDashboardData() {
   const [children, setChildren] = useState([])
   const [childrenLoading, setChildrenLoading] = useState(true)
   const [alerts, setAlerts] = useState([])
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
 
   const [modules, setModules] = useState([])
   const [modulesLoading, setModulesLoading] = useState(true)
@@ -110,9 +111,20 @@ export function useDashboardData() {
     )
   }, [alertsSubscribed, uid, childIdsKey])
 
+  // Live unread chat-message count across every child — backs the Messages
+  // sidebar badge. Same subscribed-guard as alerts above.
+  useEffect(() => {
+    if (!alertsSubscribed) return undefined
+    return listenToUnreadMessageCount(
+      { parentId: uid, childIds: childIdsKey.split(',') },
+      setUnreadMessagesCount,
+    )
+  }, [alertsSubscribed, uid, childIdsKey])
+
   // Derived rather than reset inside the effect: with no children there is
   // nothing subscribed, so the last-known alerts must not keep showing.
   const visibleAlerts = alertsSubscribed ? alerts : EMPTY_ALERTS
+  const visibleUnreadMessagesCount = alertsSubscribed ? unreadMessagesCount : 0
 
   // Scoped to whichever child is selected, filtered BEFORE the feed cap rather
   // than after: filtering the already-capped family-wide `alerts` below would
@@ -243,6 +255,10 @@ export function useDashboardData() {
     // Same alerts, scoped to selectedChildId — used by the Overview's Recent
     // Activity card so switching children doesn't bleed another child's alerts in.
     alertsForSelectedChild,
+
+    // Unread (child-sent, non-alert) chat messages across every child —
+    // backs the Messages sidebar badge.
+    unreadMessagesCount: visibleUnreadMessagesCount,
 
     assignments,
     progressById: visibleProgress,

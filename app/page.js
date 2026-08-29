@@ -184,17 +184,23 @@ export default function Home() {
               <div className="inline-flex items-center gap-2.5 rounded-full border border-[var(--border)] bg-[var(--surface)] py-1.5 pl-1.5 pr-4 shadow-sm">
                 <div className="flex -space-x-2">
                   <span
-                    className="h-6 w-6 rounded-full border-2 border-[var(--surface)]"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
                     style={{ background: "#1d4ed8" }}
-                  />
+                  >
+                    J
+                  </span>
                   <span
-                    className="h-6 w-6 rounded-full border-2 border-[var(--surface)]"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
                     style={{ background: "var(--accent)" }}
-                  />
+                  >
+                    M
+                  </span>
                   <span
-                    className="h-6 w-6 rounded-full border-2 border-[var(--surface)]"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
                     style={{ background: "#93c5fd" }}
-                  />
+                  >
+                    A
+                  </span>
                 </div>
                 <span className="text-xs font-medium text-[var(--foreground)]">
                   100+ joined

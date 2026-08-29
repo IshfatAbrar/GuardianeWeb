@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useToast } from "../app/lib/useToast";
 
 function subscribe(onStoreChange) {
   window.addEventListener("storage", onStoreChange);
@@ -30,14 +31,20 @@ function getServerSnapshot() {
   return "light";
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ disabled = false } = {}) {
   const theme = useSyncExternalStore(
     subscribe,
     getSnapshot,
     getServerSnapshot,
   );
+  const { showToast } = useToast();
 
   function toggle() {
+    if (disabled) {
+      // TEMP: dark mode is disabled on the marketing site for now
+      showToast("Dark mode is coming soon here");
+      return;
+    }
     const next = theme === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("theme", next);
@@ -49,9 +56,15 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={
-        theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+        disabled
+          ? "Dark mode is coming soon"
+          : theme === "dark"
+            ? "Switch to light mode"
+            : "Switch to dark mode"
       }
-      className="focus-visible-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.35)] text-[var(--muted)] transition-colors hover:border-[var(--brand)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+      className={`focus-visible-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[rgba(255,255,255,0.35)] text-[var(--muted)] transition-colors hover:border-[var(--brand)] hover:bg-[var(--surface)] hover:text-[var(--foreground)] ${
+        disabled ? "cursor-not-allowed opacity-60" : ""
+      }`}
     >
       {theme === "dark" ? (
         <svg

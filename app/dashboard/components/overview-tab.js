@@ -96,6 +96,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           onMessages={() => go("messaging")}
           onEmergency={() => setEmergencyOpen(true)}
           onAppLimits={() => setAppLimitsOpen(true)}
+          onAssignModule={() => go("modules")}
         />
       </div>
 

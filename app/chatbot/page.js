@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sendJojoMessage, JojoChatError } from "../lib/jojoChat";
@@ -336,20 +337,12 @@ const MenuIcon = (p) => (
 // ── Chat pieces ──────────────────────────────────────────────────────────────
 
 function JojoAvatar({ size = 30 }) {
-  const dim = `${size}px`;
   return (
     <div
-      className="flex flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)]"
-      style={{ width: dim, height: dim }}
+      className="relative flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]"
+      style={{ width: size, height: size }}
     >
-      <svg
-        width={size * 0.55}
-        height={size * 0.55}
-        fill="white"
-        viewBox="0 0 24 24"
-      >
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
+      <Image src="/jojo.png" alt="JoJo" fill className="object-cover" />
     </div>
   );
 }

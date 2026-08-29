@@ -22,6 +22,7 @@ import {
   query,
   where,
   orderBy,
+  limit,
   limitToLast,
   onSnapshot,
   getDocs,
@@ -134,6 +135,108 @@ export function listenToConversation({ parentId, childId }, callback) {
     (snap) => callback(snap.docs.map(rowFrom)),
     () => callback([]),
   )
+}
+
+/**
+ * Live preview of one parent↔child conversation — latest message plus a live
+ * unread count — for a contacts-list UI showing every child at once without
+ * streaming each conversation's full window. Same composite index as
+ * listenToConversation (equality on parentId+childId, orderBy timestamp)
+ * covers the "desc" direction here too, so this needs no extra index.
+ * Returns the combined unsubscribe function.
+ */
+export function listenToConversationPreview({ parentId, childId }, callback) {
+  if (!parentId || !childId) return () => {}
+
+  let lastMessage = null
+  let unreadCount = 0
+  const emit = () => callback({ lastMessage, unreadCount })
+
+  const unsubLast = onSnapshot(
+    query(
+      collection(db, MESSAGES_COLLECTION),
+      where('parentId', '==', parentId),
+      where('childId', '==', childId),
+      orderBy('timestamp', 'desc'),
+      limit(1),
+    ),
+    (snap) => {
+      lastMessage = snap.empty ? null : rowFrom(snap.docs[0])
+      emit()
+    },
+    () => {
+      lastMessage = null
+      emit()
+    },
+  )
+
+  // Mirrors markChildMessagesAsRead's query, live and alert-excluded (alerts
+  // have their own unread lifecycle — see that function's comment).
+  const unsubUnread = onSnapshot(
+    query(
+      collection(db, MESSAGES_COLLECTION),
+      where('parentId', '==', parentId),
+      where('childId', '==', childId),
+      where('senderType', '==', 'child'),
+      where('isRead', '==', false),
+    ),
+    (snap) => {
+      unreadCount = snap.docs.map(rowFrom).filter((m) => !isAlertMessage(m)).length
+      emit()
+    },
+    () => {
+      unreadCount = 0
+      emit()
+    },
+  )
+
+  return () => {
+    unsubLast()
+    unsubUnread()
+  }
+}
+
+/**
+ * Live total count of unread (child-sent, non-alert) messages across every
+ * given child — for a nav badge that needs just a number, not a preview per
+ * child. Lighter than listenToConversationPreview: skips its last-message
+ * listener, and shares the same query shape as markChildMessagesAsRead.
+ */
+export function listenToUnreadMessageCount({ parentId, childIds }, callback) {
+  const ids = Array.isArray(childIds) ? childIds.filter(Boolean) : []
+  if (!parentId || ids.length === 0) {
+    callback(0)
+    return () => {}
+  }
+
+  const byChild = new Map()
+  const emit = () => {
+    let total = 0
+    for (const n of byChild.values()) total += n
+    callback(total)
+  }
+
+  const unsubs = ids.map((childId) =>
+    onSnapshot(
+      query(
+        collection(db, MESSAGES_COLLECTION),
+        where('parentId', '==', parentId),
+        where('childId', '==', childId),
+        where('senderType', '==', 'child'),
+        where('isRead', '==', false),
+      ),
+      (snap) => {
+        byChild.set(childId, snap.docs.map(rowFrom).filter((m) => !isAlertMessage(m)).length)
+        emit()
+      },
+      () => {
+        byChild.set(childId, 0)
+        emit()
+      },
+    ),
+  )
+
+  return () => unsubs.forEach((u) => u())
 }
 
 /**

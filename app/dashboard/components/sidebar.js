@@ -39,6 +39,7 @@ export function Sidebar({
   setSelectedChildId,
   collapsed = false,
   onToggleCollapsed,
+  badges = {},
 }) {
   const [qrChild, setQrChild] = useState(null);
 
@@ -190,6 +191,7 @@ export function Sidebar({
             item={item}
             isActive={activeNav === item.id}
             collapsed={collapsed}
+            badge={badges[item.id] || 0}
             onClick={() => setActiveNav(item.id)}
           />
         ))}
@@ -205,6 +207,7 @@ export function Sidebar({
             item={item}
             isActive={activeNav === item.id}
             collapsed={collapsed}
+            badge={badges[item.id] || 0}
             onClick={() => setActiveNav(item.id)}
           />
         ))}
@@ -220,7 +223,24 @@ export function Sidebar({
   );
 }
 
-function NavButton({ item, isActive, onClick, collapsed }) {
+function NavBadge({ count, collapsed }) {
+  if (!count) return null;
+  const label = count > 99 ? "99+" : count;
+  if (collapsed) {
+    return (
+      <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-bold leading-none text-white">
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-[18px] min-w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] font-bold leading-none text-white">
+      {label}
+    </span>
+  );
+}
+
+function NavButton({ item, isActive, onClick, collapsed, badge = 0 }) {
   return (
     <button
       onClick={onClick}
@@ -230,15 +250,16 @@ function NavButton({ item, isActive, onClick, collapsed }) {
         collapsed ? "justify-center w-full px-0 py-2.5" : "gap-3 w-full px-3 py-3"
       } ${isActive ? "bg-[var(--accent-bg)]" : "hover:bg-[var(--surface-muted)]"}`}
     >
-      {isActive && !collapsed && (
+      {isActive && !collapsed && !badge && (
         <span className="absolute right-2 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-[var(--accent)]" />
       )}
       <span
-        className={`flex-shrink-0 transition-colors ${
+        className={`relative flex-shrink-0 transition-colors ${
           isActive ? "text-[var(--accent)]" : "text-[var(--muted)] group-hover:text-[var(--foreground)]"
         }`}
       >
         {item.icon}
+        {collapsed && <NavBadge count={badge} collapsed />}
       </span>
       {!collapsed && (
         <span
@@ -249,6 +270,7 @@ function NavButton({ item, isActive, onClick, collapsed }) {
           {item.label}
         </span>
       )}
+      {!collapsed && <NavBadge count={badge} />}
     </button>
   );
 }

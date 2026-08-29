@@ -11,6 +11,10 @@ import { mainNavLinks } from '../lib/siteConfig'
 import { logOut } from '../app/lib/authHelper'
 import { useAuth } from '../app/context/AuthContext'
 import { useNotifications } from '../app/lib/useNotifications'
+import { listenToChildrenForParent } from '../app/lib/database'
+import { listenToEmergencyContacts } from '../app/lib/emergencyContacts'
+import { getModulesByCategory, MODULE_CATEGORIES } from '../app/lib/learningModules'
+import { sideNavItems, sideHighlightItems } from '../app/dashboard/data/nav'
 
 function getDisplayName(user, profile) {
   if (profile?.name && profile.name.trim()) return profile.name
@@ -289,16 +293,318 @@ function NotificationsBell() {
   )
 }
 
+// Dashboard-wide entries this search can jump to, beyond children: every
+// sidebar destination (nav.js is the source of truth for id/label, so this
+// can't drift out of sync with what the sidebar itself shows).
+const SEARCHABLE_PAGES = [...sideHighlightItems, ...sideNavItems].map((item) => ({
+  id: item.id,
+  label: item.label,
+}))
+
+function matchesQuery(text, q) {
+  return typeof text === 'string' && text.toLowerCase().includes(q)
+}
+
+// Global search over the dashboard — pages (sidebar destinations), children,
+// learning modules, and emergency contacts. Click the icon and it extends
+// into an inline search box right there in the header (no popover jumping
+// out from under a small button); results drop down beneath it.
+//
+// Selecting a result never does its own client-side routing logic beyond
+// building the URL — every jump (`?tab=`, `?child=`, `?module=`) is read back
+// by DashboardContent (app/dashboard/page.js) through the same one-way
+// URL→state sync pattern already used for `?tab=`, so picking a result from
+// here behaves exactly like the equivalent sidebar click would.
+function HeaderDashboardSearch({ userId }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [children, setChildren] = useState([])
+  const [modules, setModules] = useState([])
+  const [contacts, setContacts] = useState([])
+  // Modules change rarely, so fetch them at most once — cached in this ref
+  // across opens/closes rather than a state flag, so reopening the search
+  // doesn't refetch a list that can't have changed.
+  const modulesFetchedRef = useRef(false)
+  const wrapperRef = useRef(null)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (!userId) return undefined
+    return listenToChildrenForParent(userId, setChildren)
+  }, [userId])
+
+  // Modules and contacts are only loaded once the search is actually opened,
+  // not on every dashboard page load.
+  useEffect(() => {
+    if (!open || !userId || modulesFetchedRef.current) return undefined
+    modulesFetchedRef.current = true
+    let cancelled = false
+    Promise.all([
+      getModulesByCategory(MODULE_CATEGORIES.PARENT),
+      getModulesByCategory(MODULE_CATEGORIES.CHILD),
+    ])
+      .then(([parentModules, childModules]) => {
+        if (!cancelled) setModules([...parentModules, ...childModules])
+      })
+      .catch(() => {
+        modulesFetchedRef.current = false
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, userId])
+
+  useEffect(() => {
+    if (!open || !userId) return undefined
+    return listenToEmergencyContacts(userId, setContacts)
+  }, [open, userId])
+
+  function close() {
+    setOpen(false)
+    setQuery('')
+  }
+
+  useEffect(() => {
+    if (!open) return undefined
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) close()
+    }
+    const handleKey = (e) => {
+      if (e.key === 'Escape') close()
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  const trimmed = query.trim().toLowerCase()
+  // Empty query: a short set of quick links (pages + children) rather than
+  // every module/contact dumped at once. Non-empty: real filtered results
+  // across all four sources.
+  const pageResults = SEARCHABLE_PAGES.filter(
+    (p) => !trimmed || matchesQuery(p.label, trimmed),
+  ).slice(0, trimmed ? 4 : 3)
+  const childResults = children
+    .filter((c) => !trimmed || matchesQuery(c.name, trimmed))
+    .slice(0, trimmed ? 5 : 3)
+  const moduleResults = trimmed
+    ? modules.filter((m) => matchesQuery(m.title, trimmed)).slice(0, 5)
+    : []
+  const contactResults = trimmed
+    ? contacts.filter((c) => matchesQuery(c.name, trimmed)).slice(0, 5)
+    : []
+  const totalResults =
+    pageResults.length + childResults.length + moduleResults.length + contactResults.length
+
+  function goToPage(id) {
+    const params = new URLSearchParams(window.location.search)
+    params.set('tab', id)
+    router.push(`/dashboard?${params.toString()}`)
+    close()
+  }
+
+  function goToChild(childId) {
+    const params = new URLSearchParams(window.location.search)
+    params.set('child', childId)
+    router.push(`/dashboard?${params.toString()}`)
+    close()
+  }
+
+  function goToModule(moduleId) {
+    const params = new URLSearchParams(window.location.search)
+    params.set('tab', 'learning')
+    params.set('module', moduleId)
+    router.push(`/dashboard?${params.toString()}`)
+    close()
+  }
+
+  function goToContacts() {
+    const params = new URLSearchParams(window.location.search)
+    params.set('tab', 'emergency')
+    router.push(`/dashboard?${params.toString()}`)
+    close()
+  }
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div
+        className={`flex items-center rounded-full border transition-colors duration-200 ${
+          open ? 'border-[var(--border)] bg-[var(--surface-muted)] pr-2 py-1' : 'border-transparent'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-label="Search dashboard"
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-white/5 hover:text-[var(--foreground)]"
+        >
+          <svg
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setOpen(true)}
+          placeholder="Search dashboard…"
+          aria-label="Search dashboard"
+          tabIndex={open ? 0 : -1}
+          className={`bg-transparent text-[12px] text-[var(--foreground)] outline-none transition-all duration-200 ${
+            open ? 'w-40 opacity-100 sm:w-56' : 'w-0 opacity-0'
+          }`}
+        />
+      </div>
+
+      {open && (
+        <div
+          role="dialog"
+          aria-label="Search dashboard results"
+          className="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--background)] shadow-lg"
+        >
+          <div className="max-h-80 overflow-y-auto py-1">
+            {totalResults === 0 ? (
+              <p className="px-3 py-2.5 text-[11.5px] text-[var(--muted)]">
+                No matches.
+              </p>
+            ) : (
+              <>
+                {pageResults.length > 0 && (
+                  <SearchSection label="Pages">
+                    {pageResults.map((page) => (
+                      <SearchResultRow
+                        key={page.id}
+                        label={page.label}
+                        onClick={() => goToPage(page.id)}
+                      />
+                    ))}
+                  </SearchSection>
+                )}
+                {childResults.length > 0 && (
+                  <SearchSection label="Children">
+                    {childResults.map((child) => (
+                      <SearchResultRow
+                        key={child.id}
+                        label={child.name || 'Child'}
+                        avatarText={getInitials(child.name)}
+                        onClick={() => goToChild(child.id)}
+                      />
+                    ))}
+                  </SearchSection>
+                )}
+                {moduleResults.length > 0 && (
+                  <SearchSection label="Learning modules">
+                    {moduleResults.map((mod) => (
+                      <SearchResultRow
+                        key={mod.id}
+                        label={mod.title || 'Module'}
+                        onClick={() => goToModule(mod.id)}
+                      />
+                    ))}
+                  </SearchSection>
+                )}
+                {contactResults.length > 0 && (
+                  <SearchSection label="Emergency contacts">
+                    {contactResults.map((contact) => (
+                      <SearchResultRow
+                        key={contact.id}
+                        label={contact.name || 'Contact'}
+                        sublabel={contact.relationship}
+                        onClick={goToContacts}
+                      />
+                    ))}
+                  </SearchSection>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SearchSection({ label, children }) {
+  return (
+    <div className="py-1">
+      <p className="px-3 pb-1 pt-1.5 text-[9.5px] font-semibold uppercase tracking-wider text-[var(--muted)]">
+        {label}
+      </p>
+      {children}
+    </div>
+  )
+}
+
+function SearchResultRow({ label, sublabel, avatarText, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-white/5"
+    >
+      {avatarText && (
+        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[9px] font-semibold text-[var(--muted)]">
+          {avatarText}
+        </span>
+      )}
+      <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-[var(--foreground)]">
+        {label}
+        {sublabel && (
+          <span className="ml-1.5 font-normal text-[var(--muted)]">{sublabel}</span>
+        )}
+      </span>
+    </button>
+  )
+}
+
 export function SiteHeader() {
   const pathname = usePathname()
   const { user, userProfile } = useAuth()
 
   // The JoJo beta chat and its /login and /signup sub-routes are all
   // chrome-free — a focused, minimal experience is the point there.
-  if (pathname === '/chatbot' || pathname.startsWith('/chatbot/')) return null
+  const isChatbotPage =
+    pathname === '/chatbot' || pathname.startsWith('/chatbot/')
 
   const isDashboardPage =
     pathname.startsWith('/dashboard')
+
+  // TEMP: dark mode disabled on the marketing site — force light theme
+  // there while leaving the dashboard's own toggle untouched.
+  useEffect(() => {
+    if (isChatbotPage) return
+    if (isDashboardPage) {
+      const stored = window.localStorage.getItem('theme')
+      document.documentElement.setAttribute(
+        'data-theme',
+        stored === 'dark' ? 'dark' : 'light',
+      )
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light')
+    }
+  }, [isChatbotPage, isDashboardPage])
+
+  if (isChatbotPage) return null
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -309,8 +615,8 @@ export function SiteHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-50 py-2 pt-3 glass ${
-        isDashboardPage ? "border-b border-[var(--border)]" : ""
+      className={`sticky top-0 z-50 glass ${
+        isDashboardPage ? "border-b border-[var(--border)]" : "py-2 pt-3"
       }`}
     >
 
@@ -326,8 +632,9 @@ export function SiteHeader() {
             href="/"
             className="flex items-center gap-2 transition-opacity hover:opacity-80"
           >
+            
             <span className="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">
-              Guardiané
+              Guardiané AI
             </span>
           </Link>
 
@@ -339,21 +646,7 @@ export function SiteHeader() {
           <ThemeToggle />
 
           {/* Search */}
-          <button className="flex h-7 w-7 items-center justify-center rounded-sm text-[var(--muted)] transition-colors hover:bg-white/5 hover:text-[var(--foreground)]">
-            <svg
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              viewBox="0 0 24 24"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </button>
+          <HeaderDashboardSearch userId={user?.uid} />
 
           {/* Notifications */}
           <NotificationsBell />
@@ -416,7 +709,8 @@ export function SiteHeader() {
 
           {/* Right: auth actions */}
           <div className="flex items-center justify-end gap-2.5 font-sans">
-            <ThemeToggle />
+            {/* TEMP: dark mode disabled on the marketing site */}
+            <ThemeToggle disabled />
 
             {user ? (
               <>

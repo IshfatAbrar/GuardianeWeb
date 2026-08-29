@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   Bell,
   BookOpen,
@@ -169,8 +170,8 @@ export function JojoPreviewCard() {
           {/* main panel */}
           <div className="min-w-0 flex-1 p-8 sm:p-10">
             <div className="flex items-center gap-3.5">
-              <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-base font-semibold text-white">
-                JJ
+              <span className="relative flex h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]">
+                <Image src="/jojo.png" alt="JoJo" fill className="object-cover" />
               </span>
               <div className="min-w-0">
                 <p className="text-base font-semibold text-[var(--foreground)]">

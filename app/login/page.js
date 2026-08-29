@@ -6,14 +6,36 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SiteFooter } from '../../components/site-footer'
 import { AuthGuard } from '../../components/auth-guard'
+import { Accordion } from '../../components/accordion'
 import { signIn } from "../lib/authHelper"  // ← Firebase helper
 import { PasswordInput } from "../../components/password-input"
-import {
-  ShieldCheck,
-  MessageCircleHeart,
-  BookOpen,
-  Stethoscope,
-} from 'lucide-react'
+
+const whatYouGetFaqs = [
+  {
+    title: 'Live risk detection',
+    content: (
+      <p>AI flags concerning digital activity patterns in real time before they escalate.</p>
+    ),
+  },
+  {
+    title: 'Mood & wellbeing',
+    content: (
+      <p>Daily mood logs and streak analytics give you an emotional pulse on each child.</p>
+    ),
+  },
+  {
+    title: 'Learning progress',
+    content: (
+      <p>Track completion of assigned digital safety and resilience modules.</p>
+    ),
+  },
+  {
+    title: 'Counselor connect',
+    content: (
+      <p>Seamless access to vetted mental health professionals when your family needs support.</p>
+    ),
+  },
+]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -59,23 +81,24 @@ export default function LoginPage() {
 
   return (
     <AuthGuard mode="public">
-    <div className="clarity-hero text-[var(--foreground)]">
+    {/* TEMP: forced white background for now */}
+    <div className="bg-white text-[var(--foreground)]">
 
       {/* ── HERO / LOGIN ── */}
-      <section className="border-b border-[var(--border)]">
-        <div className="mx-auto grid max-w-[1120px] gap-16 px-6 py-20 lg:grid-cols-[minmax(0,1fr)_480px] lg:px-8 lg:py-28">
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-[1120px] gap-16 px-10 py-10 mt-6 mb-12 lg:grid-cols-[minmax(0,1fr)_480px] lg:px-8 rounded-xl bg-gradient-to-t from-[#c2dfff] to-white to-70%">
 
           {/* LEFT: Copy */}
           <div className="clarity-copy mt-10" data-reveal>
-            <h1 className="mb-5 max-w-3xl bg-[var(--foreground)] bg-clip-text text-4xl font-normal leading-[1.06] tracking-tight text-transparent sm:text-5xl lg:text-6xl">
+            <h1 className="mb-5 max-w-3xl bg-[var(--foreground)] bg-clip-text text-3xl font-normal leading-[1.06] tracking-tight text-transparent sm:text-4xl lg:text-5xl">
               Your family&apos;s<br />safety dashboard
             </h1>
 
-            <p className="mt-5 max-w-2xl text-xl leading-relaxed text-[var(--foreground)]">
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[var(--foreground)]">
               Monitor your children&apos;s digital wellbeing, track emotional health signals, and connect with trusted counselors — all in one place.
             </p>
 
-            <p className="clarity-prose mt-6 max-w-2xl text-[0.95rem] leading-[1.85]">
+            <p className="clarity-prose mt-6 max-w-2xl text-[0.85rem] leading-[1.85]">
               Guardiané&apos;s parent portal brings together real-time risk detection, learning progress, mood analytics, and screen-time insights so every family has the visibility they need to stay safe and supported.
             </p>
           </div>
@@ -84,27 +107,27 @@ export default function LoginPage() {
           <div className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-10 py-11 shadow-[0_4px_24px_rgba(0,0,0,0.08),0_1px_4px_rgba(0,0,0,0.04)] animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             <div className="mb-8">
-              <p className="mb-2 text-[0.68rem] font-bold uppercase tracking-widest text-[var(--muted)]">
+              <p className="mb-2 text-[0.62rem] font-bold uppercase tracking-widest text-[var(--muted)]">
                 Parent portal
               </p>
-              <h2 className="mb-1.5 font-serif text-[1.9rem] font-normal leading-[1.1] tracking-tight">
+              <h2 className="mb-1.5 font-serif text-[1.7rem] font-normal leading-[1.1] tracking-tight">
                 Sign in
               </h2>
-              <p className="text-[0.82rem] text-[var(--muted)]">
+              <p className="text-[0.76rem] text-[var(--muted)]">
                 Welcome back — access your dashboard
               </p>
             </div>
 
             {/* Error banner */}
             {error && (
-              <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-[0.78rem] text-red-700">
+              <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-[0.72rem] text-red-700">
                 {error}
               </div>
             )}
 
             {/* Email */}
             <div className="mb-5">
-              <label className="mb-2 block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--muted)]">
+              <label className="mb-2 block text-[0.62rem] font-bold uppercase tracking-wider text-[var(--muted)]">
                 Email address
               </label>
               <input
@@ -113,13 +136,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 font-sans text-sm text-[var(--foreground)] outline-none transition-all focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
+                className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 font-sans text-[0.82rem] text-[var(--foreground)] outline-none transition-all focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               />
             </div>
 
             {/* Password */}
             <div className="mb-2">
-              <label className="mb-2 block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--muted)]">
+              <label className="mb-2 block text-[0.62rem] font-bold uppercase tracking-wider text-[var(--muted)]">
                 Password
               </label>
               <PasswordInput
@@ -127,13 +150,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 font-sans text-sm text-[var(--foreground)] outline-none transition-all focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
+                className="w-full rounded border border-[var(--border)] bg-[var(--background)] px-3.5 py-3 font-sans text-[0.82rem] text-[var(--foreground)] outline-none transition-all focus:border-[var(--accent)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               />
             </div>
 
             {/* Forgot password */}
             <div className="mb-6 flex justify-end">
-              <Link href="/forgot-password" className="text-[0.76rem] text-[var(--accent)] no-underline hover:underline">
+              <Link href="/forgot-password" className="text-[0.7rem] text-[var(--accent)] no-underline hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -143,27 +166,16 @@ export default function LoginPage() {
               <button
                 onClick={handleSignIn}
                 disabled={isLoading}
-                className="w-full rounded bg-[var(--accent)] px-3 py-3.5 font-sans text-[0.78rem] font-semibold uppercase tracking-wider text-white transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded bg-[var(--accent)] px-3 py-3.5 font-sans text-[0.72rem] font-semibold uppercase tracking-wider text-white transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLoading ? 'Signing in…' : 'Sign in →'}
               </button>
 
-              <div className="flex items-center gap-3 text-[0.74rem] text-[var(--muted)]">
-                <div className="h-px flex-1 bg-[var(--border)]" />
-                or
-                <div className="h-px flex-1 bg-[var(--border)]" />
-              </div>
-
-              <Link
-                href="/signup"
-                className="w-full rounded border border-[var(--accent-border)] bg-[var(--accent-bg)] px-3 py-3 text-center font-sans text-[0.78rem] font-semibold uppercase tracking-wider text-[var(--accent)] transition-all hover:bg-[var(--accent-bg-hover)] no-underline"
-              >
-                Create an account
-              </Link>
+      
             </div>
 
             {/* Footer */}
-            <div className=" pt-4 text-center text-[0.7rem] leading-relaxed text-[var(--muted)]">
+            <div className=" pt-4 text-center text-[0.65rem] leading-relaxed text-[var(--muted)]">
               Protected by 256-bit encryption&nbsp;·&nbsp;
               <Link href="#" className="text-[var(--accent)] no-underline hover:underline">Privacy Policy</Link>
               &nbsp;·&nbsp;
@@ -174,35 +186,32 @@ export default function LoginPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="border-t border-[var(--border)] bg-[var(--surface)] px-6 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-[1120px]">
-          <div className="mb-9">
-            <h2 className="mb-2 bg-[var(--foreground)] bg-clip-text text-3xl font-normal leading-[1.08] tracking-tight text-transparent sm:text-4xl">
-              What you get access to
-            </h2>
-            <p className="text-[0.85rem] text-[var(--muted)]">
-              Everything a parent needs to protect, support, and empower their children online.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-px overflow-hidden rounded border border-[var(--border)] bg-[var(--border)] sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: ShieldCheck,        title: 'Live risk detection', desc: 'AI flags concerning digital activity patterns in real time before they escalate.' },
-              { icon: MessageCircleHeart, title: 'Mood & wellbeing',    desc: 'Daily mood logs and streak analytics give you an emotional pulse on each child.' },
-              { icon: BookOpen,           title: 'Learning progress',   desc: 'Track completion of assigned digital safety and resilience modules.' },
-              { icon: Stethoscope,        title: 'Counselor connect',   desc: 'Seamless access to vetted mental health professionals when your family needs support.' },
-            ].map((f) => {
-              const Icon = f.icon
-              return (
-                <div key={f.title} className="bg-[var(--surface)] p-7 transition-colors">
-                  <span className="mb-3.5 block">
-                    <Icon className="h-[28px] w-[28px] text-[var(--accent)]" strokeWidth={1.8} />
+      <section className="bg-white py-14">
+        <div className="mx-auto max-w-[1120px] px-6 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
+            <div data-reveal>
+              <Accordion items={whatYouGetFaqs} />
+            </div>
+            <div data-reveal>
+              <h2 className="gradient-heading mb-6 font-normal leading-[1.08] tracking-[-0.04em] text-3xl">
+                What you get access to
+              </h2>
+              <p className="clarity-prose text-[0.8rem]">
+                Everything a parent needs to protect, support, and empower
+                their children online.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                {["Busy parents", "School nights", "Blended homes", "Teen years"].map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-[0.78rem] font-medium text-[var(--muted)]"
+                  >
+                    {label}
                   </span>
-                  <h4 className="mb-1.5 text-[0.84rem] font-semibold text-[var(--foreground)]">{f.title}</h4>
-                  <p className="text-[0.76rem] leading-[1.65] text-[var(--muted)]">{f.desc}</p>
-                </div>
-              )
-            })}
+                ))}
+              </div>
+            </div>
+            
           </div>
         </div>
       </section>

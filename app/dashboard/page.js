@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Sidebar } from "./components/sidebar";
 import { OverviewTab } from "./components/overview-tab";
@@ -15,6 +15,7 @@ import { CriticalAlertPopup } from "./components/critical-alert-popup";
 import { placeholderTabLabels } from "./data/nav";
 import { AuthGuard } from "../../components/auth-guard";
 import { useDashboardData } from "./_lib/useDashboardData";
+import { useModuleCompletionAlerts } from "./_lib/useModuleCompletionAlerts";
 import { useNotifications } from "../lib/useNotifications";
 
 // "access" is intentionally absent — see the note in data/nav.js. A stale
@@ -59,10 +60,31 @@ function DashboardContent() {
   const [activeNav, setActiveNav] = useState(initialTab);
   const [pendingModuleId, setPendingModuleId] = useState(null);
   // Give the chat as much room as possible: the main sidebar starts collapsed
-  // whenever the chatbot tab is open.
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(initialTab === "chatbot");
+  // whenever the chatbot or messaging tab is open.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    initialTab === "chatbot" || initialTab === "messaging",
+  );
   const data = useDashboardData();
   const { alerts: unreadAlerts } = useNotifications();
+
+  const childById = useMemo(() => {
+    const m = new Map();
+    for (const c of data.children) m.set(c.id, c);
+    return m;
+  }, [data.children]);
+  const moduleById = useMemo(() => {
+    const m = new Map();
+    for (const mod of data.modules) m.set(mod.id, mod);
+    return m;
+  }, [data.modules]);
+  const { unseenCount: moduleCompletionsUnseen, markAllSeen: markModuleCompletionsSeen } =
+    useModuleCompletionAlerts({
+      parentId: data.user?.uid,
+      assignments: data.assignments,
+      progressById: data.progressById,
+      childById,
+      moduleById,
+    });
 
   // Sync the URL ?tab= when the user clicks around. replaceState (not push)
   // so the browser-back button still leaves the dashboard rather than walking
@@ -91,13 +113,36 @@ function DashboardContent() {
     }
   }
 
-  // Auto-collapse the main sidebar when entering the chatbot tab, and restore
-  // it on the way out. Tracked on tab change (same during-render guard) so the
-  // user can still manually toggle it while staying on a tab.
+  // Same one-way URL→state sync, for `?child=<id>` — set by the header's
+  // dashboard search (components/site-header.js) so picking a child result
+  // there switches the dashboard's selected child without changing tabs.
+  const childFromUrl = searchParams.get("child");
+  const [lastSyncedChild, setLastSyncedChild] = useState(childFromUrl);
+  if (childFromUrl !== lastSyncedChild) {
+    setLastSyncedChild(childFromUrl);
+    if (childFromUrl) data.setSelectedChildId(childFromUrl);
+  }
+
+  // Same again for `?module=<id>` — the header search's module results pair
+  // this with `?tab=learning`, and pendingModuleId is the same "open this
+  // module" request openLearningModule() already feeds to LearningTab below.
+  const moduleFromUrl = searchParams.get("module");
+  const [lastSyncedModule, setLastSyncedModule] = useState(moduleFromUrl);
+  if (moduleFromUrl !== lastSyncedModule) {
+    setLastSyncedModule(moduleFromUrl);
+    if (moduleFromUrl) setPendingModuleId(moduleFromUrl);
+  }
+
+  // Auto-collapse the main sidebar when entering the chatbot or messaging
+  // tab, and restore it on the way out. Tracked on tab change (same
+  // during-render guard) so the user can still manually toggle it while
+  // staying on a tab.
   const [lastCollapseTab, setLastCollapseTab] = useState(activeNav);
   if (activeNav !== lastCollapseTab) {
     setLastCollapseTab(activeNav);
-    setSidebarCollapsed(activeNav === "chatbot");
+    setSidebarCollapsed(activeNav === "chatbot" || activeNav === "messaging");
+    // Clear the Module Assignments badge the moment the parent opens that tab.
+    if (activeNav === "modules") markModuleCompletionsSeen();
   }
 
   const openLearningModule = (moduleId) => {
@@ -155,6 +200,11 @@ function DashboardContent() {
             setSelectedChildId={data.setSelectedChildId}
             collapsed={sidebarCollapsed}
             onToggleCollapsed={() => setSidebarCollapsed((c) => !c)}
+            badges={{
+              messaging: data.unreadMessagesCount,
+              emergency: data.activeAlerts.length,
+              modules: moduleCompletionsUnseen,
+            }}
           />
           <main className="flex flex-1 flex-col overflow-y-auto">
             {renderContent()}

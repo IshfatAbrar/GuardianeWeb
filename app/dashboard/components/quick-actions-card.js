@@ -6,6 +6,7 @@ export function QuickActionsCard({
   onMessages,
   onEmergency,
   onAppLimits,
+  onAssignModule,
 }) {
   const handlers = {
     addChild: onAddChild,
@@ -13,6 +14,7 @@ export function QuickActionsCard({
     messages: onMessages,
     emergency: onEmergency,
     appLimits: onAppLimits,
+    assignModule: onAssignModule,
   };
 
   return (

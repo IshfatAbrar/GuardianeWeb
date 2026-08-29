@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 // Gemini-written insights for the selected child, mirroring GuardParent's
 // "AI Powered Insights" section (app/index.js) card for card and in the same
 // order. The Android app generates and caches them; this only reads — see
@@ -76,6 +78,9 @@ export function AiInsightsCard({ insights, loading, childName }) {
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-3">
+        <span className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]">
+          <Image src="/jojo.png" alt="" fill className="object-cover" />
+        </span>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           AI insights
         </h2>
