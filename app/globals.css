@@ -33,7 +33,7 @@
   --muted: #555d66;
   --border: #dde3e8;
   --ring: #1f2329;
-  --glass-bg: rgba(224, 228, 230, 0.94);
+  --glass-bg: rgba(255, 255, 255, 0.86);
   --glass-border: rgba(31, 35, 41, 0.08);
   --shadow-card: 0 10px 28px rgba(31, 35, 41, 0.05);
   --shadow-elevated: 0 26px 70px rgba(31, 35, 41, 0.08);
@@ -180,7 +180,6 @@ blockquote {
   background: var(--glass-bg);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--glass-border);
   transition: background 0.28s;
 }
 
@@ -190,6 +189,10 @@ blockquote {
 
 .card-shadow {
   box-shadow: var(--shadow-card);
+}
+
+.mockup-shadow {
+  box-shadow: 0 40px 150px -8px rgba(59, 130, 246, 0.55);
 }
 
 .brand-btn {
@@ -294,6 +297,21 @@ blockquote {
   }
 }
 
+.toast-pop {
+  animation: toast-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .mic-pulse:hover {
   animation: micPulse 1s ease-out infinite;
 }
@@ -358,6 +376,15 @@ blockquote {
   color: var(--foreground);
 }
 
+.brand-icon {
+  filter: none;
+  transition: filter 0.2s ease;
+}
+
+html[data-theme="dark"] .brand-icon {
+  filter: invert(1) brightness(1.6);
+}
+
 .center-monogram {
   display: inline-flex;
   align-items: center;
@@ -406,6 +433,51 @@ blockquote {
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 1rem;
+}
+
+.clarity-gradient-panel {
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  background: linear-gradient(
+    135deg,
+    var(--accent-bg) 0%,
+    var(--surface) 45%,
+    var(--brand-soft) 100%
+  );
+}
+
+.marquee-row {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+}
+
+.marquee-track {
+  animation: marquee-ltr 55s linear infinite;
+}
+
+.marquee-row:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-ltr {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0%);
+  }
 }
 
 .clarity-prose {

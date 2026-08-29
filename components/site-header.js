@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -174,6 +175,75 @@ function ProfileMenu({ user, profile, compact = false }) {
   )
 }
 
+function NavDropdown({ label, items }) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="group inline-flex cursor-pointer items-center gap-1 text-[0.82rem] font-medium text-[var(--muted)] transition-colors duration-200 hover:text-[var(--foreground)]"
+      >
+        {label}
+        <svg
+          width="10"
+          height="10"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+          className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-1/2 top-full z-50 mt-3 w-48 -translate-x-1/2 overflow-hidden rounded-sm border border-[var(--border)] bg-[var(--background)] shadow-lg"
+        >
+          {items.map(([itemLabel, href]) => (
+            <Link
+              key={href}
+              href={href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="block px-3.5 py-2.5 text-[0.8rem] font-medium text-[var(--foreground)] transition-colors hover:bg-white/5"
+            >
+              {itemLabel}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function NotificationsBell() {
   const [open, setOpen] = useState(false)
   const { unreadCount } = useNotifications()
@@ -238,7 +308,11 @@ export function SiteHeader() {
   ]
 
   return (
-    <header className="sticky top-0 z-50 glass clarity-hero">
+    <header
+      className={`sticky top-0 z-50 py-2 pt-3 glass ${
+        isDashboardPage ? "border-b border-[var(--border)]" : ""
+      }`}
+    >
 
       {isDashboardPage ? (
 
@@ -292,32 +366,56 @@ export function SiteHeader() {
       ) : (
 
         /* ── NORMAL MARKETING HEADER ── */
-        <nav className="clarity-wrap flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <nav className="clarity-wrap grid grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
 
-          <div className="flex items-center gap-10">
-            <ul className="hidden items-center gap-7 lg:flex">
-              {mainNavLinks.map(([label, href, badge]) => (
-                <li key={href}>
+          {/* Left: brand */}
+          <Link
+            href="/"
+            className="focus-visible-ring flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
+            <Image
+              src="/guardian-icon.png"
+              alt=""
+              width={26}
+              height={30}
+              className="brand-icon shrink-0"
+              priority
+            />
+            <span className="hidden text-[15px] font-semibold tracking-tight text-[var(--foreground)] sm:inline">
+              Guardiané AI
+            </span>
+          </Link>
+
+          {/* Center: nav links */}
+          <ul className="hidden items-center justify-center gap-7 lg:flex">
+            {mainNavLinks.map((entry) =>
+              entry.items ? (
+                <li key={entry.label}>
+                  <NavDropdown label={entry.label} items={entry.items} />
+                </li>
+              ) : (
+                <li key={entry.href}>
                   <Link
-                    href={href}
+                    href={entry.href}
                     className="group relative inline-flex items-center gap-1.5 text-[0.82rem] font-medium text-[var(--muted)] transition-colors duration-200 hover:text-[var(--foreground)]"
                   >
-                    {label}
+                    {entry.label}
 
-                    {badge && (
+                    {entry.badge && (
                       <span className="rounded-full border border-[var(--border)] bg-white/5 px-1.5 py-0.5 text-[0.6rem] font-semibold uppercase leading-none tracking-wide text-[var(--muted)] transition-colors duration-200 group-hover:border-[var(--foreground)]/30 group-hover:text-[var(--foreground)]">
-                        {badge}
+                        {entry.badge}
                       </span>
                     )}
 
                     <span className="absolute -bottom-1 left-0 h-px w-0 bg-[var(--foreground)] transition-all duration-300 group-hover:w-full" />
                   </Link>
                 </li>
-              ))}
-            </ul>
-          </div>
+              ),
+            )}
+          </ul>
 
-          <div className="flex items-center gap-2.5 font-sans">
+          {/* Right: auth actions */}
+          <div className="flex items-center justify-end gap-2.5 font-sans">
             <ThemeToggle />
 
             {user ? (
