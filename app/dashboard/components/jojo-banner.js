@@ -1,18 +1,23 @@
-import Image from "next/image"
+import Image from "next/image";
 
 export function JojoBanner({ onTalk, onLearnMore }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] p-3.5 sm:p-4">
+    <div className="relative overflow-hidden rounded-2xl border-1 border-neutral-200 bg-gradient-to-l from-[var(--accent-bg)] to-[var(--surface)] p-3.5 sm:p-4">
       {/* Decorative blob */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-10 top-0 h-full w-[60%] rounded-full bg-[var(--accent)] opacity-10 blur-2xl"
+        className="pointer-events-none absolute -right-14 -top-14 h-60 w-60 rounded-full bg-[var(--accent)] opacity-10 blur-2xl"
       />
 
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         {/* Avatar */}
-        <div className="relative h-36 w-36 flex-shrink-0 sm:h-28 sm:w-28">
-          <Image src="/jojo_full.png" alt="JoJo" fill className="object-contain" />
+        <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden">
+          <Image
+            src="/jojo_full.png"
+            alt="JoJo"
+            fill
+            className="object-cover"
+          />
         </div>
 
         {/* Copy */}
@@ -51,5 +56,5 @@ export function JojoBanner({ onTalk, onLearnMore }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
