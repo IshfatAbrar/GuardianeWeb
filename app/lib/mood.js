@@ -34,11 +34,12 @@ const COLOR = {
   poor: "#FF5722",
 };
 
-const EMOJI = {
-  great: "😄",
-  good: "🙂",
-  fair: "😐",
-  poor: "😟",
+// Custom mood-face art, one file per band — see public/mood/.
+const ICON = {
+  great: "/mood/great.png",
+  good: "/mood/good.png",
+  fair: "/mood/fair.png",
+  poor: "/mood/poor.png",
 };
 
 const LABEL = {
@@ -76,8 +77,8 @@ export function moodColor(band) {
   return COLOR[band] ?? COLOR.fair;
 }
 
-export function moodEmoji(band) {
-  return EMOJI[band] ?? "🙂";
+export function moodIcon(band) {
+  return ICON[band] ?? ICON.fair;
 }
 
 export function moodLabel(band) {
@@ -223,14 +224,22 @@ const WELLBEING_FALLBACK_ENTRIES = 10;
  *   average: { score: number, days: number|null, count: number, since: Date|null }|null,
  * }}
  */
-export function summarizeMood(rows, { windowDays = WELLBEING_WINDOW_DAYS, now = Date.now() } = {}) {
+export function summarizeMood(
+  rows,
+  { windowDays = WELLBEING_WINDOW_DAYS, now = Date.now() } = {},
+) {
   const scored = (Array.isArray(rows) ? rows : [])
     .filter((r) => entryScore(r) !== null)
     .map((r) => ({ row: r, ms: entryMillis(r) }))
     .sort((a, b) => (b.ms ?? 0) - (a.ms ?? 0));
 
   if (!scored.length) {
-    return { latest: null, latestIsToday: false, latestAt: null, average: null };
+    return {
+      latest: null,
+      latestIsToday: false,
+      latestAt: null,
+      average: null,
+    };
   }
 
   const latest = scored[0];
@@ -243,7 +252,9 @@ export function summarizeMood(rows, { windowDays = WELLBEING_WINDOW_DAYS, now = 
 
   const cutoff = now - windowDays * 86_400_000;
   const inWindow = scored.filter((s) => s.ms !== null && s.ms >= cutoff);
-  const used = inWindow.length ? inWindow : scored.slice(0, WELLBEING_FALLBACK_ENTRIES);
+  const used = inWindow.length
+    ? inWindow
+    : scored.slice(0, WELLBEING_FALLBACK_ENTRIES);
   const oldest = used[used.length - 1];
 
   return {
