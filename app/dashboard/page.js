@@ -85,6 +85,7 @@ function DashboardContent() {
     progressById: data.progressById,
     childById,
     moduleById,
+    ready: data.moduleCompletionDataReady,
   });
 
   // Sync the URL ?tab= when the user clicks around. replaceState (not push)

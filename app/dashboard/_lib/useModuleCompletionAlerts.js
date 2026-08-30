@@ -46,6 +46,7 @@ export function useModuleCompletionAlerts({
   progressById,
   childById,
   moduleById,
+  ready,
 }) {
   const { showToast } = useToast();
   const seenKey = parentId ? `${SEEN_KEY_PREFIX}${parentId}` : null;
@@ -75,9 +76,14 @@ export function useModuleCompletionAlerts({
   // Toast exactly once per newly-observed completion. `known` starts as
   // whatever was already complete on first render (no toast for those — the
   // parent wasn't watching when they happened), then toasts only for keys
-  // that appear afterward.
+  // that appear afterward. Gated on `ready`: assignments/progressById start
+  // empty and hydrate asynchronously from their own Firestore listeners, so
+  // priming the baseline before either has delivered a real snapshot would
+  // capture an empty set — making every pre-existing completion look new the
+  // moment real data arrives, and toasting the whole backlog at once.
   const knownRef = useRef(null);
   useEffect(() => {
+    if (!ready) return;
     if (knownRef.current === null) {
       knownRef.current = completedKeys;
       return;
@@ -97,7 +103,7 @@ export function useModuleCompletionAlerts({
       }
     }
     knownRef.current = completedKeys;
-  }, [completedKeys, assignments, childById, moduleById, showToast]);
+  }, [ready, completedKeys, assignments, childById, moduleById, showToast]);
 
   const unseenCount = useMemo(() => {
     let count = 0;
