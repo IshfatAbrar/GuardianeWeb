@@ -3,19 +3,25 @@ import { moduleColors } from "../data/modules";
 // Collapse modules that share a title (case-insensitive, trimmed) so the
 // carousel doesn't show the same card twice when Firestore has duplicates.
 function dedupeByTitle(modules) {
-  const seen = new Set()
-  const out = []
+  const seen = new Set();
+  const out = [];
   for (const m of modules) {
-    const key = String(m.title || m.name || '').trim().toLowerCase()
-    if (!key || seen.has(key)) continue
-    seen.add(key)
-    out.push(m)
+    const key = String(m.title || m.name || "")
+      .trim()
+      .toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(m);
   }
-  return out
+  return out;
 }
 
-export function LearningModulesCarousel({ modules = [], onViewAll, onSelectModule }) {
-  const unique = dedupeByTitle(modules)
+export function LearningModulesCarousel({
+  modules = [],
+  onViewAll,
+  onSelectModule,
+}) {
+  const unique = dedupeByTitle(modules);
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
@@ -59,8 +65,10 @@ export function LearningModulesCarousel({ modules = [], onViewAll, onSelectModul
         >
           {unique.map((mod, i) => {
             const color = moduleColors[i % moduleColors.length];
-            const title = mod.title || mod.name || 'Untitled module';
-            const meta = [mod.ageGroup, mod.difficulty].filter(Boolean).join(' · ');
+            const title = mod.title || mod.name || "Untitled module";
+            const meta = [mod.ageGroup, mod.difficulty]
+              .filter(Boolean)
+              .join(" · ");
             // estimatedDuration is stored in SECONDS (createModuleWithLesson
             // multiplies the minutes input by 60) — divide back down, matching
             // module-detail-view.js / assignment-form-modal.js / assignment-detail-view.js.
@@ -87,7 +95,16 @@ export function LearningModulesCarousel({ modules = [], onViewAll, onSelectModul
                     className="w-10 h-10 rounded-xl flex items-center justify-center"
                     style={{ background: "rgba(255,255,255,0.2)" }}
                   >
-                    <svg width="20" height="20" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
                       <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                     </svg>
@@ -110,7 +127,9 @@ export function LearningModulesCarousel({ modules = [], onViewAll, onSelectModul
 
                 <div className="flex items-center justify-between mt-auto pt-1">
                   {duration ? (
-                    <span className="text-[11px] font-semibold text-white opacity-90">{duration}</span>
+                    <span className="text-[11px] font-semibold text-white opacity-90">
+                      {duration}
+                    </span>
                   ) : (
                     <span />
                   )}

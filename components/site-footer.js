@@ -96,12 +96,13 @@ export function SiteFooter({ tagline }) {
               </PartnerWithUsModal>
             </div>
           </div>
-
-          
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-[var(--border)] pt-6 text-xs text-[var(--muted)] sm:flex-row">
-          <p>© {new Date().getFullYear()} AI-Guardian Center. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} AI-Guardian Center. All rights
+            reserved.
+          </p>
           <div className="flex items-center gap-5">
             <span>Privacy Policy</span>
             <span>Terms of Service</span>

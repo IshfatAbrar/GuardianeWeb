@@ -19,7 +19,11 @@ describe("childQrPayload", () => {
   });
 
   it("does not re-introduce the guardiane: prefix the child app rejects", () => {
-    const payload = childQrPayload({ id: "abc123", name: "Ann", parentId: "p1" });
+    const payload = childQrPayload({
+      id: "abc123",
+      name: "Ann",
+      parentId: "p1",
+    });
     expect(payload).not.toContain("guardiane:");
     expect(payload).not.toContain(":");
     expect(payload).toBe("abc123");
@@ -67,6 +71,8 @@ describe("ageFromBirthDate", () => {
 
   it("rejects an implausible age rather than rendering a wild number", () => {
     expect(ageFromBirthDate("01/01/1500")).toBeNull();
-    expect(ageFromBirthDate(`01/01/${new Date().getFullYear() + 5}`)).toBeNull();
+    expect(
+      ageFromBirthDate(`01/01/${new Date().getFullYear() + 5}`),
+    ).toBeNull();
   });
 });

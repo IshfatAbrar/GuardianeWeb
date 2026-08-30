@@ -37,7 +37,10 @@ function readSeen(key) {
 
 function writeSeen(key, set) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(Array.from(set).slice(-MAX_SEEN)));
+  window.localStorage.setItem(
+    key,
+    JSON.stringify(Array.from(set).slice(-MAX_SEEN)),
+  );
 }
 
 function relativeTime(ms) {
@@ -121,18 +124,32 @@ export function CriticalAlertPopup({ alerts, childList, onGoToEmergency }) {
       <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border-2 border-rose-500 bg-[var(--background)] shadow-[0_0_0_6px_rgba(239,68,68,0.15)]">
         <div className="flex flex-col items-center gap-3 bg-rose-500/10 px-5 pt-6 pb-5 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg shadow-rose-500/40">
-            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="28"
+              height="28"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </span>
           <div>
-            <h1 id="critical-alert-title" className="text-[17px] font-bold text-rose-600">
+            <h1
+              id="critical-alert-title"
+              className="text-[17px] font-bold text-rose-600"
+            >
               Critical Alert
             </h1>
             <p className="mt-0.5 text-[12.5px] font-medium text-[var(--foreground)]">
-              {[child?.name, relativeTime(current.timestampMs)].filter(Boolean).join(" · ")}
+              {[child?.name, relativeTime(current.timestampMs)]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           </div>
         </div>
@@ -151,7 +168,8 @@ export function CriticalAlertPopup({ alerts, childList, onGoToEmergency }) {
 
           {queue.length > 1 && (
             <p className="text-center text-[11.5px] text-[var(--muted)]">
-              +{queue.length - 1} more critical alert{queue.length - 1 === 1 ? "" : "s"} waiting
+              +{queue.length - 1} more critical alert
+              {queue.length - 1 === 1 ? "" : "s"} waiting
             </p>
           )}
 

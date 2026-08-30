@@ -30,17 +30,17 @@ import {
   writeBatch,
   arrayUnion,
   arrayRemove,
-} from 'firebase/firestore'
-import { db } from './firebase'
+} from "firebase/firestore";
+import { db } from "./firebase";
 
 export const COLLECTIONS = {
-  USERS: 'users',
-  MOOD_ENTRIES: 'mood_entries',
-  SCREEN_TIME_ENTRIES: 'screen_time_entries',
-  MODULES: 'modules',
-  LEARNING_PROGRESS: 'learning_progress',
-  JOJO_LEADS: 'jojoLeads',
-}
+  USERS: "users",
+  MOOD_ENTRIES: "mood_entries",
+  SCREEN_TIME_ENTRIES: "screen_time_entries",
+  MODULES: "modules",
+  LEARNING_PROGRESS: "learning_progress",
+  JOJO_LEADS: "jojoLeads",
+};
 
 // ─── JoJo guest leads ──────────────────────────────────────────────────────────
 
@@ -52,47 +52,54 @@ export const COLLECTIONS = {
  *
  * Returns the new lead document id.
  */
-export async function createJojoLead({ email, phone, name, childInfo, zip } = {}) {
-  const clean = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+export async function createJojoLead({
+  email,
+  phone,
+  name,
+  childInfo,
+  zip,
+} = {}) {
+  const clean = (v, max) =>
+    typeof v === "string" ? v.trim().slice(0, max) : "";
   const data = {
     email: clean(email, 254),
     phone: clean(phone, 32),
     name: clean(name, 100),
     childInfo: clean(childInfo, 500),
     zip: clean(zip, 20),
-    source: 'chatbot',
+    source: "chatbot",
     createdAt: serverTimestamp(),
-  }
+  };
   if (!data.email && !data.phone) {
-    throw new Error('Please enter an email address or phone number.')
+    throw new Error("Please enter an email address or phone number.");
   }
-  const ref = doc(collection(db, COLLECTIONS.JOJO_LEADS))
-  await setDoc(ref, data)
-  return ref.id
+  const ref = doc(collection(db, COLLECTIONS.JOJO_LEADS));
+  await setDoc(ref, data);
+  return ref.id;
 }
 
 // ─── Users (parents and children both live here) ─────────────────────────────
 
 /** Create or overwrite a user profile document at users/{uid}. */
 export async function createUserProfile(uid, data) {
-  const ref = doc(db, COLLECTIONS.USERS, uid)
+  const ref = doc(db, COLLECTIONS.USERS, uid);
   await setDoc(
     ref,
     { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() },
     { merge: true },
-  )
+  );
 }
 
 /** Patch a user profile document. */
 export async function updateUserProfile(uid, patch) {
-  const ref = doc(db, COLLECTIONS.USERS, uid)
-  await updateDoc(ref, { ...patch, updatedAt: serverTimestamp() })
+  const ref = doc(db, COLLECTIONS.USERS, uid);
+  await updateDoc(ref, { ...patch, updatedAt: serverTimestamp() });
 }
 
 /** Fetch a single user profile. Returns null if the doc doesn't exist. */
 export async function getUserProfile(uid) {
-  const snap = await getDoc(doc(db, COLLECTIONS.USERS, uid))
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null
+  const snap = await getDoc(doc(db, COLLECTIONS.USERS, uid));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 // ─── Children ────────────────────────────────────────────────────────────────
@@ -114,7 +121,7 @@ export async function getUserProfile(uid) {
  * That is the Android apps' existing design; the web only mirrors it.
  */
 export function childQrPayload(child) {
-  return typeof child?.id === 'string' ? child.id : ''
+  return typeof child?.id === "string" ? child.id : "";
 }
 
 /**
@@ -129,16 +136,16 @@ export function childQrPayload(child) {
  * indexes. Sorted by `childIndex` to match GuardParent's ordering.
  */
 export async function getChildrenForParent(parentUid) {
-  if (!parentUid) return []
+  if (!parentUid) return [];
   const q = query(
     collection(db, COLLECTIONS.USERS),
-    where('parentId', '==', parentUid),
-    where('role', '==', 'child'),
-  )
-  const snap = await getDocs(q)
+    where("parentId", "==", parentUid),
+    where("role", "==", "child"),
+  );
+  const snap = await getDocs(q);
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0))
+    .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0));
 }
 
 /**
@@ -149,33 +156,33 @@ export async function getChildrenForParent(parentUid) {
  */
 export function listenToChildrenForParent(parentUid, callback) {
   if (!parentUid) {
-    callback([])
-    return () => {}
+    callback([]);
+    return () => {};
   }
   const q = query(
     collection(db, COLLECTIONS.USERS),
-    where('parentId', '==', parentUid),
-    where('role', '==', 'child'),
-  )
+    where("parentId", "==", parentUid),
+    where("role", "==", "child"),
+  );
   return onSnapshot(
     q,
     (snap) => {
       const rows = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0))
-      callback(rows)
+        .sort((a, b) => (a.childIndex ?? 0) - (b.childIndex ?? 0));
+      callback(rows);
     },
     () => callback([]),
-  )
+  );
 }
 
 // Convert "YYYY-MM-DD" (HTML <input type="date">) to the "MM/DD/YYYY" string
 // GuardParent writes and reads. Android stores this as a plain string, not a
 // Timestamp, so it must round-trip verbatim.
 function toBirthDateString(input) {
-  if (!input) return ''
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input)
-  return m ? `${m[2]}/${m[3]}/${m[1]}` : input
+  if (!input) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+  return m ? `${m[2]}/${m[3]}/${m[1]}` : input;
 }
 
 /**
@@ -184,33 +191,42 @@ function toBirthDateString(input) {
  * anything showing an age has to derive it.
  */
 export function ageFromBirthDate(birthDate) {
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(birthDate ?? ''))
-  if (!m) return null
-  const dob = new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]))
-  if (Number.isNaN(dob.getTime())) return null
-  const now = new Date()
-  let age = now.getFullYear() - dob.getFullYear()
-  const monthDelta = now.getMonth() - dob.getMonth()
-  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) age--
-  return age >= 0 && age <= 120 ? age : null
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(birthDate ?? ""));
+  if (!m) return null;
+  const dob = new Date(Number(m[3]), Number(m[1]) - 1, Number(m[2]));
+  if (Number.isNaN(dob.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const monthDelta = now.getMonth() - dob.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate()))
+    age--;
+  return age >= 0 && age <= 120 ? age : null;
 }
 
 /** Build a child document in GuardParent's exact shape. */
-function buildChildDoc({ parentUid, name, bday, gender, grade, notes, childIndex }) {
+function buildChildDoc({
+  parentUid,
+  name,
+  bday,
+  gender,
+  grade,
+  notes,
+  childIndex,
+}) {
   return {
     parentId: parentUid,
-    name: (name || '').trim(),
+    name: (name || "").trim(),
     birthDate: toBirthDateString(bday),
-    gender: gender || '',
-    notes: notes || '',
+    gender: gender || "",
+    notes: notes || "",
     // `grade` has no counterpart in the Android apps — they ignore unknown
     // fields, so keeping it is additive and safe for the web's own form.
-    grade: grade || '',
-    role: 'child',
+    grade: grade || "",
+    role: "child",
     childIndex,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  }
+  };
 }
 
 /**
@@ -226,15 +242,15 @@ function buildChildDoc({ parentUid, name, bday, gender, grade, notes, childIndex
  * Returns { childIds }.
  */
 export async function provisionParent({ uid, email, name, phone, children }) {
-  const childrenArr = Array.isArray(children) ? children : []
-  const batch = writeBatch(db)
+  const childrenArr = Array.isArray(children) ? children : [];
+  const batch = writeBatch(db);
 
-  const userRef = doc(db, COLLECTIONS.USERS, uid)
-  const childIds = []
+  const userRef = doc(db, COLLECTIONS.USERS, uid);
+  const childIds = [];
 
   childrenArr.forEach((c, i) => {
-    const childRef = doc(collection(db, COLLECTIONS.USERS))
-    childIds.push(childRef.id)
+    const childRef = doc(collection(db, COLLECTIONS.USERS));
+    childIds.push(childRef.id);
     batch.set(
       childRef,
       buildChildDoc({
@@ -246,23 +262,23 @@ export async function provisionParent({ uid, email, name, phone, children }) {
         notes: c.notes,
         childIndex: i + 1,
       }),
-    )
-  })
+    );
+  });
 
   batch.set(userRef, {
     uid,
-    name: name || '',
+    name: name || "",
     email,
-    phone: phone || '',
-    role: 'parent',
+    phone: phone || "",
+    role: "parent",
     numberOfChildren: childrenArr.length,
     linkedChildren: childIds,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  })
+  });
 
-  await batch.commit()
-  return { childIds }
+  await batch.commit();
+  return { childIds };
 }
 
 /**
@@ -275,12 +291,19 @@ export async function provisionParent({ uid, email, name, phone, children }) {
  *
  * Returns the new child id.
  */
-export async function createChild({ parentUid, name, bday, gender, grade, notes }) {
-  if (!parentUid) throw new Error('Missing parentUid')
-  if (!name) throw new Error('Child name is required')
+export async function createChild({
+  parentUid,
+  name,
+  bday,
+  gender,
+  grade,
+  notes,
+}) {
+  if (!parentUid) throw new Error("Missing parentUid");
+  if (!name) throw new Error("Child name is required");
 
-  const existing = await getChildrenForParent(parentUid)
-  const childRef = doc(collection(db, COLLECTIONS.USERS))
+  const existing = await getChildrenForParent(parentUid);
+  const childRef = doc(collection(db, COLLECTIONS.USERS));
   await setDoc(
     childRef,
     buildChildDoc({
@@ -292,13 +315,13 @@ export async function createChild({ parentUid, name, bday, gender, grade, notes 
       notes,
       childIndex: existing.length + 1,
     }),
-  )
+  );
   await updateDoc(doc(db, COLLECTIONS.USERS, parentUid), {
     linkedChildren: arrayUnion(childRef.id),
     numberOfChildren: existing.length + 1,
     updatedAt: serverTimestamp(),
-  }).catch(() => {})
-  return childRef.id
+  }).catch(() => {});
+  return childRef.id;
 }
 
 /** Patch a child document (children are users docs). */
@@ -306,7 +329,7 @@ export async function updateChild(childId, patch) {
   await updateDoc(doc(db, COLLECTIONS.USERS, childId), {
     ...patch,
     updatedAt: serverTimestamp(),
-  })
+  });
 }
 
 /** Delete a child document and unlink it from the parent. */
@@ -315,9 +338,9 @@ export async function deleteChild(childId, parentUid) {
     await updateDoc(doc(db, COLLECTIONS.USERS, parentUid), {
       linkedChildren: arrayRemove(childId),
       updatedAt: serverTimestamp(),
-    }).catch(() => {})
+    }).catch(() => {});
   }
-  await deleteDoc(doc(db, COLLECTIONS.USERS, childId))
+  await deleteDoc(doc(db, COLLECTIONS.USERS, childId));
 }
 
 /**
@@ -334,12 +357,14 @@ export async function deleteChild(childId, parentUid) {
  * would mean an unbounded fan-out of deletes.
  */
 export async function deleteAccountData({ uid, children }) {
-  const kids = Array.isArray(children) ? children : []
+  const kids = Array.isArray(children) ? children : [];
   await Promise.all(
-    kids.map((c) => deleteDoc(doc(db, COLLECTIONS.USERS, c.id)).catch(() => {})),
-  )
+    kids.map((c) =>
+      deleteDoc(doc(db, COLLECTIONS.USERS, c.id)).catch(() => {}),
+    ),
+  );
   if (uid) {
-    await deleteDoc(doc(db, COLLECTIONS.USERS, uid)).catch(() => {})
+    await deleteDoc(doc(db, COLLECTIONS.USERS, uid)).catch(() => {});
   }
 }
 
@@ -357,35 +382,42 @@ export async function deleteAccountData({ uid, children }) {
 
 /** All mood entries for a child whose timestamp falls inside [fromDate, toDate). */
 export async function getMoodEntriesForChildInRange(childId, fromDate, toDate) {
-  if (!childId || !(fromDate instanceof Date) || !(toDate instanceof Date)) return []
+  if (!childId || !(fromDate instanceof Date) || !(toDate instanceof Date))
+    return [];
   const snap = await getDocs(
-    query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
-  )
-  const fromMs = fromDate.getTime()
-  const toMs = toDate.getTime()
+    query(
+      collection(db, COLLECTIONS.MOOD_ENTRIES),
+      where("childId", "==", childId),
+    ),
+  );
+  const fromMs = fromDate.getTime();
+  const toMs = toDate.getTime();
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((r) => {
-      const ms = entryMillis(r)
-      return typeof ms === 'number' && ms >= fromMs && ms < toMs
+      const ms = entryMillis(r);
+      return typeof ms === "number" && ms >= fromMs && ms < toMs;
     })
-    .sort((a, b) => (entryMillis(a) ?? 0) - (entryMillis(b) ?? 0))
+    .sort((a, b) => (entryMillis(a) ?? 0) - (entryMillis(b) ?? 0));
 }
 
 /** All mood entries for a child within the last `days` (default 7), oldest first. */
 export async function getMoodEntriesForChild(childId, days = 7) {
-  if (!childId) return []
+  if (!childId) return [];
   const snap = await getDocs(
-    query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
-  )
-  const cutoff = Date.now() - days * 86_400_000
+    query(
+      collection(db, COLLECTIONS.MOOD_ENTRIES),
+      where("childId", "==", childId),
+    ),
+  );
+  const cutoff = Date.now() - days * 86_400_000;
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((r) => {
-      const ms = entryMillis(r)
-      return typeof ms === 'number' && ms >= cutoff
+      const ms = entryMillis(r);
+      return typeof ms === "number" && ms >= cutoff;
     })
-    .sort((a, b) => (entryMillis(a) ?? 0) - (entryMillis(b) ?? 0))
+    .sort((a, b) => (entryMillis(a) ?? 0) - (entryMillis(b) ?? 0));
 }
 
 /**
@@ -397,13 +429,16 @@ export async function getMoodEntriesForChild(childId, days = 7) {
  * rather than issuing the same query twice.
  */
 export async function getMoodHistoryForChild(childId) {
-  if (!childId) return []
+  if (!childId) return [];
   const snap = await getDocs(
-    query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId)),
-  )
+    query(
+      collection(db, COLLECTIONS.MOOD_ENTRIES),
+      where("childId", "==", childId),
+    ),
+  );
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0))
+    .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0));
 }
 
 /**
@@ -414,27 +449,30 @@ export async function getMoodHistoryForChild(childId) {
  */
 export function listenToMoodHistoryForChild(childId, callback) {
   if (!childId) {
-    callback([])
-    return () => {}
+    callback([]);
+    return () => {};
   }
-  const q = query(collection(db, COLLECTIONS.MOOD_ENTRIES), where('childId', '==', childId))
+  const q = query(
+    collection(db, COLLECTIONS.MOOD_ENTRIES),
+    where("childId", "==", childId),
+  );
   return onSnapshot(
     q,
     (snap) => {
       const rows = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0))
-      callback(rows)
+        .sort((a, b) => (entryMillis(b) ?? 0) - (entryMillis(a) ?? 0));
+      callback(rows);
     },
     () => callback([]),
-  )
+  );
 }
 
 // `timestamp` is the child app's primary ordering field, but entries written
 // through some paths only carry `createdAt`. Prefer timestamp, fall back.
 function entryMillis(entry) {
-  const ts = entry?.timestamp?.toMillis?.() ?? entry?.createdAt?.toMillis?.()
-  return typeof ts === 'number' ? ts : null
+  const ts = entry?.timestamp?.toMillis?.() ?? entry?.createdAt?.toMillis?.();
+  return typeof ts === "number" ? ts : null;
 }
 
 // ─── Screen time ─────────────────────────────────────────────────────────────
@@ -449,18 +487,24 @@ function entryMillis(entry) {
 
 /** Screen-time entries for a child within the last `days`, newest first. */
 export async function getScreenTimeForChild(childId, days = 7) {
-  if (!childId) return []
+  if (!childId) return [];
   const snap = await getDocs(
-    query(collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES), where('childId', '==', childId)),
-  )
-  const cutoff = Date.now() - days * 86_400_000
+    query(
+      collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES),
+      where("childId", "==", childId),
+    ),
+  );
+  const cutoff = Date.now() - days * 86_400_000;
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((r) => {
-      const ms = r.createdAt?.toMillis?.()
-      return typeof ms === 'number' && ms >= cutoff
+      const ms = r.createdAt?.toMillis?.();
+      return typeof ms === "number" && ms >= cutoff;
     })
-    .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
+    .sort(
+      (a, b) =>
+        (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0),
+    );
 }
 
 // How far back a sync still counts as "latest": a child who hasn't synced in a
@@ -474,12 +518,15 @@ export async function getScreenTimeForChild(childId, days = 7) {
 // a dateString equality (cheap, but only finds today's row and misses a child
 // who last synced yesterday). Left as-is deliberately; revisit if an index gets
 // deployed.
-const LATEST_SCREEN_TIME_WINDOW_DAYS = 30
+const LATEST_SCREEN_TIME_WINDOW_DAYS = 30;
 
 /** The child's most recent screen-time entry, or null if they haven't synced recently. */
 export async function getLatestScreenTimeForChild(childId) {
-  const rows = await getScreenTimeForChild(childId, LATEST_SCREEN_TIME_WINDOW_DAYS)
-  return rows[0] ?? null
+  const rows = await getScreenTimeForChild(
+    childId,
+    LATEST_SCREEN_TIME_WINDOW_DAYS,
+  );
+  return rows[0] ?? null;
 }
 
 /**
@@ -488,33 +535,43 @@ export async function getLatestScreenTimeForChild(childId) {
  * child's device pushes while the parent is looking at the dashboard shows up
  * without a reload. Callers wanting "latest" take rows[0].
  */
-export function listenToScreenTimeForChild(childId, callback, days = LATEST_SCREEN_TIME_WINDOW_DAYS) {
+export function listenToScreenTimeForChild(
+  childId,
+  callback,
+  days = LATEST_SCREEN_TIME_WINDOW_DAYS,
+) {
   if (!childId) {
-    callback([])
-    return () => {}
+    callback([]);
+    return () => {};
   }
-  const cutoff = Date.now() - days * 86_400_000
-  const q = query(collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES), where('childId', '==', childId))
+  const cutoff = Date.now() - days * 86_400_000;
+  const q = query(
+    collection(db, COLLECTIONS.SCREEN_TIME_ENTRIES),
+    where("childId", "==", childId),
+  );
   return onSnapshot(
     q,
     (snap) => {
       const rows = snap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
         .filter((r) => {
-          const ms = r.createdAt?.toMillis?.()
-          return typeof ms === 'number' && ms >= cutoff
+          const ms = r.createdAt?.toMillis?.();
+          return typeof ms === "number" && ms >= cutoff;
         })
-        .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
-      callback(rows)
+        .sort(
+          (a, b) =>
+            (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0),
+        );
+      callback(rows);
     },
     () => callback([]),
-  )
+  );
 }
 
 /** Subscribe to a single Firestore document. Returns the unsubscribe function. */
 export function listenToDoc(path, callback) {
-  const ref = doc(db, ...path.split('/'))
+  const ref = doc(db, ...path.split("/"));
   return onSnapshot(ref, (snap) => {
-    callback(snap.exists() ? { id: snap.id, ...snap.data() } : null)
-  })
+    callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+  });
 }

@@ -22,28 +22,28 @@
 // Note `mood_insight` is snake_case while everything around it is camelCase.
 // That is what Android writes; do not "fix" it here or the field stops resolving.
 
-import { doc, getDoc, onSnapshot } from 'firebase/firestore'
-import { db } from './firebase'
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { db } from "./firebase";
 
-const COLLECTION = 'aiInsights'
+const COLLECTION = "aiInsights";
 
 // An insight older than this is dropped rather than shown. Yesterday's still has
 // something useful to say about a child; last week's is about a day nobody
 // remembers, and it reads as current because nothing on the card says otherwise.
-const MAX_AGE_DAYS = 1
+const MAX_AGE_DAYS = 1;
 
 /** "YYYY-MM-DD" for a Date in LOCAL time — the format and clock Android uses. */
 function localDateKey(date) {
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 /** Whole days between two "YYYY-MM-DD" keys, or null if either won't parse. */
 function dayGap(fromKey, toKey) {
-  const from = Date.parse(`${fromKey}T00:00:00`)
-  const to = Date.parse(`${toKey}T00:00:00`)
-  if (Number.isNaN(from) || Number.isNaN(to)) return null
-  return Math.round((to - from) / 86_400_000)
+  const from = Date.parse(`${fromKey}T00:00:00`);
+  const to = Date.parse(`${toKey}T00:00:00`);
+  if (Number.isNaN(from) || Number.isNaN(to)) return null;
+  return Math.round((to - from) / 86_400_000);
 }
 
 // Shared by the one-shot read and the live listener so freshness is judged
@@ -53,11 +53,14 @@ function dayGap(fromKey, toKey) {
 // whose phone is a timezone ahead of this browser writes tomorrow's date. That
 // insight is the freshest one there is, so floor the age rather than reject it.
 function shapeInsight(id, data) {
-  if (!data) return null
-  const age = typeof data.date === 'string' ? dayGap(data.date, localDateKey(new Date())) : null
+  if (!data) return null;
+  const age =
+    typeof data.date === "string"
+      ? dayGap(data.date, localDateKey(new Date()))
+      : null;
   // No usable date means we can't tell how old it is — treat that as too old.
-  if (age === null || age > MAX_AGE_DAYS) return null
-  return { id, ...data, ageInDays: Math.max(0, age) }
+  if (age === null || age > MAX_AGE_DAYS) return null;
+  return { id, ...data, ageInDays: Math.max(0, age) };
 }
 
 /**
@@ -67,9 +70,9 @@ function shapeInsight(id, data) {
  * carried-over insight honestly instead of passing it off as today's.
  */
 export async function fetchInsightsForChild(childId) {
-  if (!childId) return null
-  const snap = await getDoc(doc(db, COLLECTION, childId))
-  return snap.exists() ? shapeInsight(snap.id, snap.data()) : null
+  if (!childId) return null;
+  const snap = await getDoc(doc(db, COLLECTION, childId));
+  return snap.exists() ? shapeInsight(snap.id, snap.data()) : null;
 }
 
 /**
@@ -79,20 +82,27 @@ export async function fetchInsightsForChild(childId) {
  */
 export function listenToInsightsForChild(childId, callback) {
   if (!childId) {
-    callback(null)
-    return () => {}
+    callback(null);
+    return () => {};
   }
   return onSnapshot(
     doc(db, COLLECTION, childId),
-    (snap) => callback(snap.exists() ? shapeInsight(snap.id, snap.data()) : null),
+    (snap) =>
+      callback(snap.exists() ? shapeInsight(snap.id, snap.data()) : null),
     () => callback(null),
-  )
+  );
 }
 
 /** True when the doc carries at least one insight worth rendering. */
 export function hasInsightContent(insights) {
-  if (!insights) return false
-  return ['suggestedConversation', 'conversationStarter', 'mood_insight', 'tip'].some(
-    (key) => typeof insights[key] === 'string' && insights[key].trim().length > 0,
-  )
+  if (!insights) return false;
+  return [
+    "suggestedConversation",
+    "conversationStarter",
+    "mood_insight",
+    "tip",
+  ].some(
+    (key) =>
+      typeof insights[key] === "string" && insights[key].trim().length > 0,
+  );
 }

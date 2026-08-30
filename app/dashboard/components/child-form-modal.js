@@ -7,9 +7,20 @@ import { createChild, updateChild, deleteChild } from "../../lib/database";
 const GENDERS = ["Female", "Male", "Other", "Prefer not to say"];
 
 const GRADES = [
-  "Pre-K", "Kindergarten",
-  "1st Grade", "2nd Grade", "3rd Grade", "4th Grade", "5th Grade", "6th Grade",
-  "7th Grade", "8th Grade", "9th Grade", "10th Grade", "11th Grade", "12th Grade",
+  "Pre-K",
+  "Kindergarten",
+  "1st Grade",
+  "2nd Grade",
+  "3rd Grade",
+  "4th Grade",
+  "5th Grade",
+  "6th Grade",
+  "7th Grade",
+  "8th Grade",
+  "9th Grade",
+  "10th Grade",
+  "11th Grade",
+  "12th Grade",
 ];
 
 function fromBirthDateString(value) {
@@ -202,10 +213,23 @@ function Content({ onClose, onSaved, child, parentUid }) {
               >
                 <option value="">Select gender</option>
                 {GENDERS.map((g) => (
-                  <option key={g} value={g}>{g}</option>
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
-              <svg aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                aria-hidden
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--accent)]"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>
@@ -223,10 +247,23 @@ function Content({ onClose, onSaved, child, parentUid }) {
               >
                 <option value="">Select grade</option>
                 {GRADES.map((g) => (
-                  <option key={g} value={g}>{g}</option>
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
                 ))}
               </select>
-              <svg aria-hidden className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--accent)]" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                aria-hidden
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--accent)]"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </div>

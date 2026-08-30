@@ -1,78 +1,79 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { SiteFooter } from '../../components/site-footer'
-import { AuthGuard } from '../../components/auth-guard'
-import { HeroHalfBox } from '../../components/hero-half-box'
-import { Accordion } from '../../components/accordion'
-import { signUp } from '../lib/authHelper'
-import { Stepper } from './_components/Stepper'
-import { StepAccount } from './_components/steps/StepAccount'
-import { StepAddChild } from './_components/steps/StepAddChild'
-import { StepManageChildren } from './_components/steps/StepManageChildren'
-import { StepDeviceSetup } from './_components/steps/StepDeviceSetup'
-import { StepDone } from './_components/steps/StepDone'
+import { useState } from "react";
+import Link from "next/link";
+import { SiteFooter } from "../../components/site-footer";
+import { AuthGuard } from "../../components/auth-guard";
+import { HeroHalfBox } from "../../components/hero-half-box";
+import { Accordion } from "../../components/accordion";
+import { signUp } from "../lib/authHelper";
+import { Stepper } from "./_components/Stepper";
+import { StepAccount } from "./_components/steps/StepAccount";
+import { StepAddChild } from "./_components/steps/StepAddChild";
+import { StepManageChildren } from "./_components/steps/StepManageChildren";
+import { StepDeviceSetup } from "./_components/steps/StepDeviceSetup";
+import { StepDone } from "./_components/steps/StepDone";
 
 const whyGuardianeFaqs = [
   {
-    title: 'Set up in 2 minutes',
-    content: (
-      <p>Guided onboarding gets your first child profile live fast.</p>
-    ),
+    title: "Set up in 2 minutes",
+    content: <p>Guided onboarding gets your first child profile live fast.</p>,
   },
   {
-    title: 'Instant alerts',
-    content: (
-      <p>Push notifications for high-risk signals, day or night.</p>
-    ),
+    title: "Instant alerts",
+    content: <p>Push notifications for high-risk signals, day or night.</p>,
   },
   {
-    title: 'Privacy by design',
-    content: (
-      <p>Your data is never sold. COPPA and GDPR compliant.</p>
-    ),
+    title: "Privacy by design",
+    content: <p>Your data is never sold. COPPA and GDPR compliant.</p>,
   },
   {
-    title: 'Expert support',
-    content: (
-      <p>Access vetted counselors and child safety specialists.</p>
-    ),
+    title: "Expert support",
+    content: <p>Access vetted counselors and child safety specialists.</p>,
   },
-]
+];
 
 export default function SignupPage() {
-  const [step, setStep] = useState(0)        // 0–3, then 'done'
-  const [account, setAccount] = useState(null) // { fullName, email, password, agreed }
-  const [children, setChildren] = useState([])
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState('')
+  const [step, setStep] = useState(0); // 0–3, then 'done'
+  const [account, setAccount] = useState(null); // { fullName, email, password, agreed }
+  const [children, setChildren] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
-  const addChild = (child) => setChildren((prev) => [...prev, child])
-  const removeChild = (i) => setChildren((prev) => prev.filter((_, idx) => idx !== i))
+  const addChild = (child) => setChildren((prev) => [...prev, child]);
+  const removeChild = (i) =>
+    setChildren((prev) => prev.filter((_, idx) => idx !== i));
 
   const handleFinish = async () => {
     if (!account) {
-      setSubmitError('Account details are missing. Please go back to step 1.')
-      return
+      setSubmitError("Account details are missing. Please go back to step 1.");
+      return;
     }
-    setSubmitting(true)
-    setSubmitError('')
+    setSubmitting(true);
+    setSubmitError("");
     try {
-      const trimmedName = account.fullName.trim()
-      await signUp(account.email, account.password, trimmedName, { children })
-      setStep('done')
+      const trimmedName = account.fullName.trim();
+      await signUp(account.email, account.password, trimmedName, { children });
+      setStep("done");
     } catch (e) {
-      const code = e?.code ?? ''
-      if (code === 'auth/email-already-in-use') setSubmitError('An account with this email already exists. Try logging in.')
-      else if (code === 'auth/invalid-email') setSubmitError('Please enter a valid email address.')
-      else if (code === 'auth/weak-password') setSubmitError('Password is too weak.')
-      else if (code === 'permission-denied') setSubmitError('Firestore rules rejected the write. Check the browser console for the failing operation.')
-      else setSubmitError('Something went wrong. Please try again.')
+      const code = e?.code ?? "";
+      if (code === "auth/email-already-in-use")
+        setSubmitError(
+          "An account with this email already exists. Try logging in.",
+        );
+      else if (code === "auth/invalid-email")
+        setSubmitError("Please enter a valid email address.");
+      else if (code === "auth/weak-password")
+        setSubmitError("Password is too weak.");
+      else if (code === "permission-denied")
+        setSubmitError(
+          "Firestore rules rejected the write. Check the browser console for the failing operation.",
+        );
+      else setSubmitError("Something went wrong. Please try again.");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -80,16 +81,22 @@ export default function SignupPage() {
         return (
           <StepAccount
             initial={account}
-            onNext={(data) => { setAccount(data); setStep(1) }}
+            onNext={(data) => {
+              setAccount(data);
+              setStep(1);
+            }}
           />
-        )
+        );
       case 1:
         return (
           <StepAddChild
-            onNext={(child) => { addChild(child); setStep(2) }}
+            onNext={(child) => {
+              addChild(child);
+              setStep(2);
+            }}
             onBack={() => setStep(0)}
           />
-        )
+        );
       case 2:
         return (
           <StepManageChildren
@@ -99,7 +106,7 @@ export default function SignupPage() {
             onNext={() => setStep(3)}
             onBack={() => setStep(1)}
           />
-        )
+        );
       case 3:
         return (
           <StepDeviceSetup
@@ -108,17 +115,16 @@ export default function SignupPage() {
             submitting={submitting}
             error={submitError}
           />
-        )
-      case 'done':
-        return <StepDone />
+        );
+      case "done":
+        return <StepDone />;
     }
-  }
+  };
 
   return (
     <AuthGuard mode="public">
       {/* TEMP: forced white background for now */}
       <div className="bg-white text-[var(--foreground)]">
-
         {/* ── HERO / SIGNUP ── */}
         <section className="bg-white">
           <HeroHalfBox>
@@ -133,16 +139,17 @@ export default function SignupPage() {
               </div>
 
               <div className="overflow-hidden rounded-[10px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_4px_24px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)]">
-                {step !== 'done' && <Stepper current={step} />}
-                <div className=" py-8 sm:px-10">
-                  {renderStep()}
-                </div>
+                {step !== "done" && <Stepper current={step} />}
+                <div className=" py-8 sm:px-10">{renderStep()}</div>
               </div>
 
-              {step !== 'done' && (
+              {step !== "done" && (
                 <p className="mt-6 text-center text-[0.78rem] text-[var(--muted)]">
-                  Already have an account?{' '}
-                  <Link href="/login" className="font-medium text-[var(--accent)] hover:underline">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="font-medium text-[var(--accent)] hover:underline"
+                  >
                     Log in
                   </Link>
                 </p>
@@ -160,11 +167,16 @@ export default function SignupPage() {
                   Why families choose Guardiané
                 </h2>
                 <p className="clarity-prose text-[0.8rem]">
-                  Built by child safety researchers, psychologists, and
-                  parents — not just engineers.
+                  Built by child safety researchers, psychologists, and parents
+                  — not just engineers.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
-                  {["Busy parents", "School nights", "Blended homes", "Teen years"].map((label) => (
+                  {[
+                    "Busy parents",
+                    "School nights",
+                    "Blended homes",
+                    "Teen years",
+                  ].map((label) => (
                     <span
                       key={label}
                       className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-[0.78rem] font-medium text-[var(--muted)]"
@@ -182,8 +194,7 @@ export default function SignupPage() {
         </section>
 
         <SiteFooter tagline="Protecting children's digital safety and mental wellbeing through responsible AI innovation." />
-
       </div>
     </AuthGuard>
-  )
+  );
 }

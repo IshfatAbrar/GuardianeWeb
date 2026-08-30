@@ -8,7 +8,13 @@ import { deleteAccountData } from "../../lib/database";
 
 const CONFIRM_PHRASE = "DELETE";
 
-export function DeleteAccountModal({ open, onClose, onDeleted, uid, childList }) {
+export function DeleteAccountModal({
+  open,
+  onClose,
+  onDeleted,
+  uid,
+  childList,
+}) {
   if (!open || typeof document === "undefined") return null;
   return (
     <Content
@@ -38,7 +44,8 @@ function Content({ onClose, onDeleted, uid, childList }) {
     };
   }, [onClose]);
 
-  const canDelete = confirmText.trim().toUpperCase() === CONFIRM_PHRASE && !submitting;
+  const canDelete =
+    confirmText.trim().toUpperCase() === CONFIRM_PHRASE && !submitting;
 
   async function handleDelete() {
     if (!canDelete) return;
@@ -80,20 +87,32 @@ function Content({ onClose, onDeleted, uid, childList }) {
         <div className="space-y-4 p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-500/15">
-              <svg width="20" height="20" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="#EF4444"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
               </svg>
             </div>
-            <h1 id="delete-account-title" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+            <h1
+              id="delete-account-title"
+              className="text-lg font-semibold tracking-tight text-[var(--foreground)]"
+            >
               Delete account?
             </h1>
           </div>
 
           <p className="text-[13px] leading-relaxed text-[var(--muted)]">
-            This permanently deletes your sign-in along with your family
-            record and your children&apos;s profiles. This is not reversible —
-            there is no way to recover this data afterward.
+            This permanently deletes your sign-in along with your family record
+            and your children&apos;s profiles. This is not reversible — there is
+            no way to recover this data afterward.
           </p>
 
           {errorMessage && (
@@ -104,7 +123,9 @@ function Content({ onClose, onDeleted, uid, childList }) {
 
           <div className="space-y-2">
             <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
-              Type <span className="font-mono text-rose-500">{CONFIRM_PHRASE}</span> to confirm
+              Type{" "}
+              <span className="font-mono text-rose-500">{CONFIRM_PHRASE}</span>{" "}
+              to confirm
             </label>
             <input
               type="text"

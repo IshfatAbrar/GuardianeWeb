@@ -80,9 +80,21 @@ function ReadReceipt({ seen, light = false }) {
       className={`flex-shrink-0 ${colorClass}`}
       aria-label={seen ? "Seen" : "Sent"}
     >
-      <path d="M1 5.7 4.3 9 10.6 1.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M1 5.7 4.3 9 10.6 1.8"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       {seen && (
-        <path d="M5 5.7 8.3 9 14.6 1.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M5 5.7 8.3 9 14.6 1.8"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       )}
     </svg>
   );
@@ -114,7 +126,16 @@ function MessageBubble({ message, childName, isLast }) {
       <li className="flex justify-start">
         <div className="max-w-[78%] rounded-2xl rounded-bl-md border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-4 py-2.5">
           <div className="mb-1 flex items-center gap-1.5">
-            <svg width="13" height="13" fill="none" stroke="var(--danger)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="13"
+              height="13"
+              fill="none"
+              stroke="var(--danger)"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <path d="M12 9v4M12 17h.01" />
             </svg>
@@ -125,7 +146,9 @@ function MessageBubble({ message, childName, isLast }) {
           <p className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[var(--foreground)]">
             {message.message}
           </p>
-          <p className="mt-1 text-[10.5px] text-[var(--muted)]">{timeLabel(message)}</p>
+          <p className="mt-1 text-[10.5px] text-[var(--muted)]">
+            {timeLabel(message)}
+          </p>
         </div>
       </li>
     );
@@ -181,7 +204,8 @@ export function MessagingTab({ data }) {
   const [manualPick, setManualPick] = useState(null);
   const activeChildId =
     (manualPick && children.some((c) => c.id === manualPick) && manualPick) ||
-    (data?.selectedChildId && children.some((c) => c.id === data.selectedChildId)
+    (data?.selectedChildId &&
+    children.some((c) => c.id === data.selectedChildId)
       ? data.selectedChildId
       : null) ||
     children[0]?.id ||
@@ -236,9 +260,12 @@ function ConversationList({ parentId, childList, activeChildId, onSelect }) {
 
   useEffect(() => {
     const unsubs = childList.map((child) =>
-      listenToConversationPreview({ parentId, childId: child.id }, (preview) => {
-        setPreviews((prev) => ({ ...prev, [child.id]: preview }));
-      }),
+      listenToConversationPreview(
+        { parentId, childId: child.id },
+        (preview) => {
+          setPreviews((prev) => ({ ...prev, [child.id]: preview }));
+        },
+      ),
     );
     return () => unsubs.forEach((u) => u());
   }, [parentId, childList]);
@@ -254,15 +281,19 @@ function ConversationList({ parentId, childList, activeChildId, onSelect }) {
     .sort((a, b) => {
       const am = previews[a.id]?.lastMessage;
       const bm = previews[b.id]?.lastMessage;
-      const at = am?.timestamp?.toMillis?.() ?? am?.createdAt?.toMillis?.() ?? 0;
-      const bt = bm?.timestamp?.toMillis?.() ?? bm?.createdAt?.toMillis?.() ?? 0;
+      const at =
+        am?.timestamp?.toMillis?.() ?? am?.createdAt?.toMillis?.() ?? 0;
+      const bt =
+        bm?.timestamp?.toMillis?.() ?? bm?.createdAt?.toMillis?.() ?? 0;
       return bt - at;
     });
 
   return (
     <div className="flex min-h-0 w-[300px] flex-shrink-0 flex-col border-r border-[var(--border)]">
       <div className="p-4 pb-3">
-        <h2 className="text-[18px] font-bold text-[var(--foreground)]">Messages</h2>
+        <h2 className="text-[18px] font-bold text-[var(--foreground)]">
+          Messages
+        </h2>
         <p className="mt-0.5 text-[12px] text-[var(--muted)]">
           Check out your conversations
         </p>
@@ -327,7 +358,9 @@ function ConversationList({ parentId, childList, activeChildId, onSelect }) {
                   type="button"
                   onClick={() => onSelect(child.id)}
                   className={`flex w-full items-center gap-3 border-b border-[var(--border)] px-4 py-3 text-left transition-colors ${
-                    isActive ? "bg-[var(--accent-bg)]" : "hover:bg-[var(--surface-muted)]"
+                    isActive
+                      ? "bg-[var(--accent-bg)]"
+                      : "hover:bg-[var(--surface-muted)]"
                   }`}
                 >
                   <Avatar name={child.name} active={isActive} />
@@ -352,7 +385,9 @@ function ConversationList({ parentId, childList, activeChildId, onSelect }) {
                         </span>
                       ) : (
                         preview?.lastMessage?.senderType === "parent" && (
-                          <ReadReceipt seen={preview.lastMessage.isRead === true} />
+                          <ReadReceipt
+                            seen={preview.lastMessage.isRead === true}
+                          />
                         )
                       )}
                     </div>
@@ -385,7 +420,9 @@ function ConversationHeader({ child }) {
         <h2 className="text-[15px] font-semibold text-[var(--foreground)]">
           {child.name || "Child"}
         </h2>
-        <p className="text-[11.5px] text-[var(--muted)]">{age || "Your child"}</p>
+        <p className="text-[11.5px] text-[var(--muted)]">
+          {age || "Your child"}
+        </p>
       </div>
     </div>
   );
@@ -487,7 +524,16 @@ function Conversation({ parentId, childId, childName }) {
           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-colors hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Send message"
         >
-          <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="17"
+            height="17"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
           </svg>
         </button>

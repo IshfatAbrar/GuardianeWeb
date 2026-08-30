@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  assignModule,
-  ASSIGNMENT_PRIORITY,
-} from "../../lib/learningModules";
+import { assignModule, ASSIGNMENT_PRIORITY } from "../../lib/learningModules";
 import { useToast } from "../../lib/useToast";
 
 const PRIORITIES = [
@@ -66,7 +63,9 @@ function Toggle({ checked, onChange }) {
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        checked ? "bg-[var(--accent)]" : "border border-[var(--border)] bg-[var(--surface-muted)]"
+        checked
+          ? "bg-[var(--accent)]"
+          : "border border-[var(--border)] bg-[var(--surface-muted)]"
       }`}
     >
       <span
@@ -95,9 +94,7 @@ function ModulePreview({ module }) {
           <span className="text-amber-500">
             {"★".repeat(Math.max(0, Math.min(5, module.difficulty || 1)))}
           </span>
-          <span>
-            {Math.round((module.estimatedDuration || 0) / 60)} min
-          </span>
+          <span>{Math.round((module.estimatedDuration || 0) / 60)} min</span>
         </div>
       </div>
       {module.description && (
@@ -200,8 +197,11 @@ function FormContent({
         dueDate: parsed,
       });
       onAssigned?.();
-      const childName = childList.find((c) => c.id === childId)?.name || "child";
-      showToast(`Assigned "${selectedModule?.title || "module"}" to ${childName}`);
+      const childName =
+        childList.find((c) => c.id === childId)?.name || "child";
+      showToast(
+        `Assigned "${selectedModule?.title || "module"}" to ${childName}`,
+      );
       onClose();
     } catch (err) {
       setErrorMessage(err.message || "Failed to assign module");
@@ -223,8 +223,14 @@ function FormContent({
     setDueDate(toDateInputValue(target));
   }
 
-  const childOptions = childList.map((c) => ({ id: c.id, label: c.name || "Child" }));
-  const moduleOptions = modules.map((m) => ({ id: m.id, label: m.title || "Untitled" }));
+  const childOptions = childList.map((c) => ({
+    id: c.id,
+    label: c.name || "Child",
+  }));
+  const moduleOptions = modules.map((m) => ({
+    id: m.id,
+    label: m.title || "Untitled",
+  }));
 
   const modal = (
     <div

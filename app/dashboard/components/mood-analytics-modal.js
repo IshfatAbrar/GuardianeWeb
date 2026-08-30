@@ -12,7 +12,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { getMoodEntriesForChild, getScreenTimeForChild } from "../../lib/database";
+import {
+  getMoodEntriesForChild,
+  getScreenTimeForChild,
+} from "../../lib/database";
 import { averageScore, distribution, dailySeries } from "../../lib/mood";
 import { aggregateApps } from "../../lib/screenTime";
 import { MoodDonutChart } from "./mood/mood-donut-chart";
@@ -136,7 +139,9 @@ function Content({ onClose, child }) {
             >
               {childFirstName}&apos;s Report
             </h1>
-            <p className="text-[11.5px] text-[var(--muted)]">{activeRange.subtitle}</p>
+            <p className="text-[11.5px] text-[var(--muted)]">
+              {activeRange.subtitle}
+            </p>
           </div>
           <button
             type="button"
@@ -269,8 +274,8 @@ function NoMoodDataCard() {
         No Mood Data Available
       </h3>
       <p className="text-[12px] leading-relaxed text-[var(--muted)]">
-        No mood entries found for the selected time period. Encourage your
-        child to log their mood daily for better insights.
+        No mood entries found for the selected time period. Encourage your child
+        to log their mood daily for better insights.
       </p>
     </div>
   );

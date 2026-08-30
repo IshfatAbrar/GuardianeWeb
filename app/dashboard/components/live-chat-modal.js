@@ -41,7 +41,10 @@ function Content({ onClose }) {
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
           </div>
-          <h1 id="live-chat-title" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+          <h1
+            id="live-chat-title"
+            className="text-lg font-semibold tracking-tight text-[var(--foreground)]"
+          >
             Emergency Chat
           </h1>
           <div className="space-y-3">

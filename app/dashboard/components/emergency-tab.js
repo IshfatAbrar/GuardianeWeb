@@ -27,8 +27,16 @@ const DEFAULT_ESCALATION_CHAIN = [
 ];
 
 const SEVERITY_META = {
-  critical: { label: "Critical", color: "#EF4444", bg: "rgba(239, 68, 68, 0.16)" },
-  warning: { label: "Warning", color: "#F59E0B", bg: "rgba(245, 158, 11, 0.16)" },
+  critical: {
+    label: "Critical",
+    color: "#EF4444",
+    bg: "rgba(239, 68, 68, 0.16)",
+  },
+  warning: {
+    label: "Warning",
+    color: "#F59E0B",
+    bg: "rgba(245, 158, 11, 0.16)",
+  },
   info: { label: "Info", color: "#3B82F6", bg: "rgba(59, 130, 246, 0.16)" },
 };
 
@@ -43,7 +51,10 @@ function relativeTime(ts) {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
-  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(ms).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function SectionCard({ children, className = "" }) {
@@ -72,12 +83,19 @@ function StatusPill({ active }) {
 
 function EmergencyStatusCard({ activeSOS, criticalCount, onCall }) {
   return (
-    <SectionCard
-      className={activeSOS ? "border-rose-500/40" : ""}
-    >
+    <SectionCard className={activeSOS ? "border-rose-500/40" : ""}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <svg width="18" height="18" fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="#EF4444"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -116,7 +134,16 @@ function EmergencyStatusCard({ activeSOS, criticalCount, onCall }) {
       ) : (
         <div className="flex items-center gap-2.5 rounded-xl bg-[var(--surface-muted)] px-4 py-3">
           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500/20">
-            <svg width="14" height="14" fill="none" stroke="#10B981" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="#10B981"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </span>
@@ -218,9 +245,7 @@ function EscalationStep({ step }) {
           {isActive ? "Pending response" : "Standby"}
         </p>
       </div>
-      {isActive && (
-        <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
-      )}
+      {isActive && <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />}
     </div>
   );
 }
@@ -257,7 +282,8 @@ function RiskAlertItem({ alert, childName, isLast, highlighted }) {
   // re-render, or switching children/re-filtering would keep yanking the
   // page back to it.
   useEffect(() => {
-    if (highlighted) ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (highlighted)
+      ref.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [highlighted]);
 
   return (
@@ -274,12 +300,18 @@ function RiskAlertItem({ alert, childName, isLast, highlighted }) {
         {meta.label}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-semibold text-[var(--foreground)]">{alert.type}</p>
+        <p className="text-[13px] font-semibold text-[var(--foreground)]">
+          {alert.type}
+        </p>
         {/* The child app composes a long "Risk detected: X (0.92): SMS: ..."
             line; clamp it rather than letting one alert dominate the card. */}
-        <p className="line-clamp-2 text-[11.5px] text-[var(--muted)]">{alert.message}</p>
+        <p className="line-clamp-2 text-[11.5px] text-[var(--muted)]">
+          {alert.message}
+        </p>
         <p className="mt-0.5 text-[11px] text-[var(--muted)]">
-          {[childName, relativeTime(alert.timestamp)].filter(Boolean).join(" · ")}
+          {[childName, relativeTime(alert.timestamp)]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
       </div>
     </li>
@@ -290,7 +322,9 @@ function RecentRiskAlerts({ alerts, childById, highlightId }) {
   return (
     <SectionCard className="p-0">
       <div className="border-b border-[var(--border)] px-4 py-3">
-        <h2 className="text-[14px] font-bold text-[var(--foreground)]">Risk alerts</h2>
+        <h2 className="text-[14px] font-bold text-[var(--foreground)]">
+          Risk alerts
+        </h2>
         <p className="text-[11.5px] text-[var(--muted)]">
           Flagged on your child&apos;s device by on-device analysis
         </p>
@@ -329,7 +363,10 @@ export function EmergencyTab({ data }) {
   }, [childList]);
 
   const alerts = useMemo(() => data?.alerts || [], [data?.alerts]);
-  const activeAlerts = useMemo(() => data?.activeAlerts || [], [data?.activeAlerts]);
+  const activeAlerts = useMemo(
+    () => data?.activeAlerts || [],
+    [data?.activeAlerts],
+  );
   const critical = useMemo(
     () => activeAlerts.filter((a) => a.severity === "critical"),
     [activeAlerts],
@@ -405,10 +442,11 @@ export function EmergencyTab({ data }) {
             <EscalationProtocol steps={DEFAULT_ESCALATION_CHAIN} />
           </div>
 
-          
-          <RecentRiskAlerts alerts={alerts} childById={childById} highlightId={highlightAlertId} />
-
-          
+          <RecentRiskAlerts
+            alerts={alerts}
+            childById={childById}
+            highlightId={highlightAlertId}
+          />
         </div>
       </div>
 

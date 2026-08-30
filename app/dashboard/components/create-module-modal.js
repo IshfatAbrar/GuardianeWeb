@@ -18,7 +18,12 @@ const TYPE_OPTIONS = [
 ];
 
 function emptyQuestion(type) {
-  const base = { id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, type, prompt: "", explanation: "" };
+  const base = {
+    id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type,
+    prompt: "",
+    explanation: "",
+  };
   if (type === QUESTION_TYPES.MULTIPLE_CHOICE) {
     return { ...base, options: ["", ""], correctIndex: 0 };
   }
@@ -36,7 +41,9 @@ function Toggle({ checked, onChange }) {
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        checked ? "bg-[var(--accent)]" : "border border-[var(--border)] bg-[var(--surface-muted)]"
+        checked
+          ? "bg-[var(--accent)]"
+          : "border border-[var(--border)] bg-[var(--surface-muted)]"
       }`}
     >
       <span
@@ -79,7 +86,9 @@ function MultipleChoiceEditor({ q, onChange }) {
           <button
             type="button"
             onClick={() => onChange({ ...q, correctIndex: i })}
-            aria-label={i === q.correctIndex ? "Correct answer" : "Mark as correct"}
+            aria-label={
+              i === q.correctIndex ? "Correct answer" : "Mark as correct"
+            }
             className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border transition-colors ${
               i === q.correctIndex
                 ? "border-[var(--accent)] bg-[var(--accent)] text-white"
@@ -100,7 +109,16 @@ function MultipleChoiceEditor({ q, onChange }) {
               aria-label="Remove option"
               className="text-[var(--muted)] transition-colors hover:text-[var(--danger)]"
             >
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
@@ -153,7 +171,10 @@ function FillBlankEditor({ q, onChange }) {
   }
   function removeAnswer(i) {
     if (q.acceptedAnswers.length <= 1) return;
-    onChange({ ...q, acceptedAnswers: q.acceptedAnswers.filter((_, idx) => idx !== i) });
+    onChange({
+      ...q,
+      acceptedAnswers: q.acceptedAnswers.filter((_, idx) => idx !== i),
+    });
   }
   return (
     <div className="space-y-2">
@@ -174,7 +195,16 @@ function FillBlankEditor({ q, onChange }) {
               aria-label="Remove answer"
               className="text-[var(--muted)] transition-colors hover:text-[var(--danger)]"
             >
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
@@ -206,7 +236,16 @@ function QuestionEditor({ q, index, onChange, onRemove }) {
           aria-label="Remove question"
           className="text-[var(--muted)] transition-colors hover:text-[var(--danger)]"
         >
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
@@ -253,7 +292,9 @@ function Content({
   const [moduleType, setModuleType] = useState(MODULE_CATEGORIES.CHILD);
   const [targetSpecific, setTargetSpecific] = useState(false);
   const [selectedChildIds, setSelectedChildIds] = useState([]);
-  const [questionType, setQuestionType] = useState(QUESTION_TYPES.MULTIPLE_CHOICE);
+  const [questionType, setQuestionType] = useState(
+    QUESTION_TYPES.MULTIPLE_CHOICE,
+  );
   const [questions, setQuestions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -261,9 +302,22 @@ function Content({
   const canCreate = useMemo(() => {
     if (!title.trim() || submitting || !creatorId) return false;
     if (questions.length === 0) return false;
-    if (moduleType === MODULE_CATEGORIES.CHILD && targetSpecific && selectedChildIds.length === 0) return false;
+    if (
+      moduleType === MODULE_CATEGORIES.CHILD &&
+      targetSpecific &&
+      selectedChildIds.length === 0
+    )
+      return false;
     return true;
-  }, [title, submitting, creatorId, questions.length, moduleType, targetSpecific, selectedChildIds.length]);
+  }, [
+    title,
+    submitting,
+    creatorId,
+    questions.length,
+    moduleType,
+    targetSpecific,
+    selectedChildIds.length,
+  ]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -292,7 +346,9 @@ function Content({
 
   function toggleChild(childId) {
     setSelectedChildIds((prev) =>
-      prev.includes(childId) ? prev.filter((id) => id !== childId) : [...prev, childId],
+      prev.includes(childId)
+        ? prev.filter((id) => id !== childId)
+        : [...prev, childId],
     );
   }
 
@@ -365,7 +421,10 @@ function Content({
           {/* Header */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <h1 id="create-module-title" className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
+              <h1
+                id="create-module-title"
+                className="text-xl font-semibold tracking-tight text-[var(--foreground)]"
+              >
                 Create Module
               </h1>
               <p className="mt-0.5 text-sm text-[var(--muted)]">
@@ -378,7 +437,16 @@ function Content({
               aria-label="Close"
               className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
@@ -450,10 +518,14 @@ function Content({
                         : "border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-muted)]"
                     }`}
                   >
-                    <p className={`text-[13.5px] font-semibold ${active ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}>
+                    <p
+                      className={`text-[13.5px] font-semibold ${active ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}
+                    >
                       {t.label}
                     </p>
-                    <p className="mt-0.5 text-[11.5px] text-[var(--muted)]">{t.hint}</p>
+                    <p className="mt-0.5 text-[11.5px] text-[var(--muted)]">
+                      {t.hint}
+                    </p>
                   </button>
                 );
               })}
@@ -471,7 +543,10 @@ function Content({
                   <span className="text-[14px] font-medium text-[var(--foreground)]">
                     Create for specific children
                   </span>
-                  <Toggle checked={targetSpecific} onChange={setTargetSpecific} />
+                  <Toggle
+                    checked={targetSpecific}
+                    onChange={setTargetSpecific}
+                  />
                 </div>
                 <p className="text-[12px] leading-relaxed text-[var(--muted)]">
                   {targetSpecific
@@ -483,7 +558,8 @@ function Content({
                   <div className="flex flex-wrap gap-2 pt-1">
                     {childList.length === 0 ? (
                       <p className="text-[12px] text-[var(--muted)]">
-                        No children on file yet — add children from settings first.
+                        No children on file yet — add children from settings
+                        first.
                       </p>
                     ) : (
                       childList.map((c) => {
@@ -517,7 +593,8 @@ function Content({
                 Questions
               </h2>
               <span className="inline-flex items-center rounded-full border border-[var(--accent-border)] bg-[var(--accent-bg)] px-3 py-1 text-[11px] font-semibold text-[var(--accent)]">
-                {questions.length} {questions.length === 1 ? "question" : "questions"}
+                {questions.length}{" "}
+                {questions.length === 1 ? "question" : "questions"}
               </span>
             </div>
           </div>
@@ -569,7 +646,16 @@ function Content({
             onClick={handleAddQuestion}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface-muted)] px-4 py-4 text-[14px] font-semibold text-[var(--muted)] transition-colors hover:border-[var(--accent-border)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent)]"
           >
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v8M8 12h8" />
             </svg>

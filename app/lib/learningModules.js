@@ -28,91 +28,91 @@ import {
   writeBatch,
   serverTimestamp,
   Timestamp,
-} from 'firebase/firestore'
-import { db } from './firebase'
+} from "firebase/firestore";
+import { db } from "./firebase";
 
 export const MODULE_CATEGORIES = {
-  PARENT: 'parent',
-  CHILD: 'child',
-}
+  PARENT: "parent",
+  CHILD: "child",
+};
 
 export const QUESTION_TYPES = {
-  MULTIPLE_CHOICE: 'multiple_choice',
-  TRUE_FALSE: 'true_false',
-  FILL_BLANK: 'fill_blank',
-}
+  MULTIPLE_CHOICE: "multiple_choice",
+  TRUE_FALSE: "true_false",
+  FILL_BLANK: "fill_blank",
+};
 
-const MODULES = 'modules'
-const LESSONS = 'lessons'
-const ASSIGNMENTS = 'module_assignments'
-const LEARNING_PROGRESS = 'learning_progress'
+const MODULES = "modules";
+const LESSONS = "lessons";
+const ASSIGNMENTS = "module_assignments";
+const LEARNING_PROGRESS = "learning_progress";
 
 /** The deterministic assignment / progress key both Android apps use. */
 export function assignmentKey(childId, moduleId) {
-  return `${childId}_${String(moduleId)}`
+  return `${childId}_${String(moduleId)}`;
 }
 
 export const ASSIGNMENT_PRIORITY = {
-  LOW: 'low',
-  MEDIUM: 'medium',
-  HIGH: 'high',
-}
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+};
 
 // 'in_progress' and 'completed' match the `status` the child app writes to
 // learning_progress; 'assigned' is this app's name for the child's
 // 'not_started', and 'overdue' is derived from dueDate rather than stored.
 export const ASSIGNMENT_STATUS = {
-  ASSIGNED: 'assigned',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  OVERDUE: 'overdue',
-}
+  ASSIGNED: "assigned",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+  OVERDUE: "overdue",
+};
 
 function trim(value) {
-  return typeof value === 'string' ? value.trim() : ''
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function withId(snap) {
-  return { id: snap.id, ...snap.data() }
+  return { id: snap.id, ...snap.data() };
 }
 
 function tsMillis(value) {
-  if (!value) return 0
-  if (typeof value.toMillis === 'function') return value.toMillis()
-  if (value instanceof Date) return value.getTime()
-  return 0
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  return 0;
 }
 
 function sortNewestFirst(rows) {
   return [...rows].sort(
     (a, b) => tsMillis(b.createdAt) - tsMillis(a.createdAt),
-  )
+  );
 }
 
 // ─── Modules: read ───────────────────────────────────────────────────────────
 
 export async function getModulesByCategory(category) {
   const snap = await getDocs(
-    query(collection(db, MODULES), where('category', '==', category)),
-  )
-  return sortNewestFirst(snap.docs.map(withId))
+    query(collection(db, MODULES), where("category", "==", category)),
+  );
+  return sortNewestFirst(snap.docs.map(withId));
 }
 
 export async function getModuleById(moduleId) {
-  const snap = await getDoc(doc(db, MODULES, moduleId))
-  return snap.exists() ? withId(snap) : null
+  const snap = await getDoc(doc(db, MODULES, moduleId));
+  return snap.exists() ? withId(snap) : null;
 }
 
 export async function getLessonsForModule(moduleId) {
-  const snap = await getDocs(collection(db, MODULES, moduleId, LESSONS))
-  return sortNewestFirst(snap.docs.map(withId))
+  const snap = await getDocs(collection(db, MODULES, moduleId, LESSONS));
+  return sortNewestFirst(snap.docs.map(withId));
 }
 
 export async function getModuleWithLessons(moduleId) {
-  const module_ = await getModuleById(moduleId)
-  if (!module_) return null
-  const lessons = await getLessonsForModule(moduleId)
-  return { ...module_, lessons }
+  const module_ = await getModuleById(moduleId);
+  if (!module_) return null;
+  const lessons = await getLessonsForModule(moduleId);
+  return { ...module_, lessons };
 }
 
 /**
@@ -124,20 +124,20 @@ export async function fetchAllModules() {
   const [parentModules, childModules] = await Promise.all([
     getModulesByCategory(MODULE_CATEGORIES.PARENT),
     getModulesByCategory(MODULE_CATEGORIES.CHILD),
-  ])
-  const all = [...parentModules, ...childModules]
+  ]);
+  const all = [...parentModules, ...childModules];
 
   const withLessons = await Promise.all(
     all.map(async (m) => {
       try {
-        const lessons = await getLessonsForModule(m.id)
-        return { ...m, lessons }
+        const lessons = await getLessonsForModule(m.id);
+        return { ...m, lessons };
       } catch {
-        return { ...m, lessons: [] }
+        return { ...m, lessons: [] };
       }
     }),
-  )
-  return withLessons
+  );
+  return withLessons;
 }
 
 // ─── Modules: write ──────────────────────────────────────────────────────────
@@ -161,21 +161,23 @@ export async function createModuleWithLesson({
   isChildSpecific = false,
 }) {
   if (!Array.isArray(questions) || questions.length === 0) {
-    throw new Error('At least one question is required to create a lesson.')
+    throw new Error("At least one question is required to create a lesson.");
   }
 
-  const batch = writeBatch(db)
-  const moduleRef = doc(collection(db, MODULES))
-  const lessonRef = doc(collection(db, MODULES, moduleRef.id, LESSONS))
+  const batch = writeBatch(db);
+  const moduleRef = doc(collection(db, MODULES));
+  const lessonRef = doc(collection(db, MODULES, moduleRef.id, LESSONS));
 
   const normalizedCategory =
-    category === MODULE_CATEGORIES.CHILD ? MODULE_CATEGORIES.CHILD : MODULE_CATEGORIES.PARENT
+    category === MODULE_CATEGORIES.CHILD
+      ? MODULE_CATEGORIES.CHILD
+      : MODULE_CATEGORIES.PARENT;
 
   const modulePayload = {
     title: trim(title),
     subtitle: trim(title),
     description: trim(description),
-    icon: 'book.closed',
+    icon: "book.closed",
     difficulty,
     estimatedDuration: estimatedDuration * 60,
     category: normalizedCategory,
@@ -187,9 +189,9 @@ export async function createModuleWithLesson({
     isChildSpecific,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  }
+  };
   if (Array.isArray(targetChildIds) && targetChildIds.length > 0) {
-    modulePayload.targetChildIds = targetChildIds
+    modulePayload.targetChildIds = targetChildIds;
   }
 
   const lessonPayload = {
@@ -201,17 +203,17 @@ export async function createModuleWithLesson({
     category: normalizedCategory,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  }
+  };
 
-  batch.set(moduleRef, modulePayload)
-  batch.set(lessonRef, lessonPayload)
-  await batch.commit()
+  batch.set(moduleRef, modulePayload);
+  batch.set(lessonRef, lessonPayload);
+  await batch.commit();
 
   return {
     id: moduleRef.id,
     lessonId: lessonRef.id,
     ...modulePayload,
-  }
+  };
 }
 
 // ─── Assignments ─────────────────────────────────────────────────────────────
@@ -237,9 +239,9 @@ export async function assignModule({
   priority = ASSIGNMENT_PRIORITY.MEDIUM,
   dueDate = null,
 }) {
-  if (!moduleId) throw new Error('moduleId is required')
-  if (!childId) throw new Error('childId is required')
-  if (!parentId) throw new Error('parentId is required')
+  if (!moduleId) throw new Error("moduleId is required");
+  if (!childId) throw new Error("childId is required");
+  if (!parentId) throw new Error("parentId is required");
 
   const data = {
     parentId,
@@ -248,17 +250,17 @@ export async function assignModule({
     // writes String(moduleId) even though the module doc's own `moduleId` is a
     // number. Matching it keeps equality filters working across both apps.
     moduleId: String(moduleId),
-    category: category === MODULE_CATEGORIES.PARENT ? 'parent' : 'child',
+    category: category === MODULE_CATEGORIES.PARENT ? "parent" : "child",
     assignedAt: serverTimestamp(),
     priority,
-  }
+  };
   if (dueDate instanceof Date) {
-    data.dueDate = Timestamp.fromDate(dueDate)
+    data.dueDate = Timestamp.fromDate(dueDate);
   }
 
-  const id = assignmentKey(childId, moduleId)
-  await setDoc(doc(db, ASSIGNMENTS, id), data, { merge: true })
-  return id
+  const id = assignmentKey(childId, moduleId);
+  await setDoc(doc(db, ASSIGNMENTS, id), data, { merge: true });
+  return id;
 }
 
 /**
@@ -268,18 +270,21 @@ export async function assignModule({
  * Single equality on parentId, sorted client-side — no composite index needed.
  */
 export function listenToAssignments(parentId, onUpdate, onError) {
-  if (!parentId) return () => {}
-  const q = query(collection(db, ASSIGNMENTS), where('parentId', '==', parentId))
+  if (!parentId) return () => {};
+  const q = query(
+    collection(db, ASSIGNMENTS),
+    where("parentId", "==", parentId),
+  );
   return onSnapshot(
     q,
     (snap) => {
       const rows = snap.docs
         .map(withId)
-        .sort((a, b) => tsMillis(b.assignedAt) - tsMillis(a.assignedAt))
-      onUpdate?.(rows)
+        .sort((a, b) => tsMillis(b.assignedAt) - tsMillis(a.assignedAt));
+      onUpdate?.(rows);
     },
     (err) => onError?.(err),
-  )
+  );
 }
 
 /**
@@ -288,7 +293,7 @@ export function listenToAssignments(parentId, onUpdate, onError) {
  * show as assigned in the Android app.
  */
 export async function unassignModule(childId, moduleId) {
-  await deleteDoc(doc(db, ASSIGNMENTS, assignmentKey(childId, moduleId)))
+  await deleteDoc(doc(db, ASSIGNMENTS, assignmentKey(childId, moduleId)));
 }
 
 // ─── Learning progress (read-only) ───────────────────────────────────────────
@@ -302,22 +307,24 @@ export async function unassignModule(childId, moduleId) {
  * totalLessons, progress (0..1), status, lastUpdated.
  */
 export async function fetchLearningProgressForChild(childId) {
-  if (!childId) return new Map()
+  if (!childId) return new Map();
   const snap = await getDocs(
-    query(collection(db, LEARNING_PROGRESS), where('childId', '==', childId)),
-  )
-  return new Map(snap.docs.map((d) => [d.id, withId(d)]))
+    query(collection(db, LEARNING_PROGRESS), where("childId", "==", childId)),
+  );
+  return new Map(snap.docs.map((d) => [d.id, withId(d)]));
 }
 
 /** Merge progress for several children into one map keyed by assignment id. */
 export async function fetchLearningProgressForChildren(childIds) {
-  const ids = Array.isArray(childIds) ? childIds.filter(Boolean) : []
-  const maps = await Promise.all(ids.map((id) => fetchLearningProgressForChild(id)))
-  const merged = new Map()
+  const ids = Array.isArray(childIds) ? childIds.filter(Boolean) : [];
+  const maps = await Promise.all(
+    ids.map((id) => fetchLearningProgressForChild(id)),
+  );
+  const merged = new Map();
   for (const m of maps) {
-    for (const [k, v] of m) merged.set(k, v)
+    for (const [k, v] of m) merged.set(k, v);
   }
-  return merged
+  return merged;
 }
 
 /**
@@ -331,42 +338,42 @@ export async function fetchLearningProgressForChildren(childIds) {
  * whole set.
  */
 export function listenToLearningProgressForChildren(childIds, callback) {
-  const ids = Array.isArray(childIds) ? childIds.filter(Boolean) : []
+  const ids = Array.isArray(childIds) ? childIds.filter(Boolean) : [];
   if (ids.length === 0) {
-    callback(new Map())
-    return () => {}
+    callback(new Map());
+    return () => {};
   }
 
-  const byChild = new Map()
+  const byChild = new Map();
   const emit = () => {
-    const merged = new Map()
+    const merged = new Map();
     for (const rows of byChild.values()) {
-      for (const [k, v] of rows) merged.set(k, v)
+      for (const [k, v] of rows) merged.set(k, v);
     }
-    callback(merged)
-  }
+    callback(merged);
+  };
 
   const unsubs = ids.map((childId) =>
     onSnapshot(
-      query(collection(db, LEARNING_PROGRESS), where('childId', '==', childId)),
+      query(collection(db, LEARNING_PROGRESS), where("childId", "==", childId)),
       (snap) => {
-        byChild.set(childId, new Map(snap.docs.map((d) => [d.id, withId(d)])))
-        emit()
+        byChild.set(childId, new Map(snap.docs.map((d) => [d.id, withId(d)])));
+        emit();
       },
       () => {
-        byChild.set(childId, new Map())
-        emit()
+        byChild.set(childId, new Map());
+        emit();
       },
     ),
-  )
+  );
 
-  return () => unsubs.forEach((u) => u())
+  return () => unsubs.forEach((u) => u());
 }
 
 /** Clamp to 0..1, or null when the input isn't a usable number. */
 function clamp01(value) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return null
-  return Math.max(0, Math.min(1, value))
+  if (typeof value !== "number" || Number.isNaN(value)) return null;
+  return Math.max(0, Math.min(1, value));
 }
 
 /**
@@ -382,23 +389,27 @@ function clamp01(value) {
  * be rejected explicitly or it reaches the DOM as `width: NaN%`.
  */
 export function progressFor(assignment, progressById) {
-  const row = progressById?.get(assignmentKey(assignment?.childId, assignment?.moduleId))
-  if (!row) return 0
+  const row = progressById?.get(
+    assignmentKey(assignment?.childId, assignment?.moduleId),
+  );
+  if (!row) return 0;
   const fromPercent = clamp01(
-    typeof row.progress === 'number' ? row.progress / 100 : null,
-  )
-  if (fromPercent !== null) return fromPercent
+    typeof row.progress === "number" ? row.progress / 100 : null,
+  );
+  if (fromPercent !== null) return fromPercent;
   // Fall back to lesson counts when `progress` is absent or NaN.
-  const done = Number(row.lessonsCompleted) || 0
-  const total = Number(row.totalLessons) || 0
-  return total > 0 ? clamp01(done / total) ?? 0 : 0
+  const done = Number(row.lessonsCompleted) || 0;
+  const total = Number(row.totalLessons) || 0;
+  return total > 0 ? (clamp01(done / total) ?? 0) : 0;
 }
 
 /** True when the child's device has reported this module complete. */
 export function isAssignmentCompleted(assignment, progressById) {
-  const row = progressById?.get(assignmentKey(assignment?.childId, assignment?.moduleId))
-  if (row?.status === ASSIGNMENT_STATUS.COMPLETED) return true
-  return progressFor(assignment, progressById) >= 1
+  const row = progressById?.get(
+    assignmentKey(assignment?.childId, assignment?.moduleId),
+  );
+  if (row?.status === ASSIGNMENT_STATUS.COMPLETED) return true;
+  return progressFor(assignment, progressById) >= 1;
 }
 
 /**
@@ -407,51 +418,60 @@ export function isAssignmentCompleted(assignment, progressById) {
  * the assignment carries no status in this schema.
  */
 export function isAssignmentOverdue(assignment, progressById) {
-  if (!assignment || isAssignmentCompleted(assignment, progressById)) return false
-  const due = assignment.dueDate
-  if (!due) return false
-  const ms = typeof due.toMillis === 'function' ? due.toMillis() : new Date(due).getTime()
-  return Number.isFinite(ms) && ms < Date.now()
+  if (!assignment || isAssignmentCompleted(assignment, progressById))
+    return false;
+  const due = assignment.dueDate;
+  if (!due) return false;
+  const ms =
+    typeof due.toMillis === "function"
+      ? due.toMillis()
+      : new Date(due).getTime();
+  return Number.isFinite(ms) && ms < Date.now();
 }
 
 /** Effective status, derived from the child's reported progress + dueDate. */
 export function effectiveAssignmentStatus(assignment, progressById) {
-  if (!assignment) return ASSIGNMENT_STATUS.ASSIGNED
-  if (isAssignmentCompleted(assignment, progressById)) return ASSIGNMENT_STATUS.COMPLETED
-  if (isAssignmentOverdue(assignment, progressById)) return ASSIGNMENT_STATUS.OVERDUE
+  if (!assignment) return ASSIGNMENT_STATUS.ASSIGNED;
+  if (isAssignmentCompleted(assignment, progressById))
+    return ASSIGNMENT_STATUS.COMPLETED;
+  if (isAssignmentOverdue(assignment, progressById))
+    return ASSIGNMENT_STATUS.OVERDUE;
   return progressFor(assignment, progressById) > 0
     ? ASSIGNMENT_STATUS.IN_PROGRESS
-    : ASSIGNMENT_STATUS.ASSIGNED
+    : ASSIGNMENT_STATUS.ASSIGNED;
 }
 
 // ─── Question builders ───────────────────────────────────────────────────────
 // Helpers that produce the dict shape Swift's Question(from: dict) expects.
 
 function makeId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
   }
-  return `q_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  return `q_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export function buildMultipleChoiceQuestion({
   question,
-  explanation = '',
+  explanation = "",
   options,
   correctAnswerIndex,
 }) {
-  if (typeof question !== 'string' || !question.trim()) {
-    throw new Error('Question text is required.')
+  if (typeof question !== "string" || !question.trim()) {
+    throw new Error("Question text is required.");
   }
   if (!Array.isArray(options) || options.length < 2) {
-    throw new Error('Multiple-choice questions need at least two options.')
+    throw new Error("Multiple-choice questions need at least two options.");
   }
   if (
-    typeof correctAnswerIndex !== 'number' ||
+    typeof correctAnswerIndex !== "number" ||
     correctAnswerIndex < 0 ||
     correctAnswerIndex >= options.length
   ) {
-    throw new Error('Pick which option is correct.')
+    throw new Error("Pick which option is correct.");
   }
   return {
     id: makeId(),
@@ -461,37 +481,45 @@ export function buildMultipleChoiceQuestion({
     options: options.map((o) => o.trim()),
     correctAnswer: options[correctAnswerIndex].trim(),
     correctAnswerIndex,
-  }
+  };
 }
 
-export function buildTrueFalseQuestion({ question, explanation = '', correctAnswer }) {
-  if (typeof question !== 'string' || !question.trim()) {
-    throw new Error('Question text is required.')
+export function buildTrueFalseQuestion({
+  question,
+  explanation = "",
+  correctAnswer,
+}) {
+  if (typeof question !== "string" || !question.trim()) {
+    throw new Error("Question text is required.");
   }
-  const normalized = String(correctAnswer).toLowerCase()
-  if (normalized !== 'true' && normalized !== 'false') {
-    throw new Error('Pick True or False.')
+  const normalized = String(correctAnswer).toLowerCase();
+  if (normalized !== "true" && normalized !== "false") {
+    throw new Error("Pick True or False.");
   }
   return {
     id: makeId(),
     type: QUESTION_TYPES.TRUE_FALSE,
     question: question.trim(),
     explanation: explanation.trim(),
-    options: ['True', 'False'],
-    correctAnswer: normalized === 'true' ? 'True' : 'False',
-    correctAnswerIndex: normalized === 'true' ? 0 : 1,
-  }
+    options: ["True", "False"],
+    correctAnswer: normalized === "true" ? "True" : "False",
+    correctAnswerIndex: normalized === "true" ? 0 : 1,
+  };
 }
 
-export function buildFillBlankQuestion({ question, explanation = '', acceptedAnswers }) {
-  if (typeof question !== 'string' || !question.trim()) {
-    throw new Error('Question text is required.')
+export function buildFillBlankQuestion({
+  question,
+  explanation = "",
+  acceptedAnswers,
+}) {
+  if (typeof question !== "string" || !question.trim()) {
+    throw new Error("Question text is required.");
   }
   const cleaned = (Array.isArray(acceptedAnswers) ? acceptedAnswers : [])
-    .map((a) => (typeof a === 'string' ? a.trim() : ''))
-    .filter(Boolean)
+    .map((a) => (typeof a === "string" ? a.trim() : ""))
+    .filter(Boolean);
   if (cleaned.length === 0) {
-    throw new Error('Provide at least one accepted answer.')
+    throw new Error("Provide at least one accepted answer.");
   }
   return {
     id: makeId(),
@@ -500,5 +528,5 @@ export function buildFillBlankQuestion({ question, explanation = '', acceptedAns
     explanation: explanation.trim(),
     acceptedAnswers: cleaned,
     correctAnswer: cleaned[0],
-  }
+  };
 }

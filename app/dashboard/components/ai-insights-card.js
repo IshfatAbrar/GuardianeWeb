@@ -111,7 +111,8 @@ export function AiInsightsCard({ insights, loading, childName }) {
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {CARDS.filter(
-            (c) => typeof insights[c.key] === "string" && insights[c.key].trim(),
+            (c) =>
+              typeof insights[c.key] === "string" && insights[c.key].trim(),
           ).map((card) => (
             <article
               key={card.key}
