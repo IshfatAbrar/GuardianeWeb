@@ -137,6 +137,16 @@ describe("alertSeverity", () => {
         childAlert({ metadata: { classification: "Emotional Distress" } }),
       ),
     ).toBe("warning");
+    expect(
+      alertSeverity(
+        childAlert({ metadata: { classification: "Explicit Content" } }),
+      ),
+    ).toBe("warning");
+    expect(
+      alertSeverity(
+        childAlert({ metadata: { classification: "Incognito Browsing" } }),
+      ),
+    ).toBe("warning");
   });
 
   it("degrades an unrecognised label to info rather than dropping it", () => {

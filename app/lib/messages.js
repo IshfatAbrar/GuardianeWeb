@@ -99,6 +99,8 @@ const SEVERITY_BY_CLASSIFICATION = {
   "Suicidal Reference": "critical",
   "Attacking Behavior": "warning",
   "Emotional Distress": "warning",
+  "Explicit Content": "warning",
+  "Incognito Browsing": "warning",
 };
 
 /** Severity bucket for an alert message, for the activity feed's colour dot. */
