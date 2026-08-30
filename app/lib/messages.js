@@ -88,19 +88,14 @@ export function isAlertMessage(message) {
   );
 }
 
-// The child app's classifier stack (services/TextClassifier.js — remote
-// chatWithAgent classification plus the rule-based VulgarContentDetector and
-// IncognitoDetector tiers) emits exactly these five risk labels
-// (TextClassifier.isRiskLabel / RemoteTextClassifier.REMOTE_LABELS); the sixth,
-// 'Safe/Neutral', is filtered out by isAlertMessage before this runs. Anything
-// unrecognised degrades to 'info' rather than being dropped, so a future label
-// still surfaces to the parent.
+// The child's on-device classifier emits exactly these labels
+// (TextClassifier.getDefaultLabels); only the first three are treated as risks
+// and thus ever sent. Anything unrecognised degrades to 'info' rather than
+// being dropped, so a future label still surfaces to the parent.
 const SEVERITY_BY_CLASSIFICATION = {
   "Suicidal Reference": "critical",
   "Attacking Behavior": "warning",
   "Emotional Distress": "warning",
-  "Explicit Content": "warning",
-  "Incognito Browsing": "warning",
 };
 
 /** Severity bucket for an alert message, for the activity feed's colour dot. */

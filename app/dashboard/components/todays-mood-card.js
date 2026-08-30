@@ -1,8 +1,7 @@
-import Image from "next/image";
 import {
   entryScore,
   entryBand,
-  moodIcon,
+  moodEmoji,
   moodLabel,
   moodColor,
 } from "../../lib/mood";
@@ -16,7 +15,7 @@ function moodMeta(entry) {
   const band = entryBand(entry);
   if (score === null || !band) return null;
   return {
-    icon: moodIcon(band),
+    emoji: moodEmoji(band),
     label: moodLabel(band),
     color: moodColor(band),
     score: Math.round(score),
@@ -83,7 +82,9 @@ export function TodaysMoodCard({ mood, childName, onFullReport }) {
       <div className="flex-1 rounded-2xl bg-[var(--surface-muted)] flex flex-col items-center justify-center py-6 gap-2">
         {meta ? (
           <>
-            <Image src={meta.icon} alt="" aria-hidden width={60} height={60} />
+            <span className="text-4xl" aria-hidden>
+              {meta.emoji}
+            </span>
             <span
               className="text-[14px] font-semibold"
               style={{ color: meta.color }}
