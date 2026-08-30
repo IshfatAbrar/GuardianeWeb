@@ -15,7 +15,7 @@ function moodMeta(entry) {
   const band = entryBand(entry);
   if (score === null || !band) return null;
   return {
-    emoji: moodEmoji(band),
+    icon: moodIcon(band),
     label: moodLabel(band),
     color: moodColor(band),
     score: Math.round(score),

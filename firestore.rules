@@ -27,8 +27,8 @@
 //
 // Collections that are read/written by the no-auth child app and so remain
 // publicly accessible by necessity: users(get), mood_entries, screen_time_entries,
-// messages, conversations, learning_progress, lesson_streaks, module_assignments,
-// modules(+lessons), emergency_contacts(read).
+// messages, alerts, conversations, learning_progress, lesson_streaks,
+// module_assignments, modules(+lessons), emergency_contacts(read).
 // ───────────────────────────────────────────────────────────────────────────
 
 rules_version = '2';
@@ -95,6 +95,22 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.resource.data.childId is string &&
                        request.resource.data.senderType in ['parent', 'child'];
+      allow update: if true;
+      allow delete: if isAuthenticated();
+    }
+
+    // ── alerts (child-app risk-alert dual-write, unauthenticated) ────────────
+    // Added 2026-08-30: the child app's AlertService now writes every risk
+    // detection to BOTH `messages` (chat-style, what the web currently reads)
+    // AND this collection ("parent apps may listen to either"). Mirrors the
+    // `messages` create/read/update shape below — same no-auth constraint,
+    // since the writer is the same unauthenticated child app. `isRead` is the
+    // only field any client mutates in place, so update stays wide open like
+    // `messages`; only an authenticated parent may delete.
+    match /alerts/{alertId} {
+      allow read: if true;
+      allow create: if request.resource.data.childId is string &&
+                       request.resource.data.parentId is string;
       allow update: if true;
       allow delete: if isAuthenticated();
     }

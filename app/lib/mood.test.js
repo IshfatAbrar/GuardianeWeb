@@ -11,7 +11,7 @@ import {
   entryBand,
   moodBand,
   moodColor,
-  moodEmoji,
+  moodIcon,
   moodLabel,
   averageScore,
   distribution,
@@ -72,10 +72,10 @@ describe("moodBand", () => {
     expect(moodBand("70")).toBe("fair");
   });
 
-  it("has a color, emoji and label for every band", () => {
+  it("has a color, icon and label for every band", () => {
     for (const band of MOOD_BANDS) {
       expect(moodColor(band)).toMatch(/^#[0-9A-F]{6}$/i);
-      expect(moodEmoji(band)).toBeTruthy();
+      expect(moodIcon(band)).toMatch(/^\/mood\/.+\.png$/);
       expect(moodLabel(band)).toBeTruthy();
       expect(moodLabel(band)).not.toBe("—");
     }

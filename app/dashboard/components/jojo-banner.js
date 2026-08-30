@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function JojoBanner({ onTalk, onLearnMore }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border-1 border-neutral-200 bg-gradient-to-l from-[var(--accent-bg)] to-[var(--surface)] p-3.5 sm:p-4">
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-l from-[var(--accent-bg)] to-[var(--surface)] p-3.5 sm:p-4">
       {/* Decorative blob */}
       <div
         aria-hidden

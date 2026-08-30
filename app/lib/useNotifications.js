@@ -16,9 +16,13 @@
 //   Firestore write → onSnapshot fires → L1 updated → async persist to L2.
 //
 // An "alert" here is a `messages` row the child app wrote with a risk
-// classification — there is no separate alerts collection in this schema. See
-// lib/messages.js for the contract. Scoping is by parentId + the parent's
-// children, since the Android schema has no family document.
+// classification. The child app also dual-writes the same detection to a
+// separate `alerts` collection (added 2026-08-30, see firestore.rules) for
+// other potential consumers, but this app deliberately keeps reading only
+// `messages` — it already has everything an alert needs and switching would
+// just be a second query shape for no new information. See lib/messages.js
+// for the contract. Scoping is by parentId + the parent's children, since the
+// Android schema has no family document.
 
 import {
   createContext,
