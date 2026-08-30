@@ -33,7 +33,8 @@ function Content({ childName, qrCode, onClose }) {
         setErrorMessage(null);
       })
       .catch((err) => {
-        if (!cancelled) setErrorMessage(err.message || "Failed to render QR code");
+        if (!cancelled)
+          setErrorMessage(err.message || "Failed to render QR code");
       });
     return () => {
       cancelled = true;
@@ -80,7 +81,16 @@ function Content({ childName, qrCode, onClose }) {
               aria-label="Close"
               className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
@@ -108,7 +118,8 @@ function Content({ childName, qrCode, onClose }) {
           )}
 
           <p className="text-center text-[12.5px] text-[var(--muted)]">
-            Scan this permanent QR code from the child’s app to link their device.
+            Scan this permanent QR code from the child’s app to link their
+            device.
           </p>
 
           <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
@@ -125,7 +136,16 @@ function Content({ childName, qrCode, onClose }) {
               marketHref={CHILD_PLAY_STORE_MARKET_URL}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
             >
-              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
@@ -138,7 +158,16 @@ function Content({ childName, qrCode, onClose }) {
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] px-3 py-2.5 text-[12px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
             >
-              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M17.5 2.5c.3 1.3-.2 2.6-1 3.5-.8.9-2.1 1.6-3.3 1.5-.2-1.2.3-2.5 1.1-3.4.8-.9 2.2-1.6 3.2-1.6zM20.9 17c-.5 1.2-.8 1.7-1.5 2.7-1 1.5-2.3 3.3-4 3.3-1.5 0-1.9-1-3.9-1s-2.5 1-4 1c-1.7 0-3-1.6-3.9-3.1-2.7-4.2-3-9.1-1.3-11.7 1.2-1.8 3-2.9 4.8-2.9 1.8 0 3 1 4.5 1 1.5 0 2.4-1 4.5-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.3 9.3z" />
               </svg>
               App Store

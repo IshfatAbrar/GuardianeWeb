@@ -12,23 +12,19 @@ export const metadata = {
 const HELP_TOPICS = [
   {
     title: "Linking your child's device",
-    body:
-      "Open the child app on the device you want to link, tap \"Scan to Link\", and point the camera at the QR code shown next to your child's name in the parent dashboard sidebar.",
+    body: 'Open the child app on the device you want to link, tap "Scan to Link", and point the camera at the QR code shown next to your child\'s name in the parent dashboard sidebar.',
   },
   {
     title: "Assigning learning modules",
-    body:
-      "From Module Assignments → Assign Module, pick a child and a module, set a priority and optional due date, then tap Assign.",
+    body: "From Module Assignments → Assign Module, pick a child and a module, set a priority and optional due date, then tap Assign.",
   },
   {
     title: "Reviewing access requests",
-    body:
-      "When your child asks for app access, the request appears in the Access Requests tab. Tap Approve or Deny — for approvals you can also set a time limit and an optional reason.",
+    body: "When your child asks for app access, the request appears in the Access Requests tab. Tap Approve or Deny — for approvals you can also set a time limit and an optional reason.",
   },
   {
     title: "What JoJo can help with",
-    body:
-      "JoJo is the in-app chatbot for teen safety, mental health, and digital well-being questions. JoJo offers general guidance, not medical or legal advice.",
+    body: "JoJo is the in-app chatbot for teen safety, mental health, and digital well-being questions. JoJo offers general guidance, not medical or legal advice.",
   },
 ];
 
@@ -38,14 +34,16 @@ export default function SupportPage() {
       <main className="border-t border-[var(--border)]">
         <div className="clarity-wrap px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto max-w-2xl">
-            <p className="clarity-kicker mb-4 text-[var(--accent)]">Help Center</p>
+            <p className="clarity-kicker mb-4 text-[var(--accent)]">
+              Help Center
+            </p>
             <h1 className="gradient-heading text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[2.75rem]">
               Guardiané Support
             </h1>
             <p className="mt-5 text-base leading-relaxed text-[var(--muted)]">
-              Need help with the Guardiané app or parent dashboard? Browse common
-              topics below or reach our team by email. We usually reply within one
-              business day.
+              Need help with the Guardiané app or parent dashboard? Browse
+              common topics below or reach our team by email. We usually reply
+              within one business day.
             </p>
 
             <div className="mt-10 space-y-3">
@@ -97,8 +95,8 @@ export default function SupportPage() {
               </a>
               <p className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-5 text-sm leading-relaxed text-[var(--muted)]">
                 For urgent safety concerns about a child, please contact local
-                emergency services. The in-app Crisis Management tab can help you
-                do this quickly.
+                emergency services. The in-app Crisis Management tab can help
+                you do this quickly.
               </p>
             </div>
 

@@ -16,7 +16,8 @@ export function MoodColorLegend({ distribution }) {
             style={{ backgroundColor: moodColor(item.mood) }}
           />
           <span className="text-[12.5px] text-[var(--foreground)]">
-            {moodLabel(item.mood)}: {item.count} day{item.count === 1 ? "" : "s"}
+            {moodLabel(item.mood)}: {item.count} day
+            {item.count === 1 ? "" : "s"}
           </span>
         </div>
       ))}

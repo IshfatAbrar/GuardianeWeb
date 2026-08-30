@@ -49,9 +49,12 @@ export async function POST(request) {
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   if (!emailOk) {
-    return Response.json({ error: "Please enter a valid email address." }, {
-      status: 400,
-    });
+    return Response.json(
+      { error: "Please enter a valid email address." },
+      {
+        status: 400,
+      },
+    );
   }
 
   const to = process.env.PARTNER_INBOX_EMAIL?.trim() || DEFAULT_INBOX;

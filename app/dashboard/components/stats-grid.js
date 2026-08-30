@@ -1,4 +1,4 @@
-import { moodBand, moodLabel } from '../../lib/mood'
+import { moodBand, moodLabel } from "../../lib/mood";
 
 /**
  * `wellbeing` is `summarizeMood(...).average` for the selected child: the mean
@@ -15,42 +15,45 @@ export function StatsGrid({
   wellbeing = null,
   wellbeingChildName = null,
 }) {
-  const childFirst = wellbeingChildName?.split(' ')[0]
+  const childFirst = wellbeingChildName?.split(" ")[0];
   const period = !wellbeing
     ? null
     : wellbeing.days
       ? `${wellbeing.days} days`
       : wellbeing.since
-        ? `since ${wellbeing.since.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
-        : `last ${wellbeing.count} entries`
+        ? `since ${wellbeing.since.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+        : `last ${wellbeing.count} entries`;
   const stats = [
     {
-      label: 'Children monitored',
+      label: "Children monitored",
       value: String(childrenCount),
-      sub: childrenCount === 0 ? 'Add your first child' : 'All active today',
+      sub: childrenCount === 0 ? "Add your first child" : "All active today",
       danger: false,
     },
     {
-      label: 'Active alerts',
+      label: "Active alerts",
       value: String(activeAlertsCount),
-      sub: activeAlertsCount === 0 ? 'All clear' : 'Needs review',
+      sub: activeAlertsCount === 0 ? "All clear" : "Needs review",
       danger: activeAlertsCount > 0,
     },
     {
-      label: 'Avg wellbeing',
-      value: wellbeing ? String(wellbeing.score) : '—',
+      label: "Avg wellbeing",
+      value: wellbeing ? String(wellbeing.score) : "—",
       sub: wellbeing
-        ? `${moodLabel(moodBand(wellbeing.score))}${childFirst ? ` · ${childFirst}` : ''}, ${period}`
-        : 'Needs more data',
+        ? `${moodLabel(moodBand(wellbeing.score))}${childFirst ? ` · ${childFirst}` : ""}, ${period}`
+        : "Needs more data",
       danger: false,
     },
     {
-      label: 'Modules done',
+      label: "Modules done",
       value: String(completedCount),
-      sub: inProgressCount > 0 ? `${inProgressCount} in progress` : 'None in progress',
+      sub:
+        inProgressCount > 0
+          ? `${inProgressCount} in progress`
+          : "None in progress",
       danger: false,
     },
-  ]
+  ];
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -64,7 +67,7 @@ export function StatsGrid({
           </p>
           <p
             className={`mt-2 text-3xl font-semibold leading-none tracking-tight ${
-              s.danger ? 'text-[var(--danger)]' : 'text-[var(--accent)]'
+              s.danger ? "text-[var(--danger)]" : "text-[var(--accent)]"
             }`}
           >
             {s.value}
@@ -73,5 +76,5 @@ export function StatsGrid({
         </div>
       ))}
     </div>
-  )
+  );
 }

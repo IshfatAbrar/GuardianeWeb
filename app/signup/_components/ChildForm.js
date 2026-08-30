@@ -1,22 +1,22 @@
-import { useState } from 'react'
-import { GRADES, inputCls } from '../_lib/constants'
-import { ErrorBanner, Field } from './StepShell'
+import { useState } from "react";
+import { GRADES, inputCls } from "../_lib/constants";
+import { ErrorBanner, Field } from "./StepShell";
 
-export function ChildForm({ onSave, onCancel, saveLabel = 'Add child →' }) {
-  const [name, setName] = useState('')
-  const [bday, setBday] = useState('')
-  const [gender, setGender] = useState('')
-  const [grade, setGrade] = useState('')
-  const [err, setErr] = useState('')
+export function ChildForm({ onSave, onCancel, saveLabel = "Add child →" }) {
+  const [name, setName] = useState("");
+  const [bday, setBday] = useState("");
+  const [gender, setGender] = useState("");
+  const [grade, setGrade] = useState("");
+  const [err, setErr] = useState("");
 
   const handleSave = () => {
     if (!name || !bday || !gender || !grade) {
-      setErr('Please complete all fields.')
-      return
+      setErr("Please complete all fields.");
+      return;
     }
-    setErr('')
-    onSave({ name, bday, gender, grade })
-  }
+    setErr("");
+    onSave({ name, bday, gender, grade });
+  };
 
   return (
     <div className="rounded border border-[var(--border)] bg-[var(--background)] px-5 py-5">
@@ -41,16 +41,24 @@ export function ChildForm({ onSave, onCancel, saveLabel = 'Add child →' }) {
             />
           </Field>
           <Field label="Gender">
-            <select className={inputCls} value={gender} onChange={(e) => setGender(e.target.value)}>
+            <select
+              className={inputCls}
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+            >
               <option value="">Select…</option>
-              {['Girl', 'Boy', 'Non-binary', 'Prefer not to say'].map((g) => (
+              {["Girl", "Boy", "Non-binary", "Prefer not to say"].map((g) => (
                 <option key={g}>{g}</option>
               ))}
             </select>
           </Field>
         </div>
         <Field label="School grade">
-          <select className={inputCls} value={grade} onChange={(e) => setGrade(e.target.value)}>
+          <select
+            className={inputCls}
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+          >
             <option value="">Select grade…</option>
             {GRADES.map((g) => (
               <option key={g}>{g}</option>
@@ -75,5 +83,5 @@ export function ChildForm({ onSave, onCancel, saveLabel = 'Add child →' }) {
         </button>
       </div>
     </div>
-  )
+  );
 }

@@ -6,10 +6,7 @@ import { ModuleDetailView } from "./module-detail-view";
 import { LessonDetailView } from "./lesson-detail-view";
 import { LessonQuizModal } from "./lesson-quiz-modal";
 import { useAuth } from "../../context/AuthContext";
-import {
-  fetchAllModules,
-  MODULE_CATEGORIES,
-} from "../../lib/learningModules";
+import { fetchAllModules, MODULE_CATEGORIES } from "../../lib/learningModules";
 
 const CATEGORY_LABEL = {
   [MODULE_CATEGORIES.PARENT]: "Parent",
@@ -17,7 +14,7 @@ const CATEGORY_LABEL = {
 };
 
 function CategoryPill({ category }) {
-  const label = CATEGORY_LABEL[category] || (category || "Module");
+  const label = CATEGORY_LABEL[category] || category || "Module";
   const isParent = category === MODULE_CATEGORIES.PARENT;
   return (
     <span
@@ -82,9 +79,7 @@ function ModuleCard({ module, isYours, onOpen }) {
       </div>
 
       <div className="mt-auto flex items-center justify-between text-[11px] font-medium text-[var(--muted)]">
-        <span className="truncate">
-          By {module.createdByName || "Unknown"}
-        </span>
+        <span className="truncate">By {module.createdByName || "Unknown"}</span>
         <span className="flex-shrink-0">
           {totalLessons} {totalLessons === 1 ? "lesson" : "lessons"}
         </span>
@@ -152,7 +147,16 @@ function HubContent({
             disabled={loading}
             className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-[12px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <path d="M3 12a9 9 0 1 0 3-6.7" />
               <path d="M3 4v5h5" />
             </svg>
@@ -164,7 +168,16 @@ function HubContent({
             disabled={!uid}
             className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v8M8 12h8" />
             </svg>
@@ -178,7 +191,17 @@ function HubContent({
       {/* Search + filters */}
       <div className="space-y-3 p-6 pb-3">
         <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 transition-colors focus-within:border-[var(--accent-border)]">
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="text-[var(--accent)]">
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+            className="text-[var(--accent)]"
+          >
             <circle cx="11" cy="11" r="7" />
             <path d="m21 21-4.3-4.3" />
           </svg>
@@ -273,7 +296,11 @@ function HubContent({
         ) : (
           <>
             {yourModules.length > 0 && (
-              <Section title="Your Modules" count={yourModules.length} accent="emerald">
+              <Section
+                title="Your Modules"
+                count={yourModules.length}
+                accent="emerald"
+              >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {yourModules.map((m) => (
                     <ModuleCard
@@ -312,7 +339,11 @@ function HubContent({
   );
 }
 
-export function LearningTab({ data, initialModuleId, onInitialModuleConsumed }) {
+export function LearningTab({
+  data,
+  initialModuleId,
+  onInitialModuleConsumed,
+}) {
   const { user, userProfile } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [modules, setModules] = useState([]);

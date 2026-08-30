@@ -14,7 +14,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "../../lib/useToast";
-import { isAssignmentCompleted, assignmentKey } from "../../lib/learningModules";
+import {
+  isAssignmentCompleted,
+  assignmentKey,
+} from "../../lib/learningModules";
 
 const SEEN_KEY_PREFIX = "guardiane.moduleCompletions.seen:";
 const MAX_SEEN = 300;
@@ -31,7 +34,10 @@ function readSeen(key) {
 
 function writeSeen(key, set) {
   if (typeof window === "undefined" || !key) return;
-  window.localStorage.setItem(key, JSON.stringify(Array.from(set).slice(-MAX_SEEN)));
+  window.localStorage.setItem(
+    key,
+    JSON.stringify(Array.from(set).slice(-MAX_SEEN)),
+  );
 }
 
 export function useModuleCompletionAlerts({
@@ -82,7 +88,9 @@ export function useModuleCompletionAlerts({
       const assignment = assignments.find(
         (a) => assignmentKey(a.childId, a.moduleId) === key,
       );
-      const childName = childById?.get(assignment?.childId)?.name?.split(" ")[0];
+      const childName = childById
+        ?.get(assignment?.childId)
+        ?.name?.split(" ")[0];
       const moduleTitle = moduleById?.get(assignment?.moduleId)?.title;
       if (childName && moduleTitle) {
         showToast(`${childName} completed "${moduleTitle}"! \u{1F389}`);

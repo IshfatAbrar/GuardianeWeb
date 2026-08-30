@@ -1,70 +1,73 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-import { ThemeToggle } from './theme-toggle'
-import { NotificationPanel } from './notification-panel'
-import { mainNavLinks } from '../lib/siteConfig'
-import { logOut } from '../app/lib/authHelper'
-import { useAuth } from '../app/context/AuthContext'
-import { useNotifications } from '../app/lib/useNotifications'
-import { listenToChildrenForParent } from '../app/lib/database'
-import { listenToEmergencyContacts } from '../app/lib/emergencyContacts'
-import { getModulesByCategory, MODULE_CATEGORIES } from '../app/lib/learningModules'
-import { sideNavItems, sideHighlightItems } from '../app/dashboard/data/nav'
+import { ThemeToggle } from "./theme-toggle";
+import { NotificationPanel } from "./notification-panel";
+import { mainNavLinks } from "../lib/siteConfig";
+import { logOut } from "../app/lib/authHelper";
+import { useAuth } from "../app/context/AuthContext";
+import { useNotifications } from "../app/lib/useNotifications";
+import { listenToChildrenForParent } from "../app/lib/database";
+import { listenToEmergencyContacts } from "../app/lib/emergencyContacts";
+import {
+  getModulesByCategory,
+  MODULE_CATEGORIES,
+} from "../app/lib/learningModules";
+import { sideNavItems, sideHighlightItems } from "../app/dashboard/data/nav";
 
 function getDisplayName(user, profile) {
-  if (profile?.name && profile.name.trim()) return profile.name
-  if (!user) return ''
-  if (user.displayName && user.displayName.trim()) return user.displayName
-  if (user.email) return user.email.split('@')[0]
-  return 'Account'
+  if (profile?.name && profile.name.trim()) return profile.name;
+  if (!user) return "";
+  if (user.displayName && user.displayName.trim()) return user.displayName;
+  if (user.email) return user.email.split("@")[0];
+  return "Account";
 }
 
 function getInitials(name) {
-  if (!name) return '?'
-  const parts = name.trim().split(/\s+/)
-  if (parts.length === 1) return parts[0][0].toUpperCase()
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function ProfileMenu({ user, profile, compact = false }) {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const wrapperRef = useRef(null)
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const handleClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false)
+        setOpen(false);
       }
-    }
+    };
     const handleKey = (e) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [open])
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
 
-  const name = getDisplayName(user, profile)
-  const initials = getInitials(name)
+  const name = getDisplayName(user, profile);
+  const initials = getInitials(name);
 
   const handleLogout = async () => {
-    setOpen(false)
+    setOpen(false);
     try {
-      await logOut()
+      await logOut();
     } finally {
-      router.replace('/login')
+      router.replace("/login");
     }
-  }
+  };
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -104,7 +107,7 @@ function ProfileMenu({ user, profile, compact = false }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             viewBox="0 0 24 24"
-            className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`text-[var(--muted)] transition-transform ${open ? "rotate-180" : ""}`}
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -176,30 +179,30 @@ function ProfileMenu({ user, profile, compact = false }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function NavDropdown({ label, items }) {
-  const [open, setOpen] = useState(false)
-  const wrapperRef = useRef(null)
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const handleClick = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false)
+        setOpen(false);
       }
-    }
+    };
     const handleKey = (e) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [open])
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -220,7 +223,7 @@ function NavDropdown({ label, items }) {
           strokeLinecap="round"
           strokeLinejoin="round"
           viewBox="0 0 24 24"
-          className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         >
           <polyline points="6 9 12 15 18 9" />
         </svg>
@@ -245,13 +248,13 @@ function NavDropdown({ label, items }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function NotificationsBell() {
-  const [open, setOpen] = useState(false)
-  const { unreadCount } = useNotifications()
-  const wrapperRef = useRef(null)
+  const [open, setOpen] = useState(false);
+  const { unreadCount } = useNotifications();
+  const wrapperRef = useRef(null);
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -263,7 +266,7 @@ function NotificationsBell() {
         aria-label={
           unreadCount > 0
             ? `Notifications — ${unreadCount} unread`
-            : 'Notifications'
+            : "Notifications"
         }
         className="relative flex h-7 w-7 items-center justify-center rounded-sm text-[var(--muted)] transition-colors hover:bg-white/5 hover:text-[var(--foreground)]"
       >
@@ -283,26 +286,28 @@ function NotificationsBell() {
 
         {unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-semibold leading-none text-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       <NotificationPanel open={open} onClose={() => setOpen(false)} />
     </div>
-  )
+  );
 }
 
 // Dashboard-wide entries this search can jump to, beyond children: every
 // sidebar destination (nav.js is the source of truth for id/label, so this
 // can't drift out of sync with what the sidebar itself shows).
-const SEARCHABLE_PAGES = [...sideHighlightItems, ...sideNavItems].map((item) => ({
-  id: item.id,
-  label: item.label,
-}))
+const SEARCHABLE_PAGES = [...sideHighlightItems, ...sideNavItems].map(
+  (item) => ({
+    id: item.id,
+    label: item.label,
+  }),
+);
 
 function matchesQuery(text, q) {
-  return typeof text === 'string' && text.toLowerCase().includes(q)
+  return typeof text === "string" && text.toLowerCase().includes(q);
 }
 
 // Global search over the dashboard — pages (sidebar destinations), children,
@@ -316,128 +321,133 @@ function matchesQuery(text, q) {
 // URL→state sync pattern already used for `?tab=`, so picking a result from
 // here behaves exactly like the equivalent sidebar click would.
 function HeaderDashboardSearch({ userId }) {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [children, setChildren] = useState([])
-  const [modules, setModules] = useState([])
-  const [contacts, setContacts] = useState([])
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [children, setChildren] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [contacts, setContacts] = useState([]);
   // Modules change rarely, so fetch them at most once — cached in this ref
   // across opens/closes rather than a state flag, so reopening the search
   // doesn't refetch a list that can't have changed.
-  const modulesFetchedRef = useRef(false)
-  const wrapperRef = useRef(null)
-  const inputRef = useRef(null)
+  const modulesFetchedRef = useRef(false);
+  const wrapperRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
-    if (!userId) return undefined
-    return listenToChildrenForParent(userId, setChildren)
-  }, [userId])
+    if (!userId) return undefined;
+    return listenToChildrenForParent(userId, setChildren);
+  }, [userId]);
 
   // Modules and contacts are only loaded once the search is actually opened,
   // not on every dashboard page load.
   useEffect(() => {
-    if (!open || !userId || modulesFetchedRef.current) return undefined
-    modulesFetchedRef.current = true
-    let cancelled = false
+    if (!open || !userId || modulesFetchedRef.current) return undefined;
+    modulesFetchedRef.current = true;
+    let cancelled = false;
     Promise.all([
       getModulesByCategory(MODULE_CATEGORIES.PARENT),
       getModulesByCategory(MODULE_CATEGORIES.CHILD),
     ])
       .then(([parentModules, childModules]) => {
-        if (!cancelled) setModules([...parentModules, ...childModules])
+        if (!cancelled) setModules([...parentModules, ...childModules]);
       })
       .catch(() => {
-        modulesFetchedRef.current = false
-      })
+        modulesFetchedRef.current = false;
+      });
     return () => {
-      cancelled = true
-    }
-  }, [open, userId])
+      cancelled = true;
+    };
+  }, [open, userId]);
 
   useEffect(() => {
-    if (!open || !userId) return undefined
-    return listenToEmergencyContacts(userId, setContacts)
-  }, [open, userId])
+    if (!open || !userId) return undefined;
+    return listenToEmergencyContacts(userId, setContacts);
+  }, [open, userId]);
 
   function close() {
-    setOpen(false)
-    setQuery('')
+    setOpen(false);
+    setQuery("");
   }
 
   useEffect(() => {
-    if (!open) return undefined
+    if (!open) return undefined;
     const handleClick = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) close()
-    }
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) close();
+    };
     const handleKey = (e) => {
-      if (e.key === 'Escape') close()
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [open])
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
 
   useEffect(() => {
-    if (open) inputRef.current?.focus()
-  }, [open])
+    if (open) inputRef.current?.focus();
+  }, [open]);
 
-  const trimmed = query.trim().toLowerCase()
+  const trimmed = query.trim().toLowerCase();
   // Empty query: a short set of quick links (pages + children) rather than
   // every module/contact dumped at once. Non-empty: real filtered results
   // across all four sources.
   const pageResults = SEARCHABLE_PAGES.filter(
     (p) => !trimmed || matchesQuery(p.label, trimmed),
-  ).slice(0, trimmed ? 4 : 3)
+  ).slice(0, trimmed ? 4 : 3);
   const childResults = children
     .filter((c) => !trimmed || matchesQuery(c.name, trimmed))
-    .slice(0, trimmed ? 5 : 3)
+    .slice(0, trimmed ? 5 : 3);
   const moduleResults = trimmed
     ? modules.filter((m) => matchesQuery(m.title, trimmed)).slice(0, 5)
-    : []
+    : [];
   const contactResults = trimmed
     ? contacts.filter((c) => matchesQuery(c.name, trimmed)).slice(0, 5)
-    : []
+    : [];
   const totalResults =
-    pageResults.length + childResults.length + moduleResults.length + contactResults.length
+    pageResults.length +
+    childResults.length +
+    moduleResults.length +
+    contactResults.length;
 
   function goToPage(id) {
-    const params = new URLSearchParams(window.location.search)
-    params.set('tab', id)
-    router.push(`/dashboard?${params.toString()}`)
-    close()
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", id);
+    router.push(`/dashboard?${params.toString()}`);
+    close();
   }
 
   function goToChild(childId) {
-    const params = new URLSearchParams(window.location.search)
-    params.set('child', childId)
-    router.push(`/dashboard?${params.toString()}`)
-    close()
+    const params = new URLSearchParams(window.location.search);
+    params.set("child", childId);
+    router.push(`/dashboard?${params.toString()}`);
+    close();
   }
 
   function goToModule(moduleId) {
-    const params = new URLSearchParams(window.location.search)
-    params.set('tab', 'learning')
-    params.set('module', moduleId)
-    router.push(`/dashboard?${params.toString()}`)
-    close()
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "learning");
+    params.set("module", moduleId);
+    router.push(`/dashboard?${params.toString()}`);
+    close();
   }
 
   function goToContacts() {
-    const params = new URLSearchParams(window.location.search)
-    params.set('tab', 'emergency')
-    router.push(`/dashboard?${params.toString()}`)
-    close()
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "emergency");
+    router.push(`/dashboard?${params.toString()}`);
+    close();
   }
 
   return (
     <div ref={wrapperRef} className="relative">
       <div
         className={`flex items-center rounded-full border transition-colors duration-200 ${
-          open ? 'border-[var(--border)] bg-[var(--surface-muted)] pr-2 py-1' : 'border-transparent'
+          open
+            ? "border-[var(--border)] bg-[var(--surface-muted)] pr-2 py-1"
+            : "border-transparent"
         }`}
       >
         <button
@@ -471,7 +481,7 @@ function HeaderDashboardSearch({ userId }) {
           aria-label="Search dashboard"
           tabIndex={open ? 0 : -1}
           className={`bg-transparent text-[12px] text-[var(--foreground)] outline-none transition-all duration-200 ${
-            open ? 'w-40 opacity-100 sm:w-56' : 'w-0 opacity-0'
+            open ? "w-40 opacity-100 sm:w-56" : "w-0 opacity-0"
           }`}
         />
       </div>
@@ -505,7 +515,7 @@ function HeaderDashboardSearch({ userId }) {
                     {childResults.map((child) => (
                       <SearchResultRow
                         key={child.id}
-                        label={child.name || 'Child'}
+                        label={child.name || "Child"}
                         avatarText={getInitials(child.name)}
                         onClick={() => goToChild(child.id)}
                       />
@@ -517,7 +527,7 @@ function HeaderDashboardSearch({ userId }) {
                     {moduleResults.map((mod) => (
                       <SearchResultRow
                         key={mod.id}
-                        label={mod.title || 'Module'}
+                        label={mod.title || "Module"}
                         onClick={() => goToModule(mod.id)}
                       />
                     ))}
@@ -528,7 +538,7 @@ function HeaderDashboardSearch({ userId }) {
                     {contactResults.map((contact) => (
                       <SearchResultRow
                         key={contact.id}
-                        label={contact.name || 'Contact'}
+                        label={contact.name || "Contact"}
                         sublabel={contact.relationship}
                         onClick={goToContacts}
                       />
@@ -541,7 +551,7 @@ function HeaderDashboardSearch({ userId }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function SearchSection({ label, children }) {
@@ -552,7 +562,7 @@ function SearchSection({ label, children }) {
       </p>
       {children}
     </div>
-  )
+  );
 }
 
 function SearchResultRow({ label, sublabel, avatarText, onClick }) {
@@ -570,48 +580,49 @@ function SearchResultRow({ label, sublabel, avatarText, onClick }) {
       <span className="min-w-0 flex-1 truncate text-[11.5px] font-medium text-[var(--foreground)]">
         {label}
         {sublabel && (
-          <span className="ml-1.5 font-normal text-[var(--muted)]">{sublabel}</span>
+          <span className="ml-1.5 font-normal text-[var(--muted)]">
+            {sublabel}
+          </span>
         )}
       </span>
     </button>
-  )
+  );
 }
 
 export function SiteHeader() {
-  const pathname = usePathname()
-  const { user, userProfile } = useAuth()
+  const pathname = usePathname();
+  const { user, userProfile } = useAuth();
 
   // The JoJo beta chat and its /login and /signup sub-routes are all
   // chrome-free — a focused, minimal experience is the point there.
   const isChatbotPage =
-    pathname === '/chatbot' || pathname.startsWith('/chatbot/')
+    pathname === "/chatbot" || pathname.startsWith("/chatbot/");
 
-  const isDashboardPage =
-    pathname.startsWith('/dashboard')
+  const isDashboardPage = pathname.startsWith("/dashboard");
 
   // TEMP: dark mode disabled on the marketing site — force light theme
   // there while leaving the dashboard's own toggle untouched.
   useEffect(() => {
-    if (isChatbotPage) return
+    if (isChatbotPage) return;
     if (isDashboardPage) {
-      const stored = window.localStorage.getItem('theme')
+      const stored = window.localStorage.getItem("theme");
       document.documentElement.setAttribute(
-        'data-theme',
-        stored === 'dark' ? 'dark' : 'light',
-      )
+        "data-theme",
+        stored === "dark" ? "dark" : "light",
+      );
     } else {
-      document.documentElement.setAttribute('data-theme', 'light')
+      document.documentElement.setAttribute("data-theme", "light");
     }
-  }, [isChatbotPage, isDashboardPage])
+  }, [isChatbotPage, isDashboardPage]);
 
-  if (isChatbotPage) return null
+  if (isChatbotPage) return null;
 
   const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'children', label: 'Children' },
-    { id: 'alerts', label: 'Alerts' },
-    { id: 'reports', label: 'Reports' },
-  ]
+    { id: "overview", label: "Overview" },
+    { id: "children", label: "Children" },
+    { id: "alerts", label: "Alerts" },
+    { id: "reports", label: "Reports" },
+  ];
 
   return (
     <header
@@ -619,48 +630,38 @@ export function SiteHeader() {
         isDashboardPage ? "border-b border-[var(--border)]" : "py-2 pt-3"
       }`}
     >
-
       {isDashboardPage ? (
+        <div className=" flex items-center justify-between  bg-[var(--background)] px-4 py-3 sm:px-6 lg:px-8">
+          {/* Left */}
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex items-center gap-2 transition-opacity hover:opacity-80"
+            >
+              <span className="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">
+                Guardiané AI
+              </span>
+            </Link>
+          </div>
 
-         <div className=" flex items-center justify-between  bg-[var(--background)] px-4 py-3 sm:px-6 lg:px-8">
+          {/* Right */}
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
 
-        {/* Left */}
-        <div className="flex items-center justify-between">
+            {/* Search */}
+            <HeaderDashboardSearch userId={user?.uid} />
 
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 transition-opacity hover:opacity-80"
-          >
-            
-            <span className="text-[18px] font-semibold tracking-tight text-[var(--foreground)]">
-              Guardiané AI
-            </span>
-          </Link>
+            {/* Notifications */}
+            <NotificationsBell />
 
+            {/* Profile dropdown */}
+            <ProfileMenu user={user} profile={userProfile} />
+          </div>
         </div>
-
-
-        {/* Right */}
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
-
-          {/* Search */}
-          <HeaderDashboardSearch userId={user?.uid} />
-
-          {/* Notifications */}
-          <NotificationsBell />
-
-          {/* Profile dropdown */}
-          <ProfileMenu user={user} profile={userProfile} />
-        </div>
-      </div>
-
       ) : (
-
         /* ── NORMAL MARKETING HEADER ── */
         <nav className="clarity-wrap grid grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
-
           {/* Left: brand */}
           <Link
             href="/"
@@ -749,5 +750,5 @@ export function SiteHeader() {
         </nav>
       )}
     </header>
-  )
+  );
 }

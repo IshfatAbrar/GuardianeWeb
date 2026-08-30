@@ -1,33 +1,33 @@
-'use client'
+"use client";
 
-import { useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { useNotifications } from '../app/lib/useNotifications'
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useNotifications } from "../app/lib/useNotifications";
 
 const SEVERITY_DOT = {
-  critical: 'bg-[var(--danger)]',
-  error: 'bg-[var(--danger)]',
-  warning: 'bg-amber-500',
-  info: 'bg-[var(--accent)]',
-}
+  critical: "bg-[var(--danger)]",
+  error: "bg-[var(--danger)]",
+  warning: "bg-amber-500",
+  info: "bg-[var(--accent)]",
+};
 
 function relativeTime(ms) {
-  if (!ms) return ''
-  const diff = Math.max(0, Date.now() - ms)
-  const mins = Math.floor(diff / 60_000)
-  if (mins < 1) return 'Just now'
-  if (mins < 60) return `${mins} min ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(ms).toLocaleDateString()
+  if (!ms) return "";
+  const diff = Math.max(0, Date.now() - ms);
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(ms).toLocaleDateString();
 }
 
 export function NotificationPanel({ open, onClose }) {
-  const { alerts, loading, markAllRead } = useNotifications()
-  const ref = useRef(null)
-  const router = useRouter()
+  const { alerts, loading, markAllRead } = useNotifications();
+  const ref = useRef(null);
+  const router = useRouter();
 
   // The bell is a compact preview; the Emergency tab's Risk alerts card is
   // where the full detail (classification, untruncated message, contacts,
@@ -36,27 +36,29 @@ export function NotificationPanel({ open, onClose }) {
   // ?tab= itself on load. The `alert` param lets the Emergency tab scroll to
   // and highlight this specific one instead of just landing on the tab.
   function goToAlert(alert) {
-    onClose?.()
-    router.push(`/dashboard?tab=emergency&alert=${encodeURIComponent(alert.id)}`)
+    onClose?.();
+    router.push(
+      `/dashboard?tab=emergency&alert=${encodeURIComponent(alert.id)}`,
+    );
   }
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const handleClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onClose?.()
-    }
+      if (ref.current && !ref.current.contains(e.target)) onClose?.();
+    };
     const handleKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
-    }
-    document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
+      if (e.key === "Escape") onClose?.();
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
     return () => {
-      document.removeEventListener('mousedown', handleClick)
-      document.removeEventListener('keydown', handleKey)
-    }
-  }, [open, onClose])
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open, onClose]);
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div
@@ -92,7 +94,7 @@ export function NotificationPanel({ open, onClose }) {
         ) : (
           <ul className="divide-y divide-[var(--border)]">
             {alerts.map((a) => {
-              const dot = SEVERITY_DOT[a.severity] ?? 'bg-[var(--muted)]'
+              const dot = SEVERITY_DOT[a.severity] ?? "bg-[var(--muted)]";
               return (
                 <li key={a.id}>
                   <button
@@ -105,7 +107,7 @@ export function NotificationPanel({ open, onClose }) {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[11px] font-medium text-[var(--foreground)]">
-                        {a.type || a.message || 'Alert'}
+                        {a.type || a.message || "Alert"}
                       </p>
                       <p className="text-[10px] text-[var(--muted)]">
                         {relativeTime(a.timestampMs)}
@@ -113,11 +115,11 @@ export function NotificationPanel({ open, onClose }) {
                     </div>
                   </button>
                 </li>
-              )
+              );
             })}
           </ul>
         )}
       </div>
     </div>
-  )
+  );
 }

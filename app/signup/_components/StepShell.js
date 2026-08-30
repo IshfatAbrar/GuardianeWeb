@@ -6,16 +6,16 @@ export function Field({ label, children }) {
       </label>
       {children}
     </div>
-  )
+  );
 }
 
 export function ErrorBanner({ msg }) {
-  if (!msg) return null
+  if (!msg) return null;
   return (
     <div className="mb-5 rounded border border-red-200 bg-red-50 px-4 py-3 text-[0.78rem] text-red-700">
       {msg}
     </div>
-  )
+  );
 }
 
 export function StepCard({ title, sub, children }) {
@@ -28,15 +28,22 @@ export function StepCard({ title, sub, children }) {
               {title}
             </h2>
           )}
-          {sub && <p className="mt-1 text-[0.82rem] text-[var(--muted)]">{sub}</p>}
+          {sub && (
+            <p className="mt-1 text-[0.82rem] text-[var(--muted)]">{sub}</p>
+          )}
         </div>
       )}
       {children}
     </div>
-  )
+  );
 }
 
-export function StepFooter({ onBack, onNext, nextLabel = 'Continue →', nextDisabled = false }) {
+export function StepFooter({
+  onBack,
+  onNext,
+  nextLabel = "Continue →",
+  nextDisabled = false,
+}) {
   return (
     <div className="mt-8 flex items-center justify-between pt-2">
       {onBack ? (
@@ -57,5 +64,5 @@ export function StepFooter({ onBack, onNext, nextLabel = 'Continue →', nextDis
         {nextLabel}
       </button>
     </div>
-  )
+  );
 }

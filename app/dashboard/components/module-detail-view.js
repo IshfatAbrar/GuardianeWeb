@@ -20,7 +20,9 @@ function StatPill({ label, value }) {
 }
 
 function LessonRow({ lesson, isParentModule, onOpen }) {
-  const questionCount = Array.isArray(lesson.questions) ? lesson.questions.length : 0;
+  const questionCount = Array.isArray(lesson.questions)
+    ? lesson.questions.length
+    : 0;
   const playable = isParentModule && questionCount > 0;
   return (
     <button
@@ -28,11 +30,22 @@ function LessonRow({ lesson, isParentModule, onOpen }) {
       onClick={playable ? onOpen : undefined}
       disabled={!playable}
       className={`flex w-full items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-left transition-all ${
-        playable ? "hover:border-[var(--accent-border)] hover:bg-[var(--surface-muted)]" : "cursor-default"
+        playable
+          ? "hover:border-[var(--accent-border)] hover:bg-[var(--surface-muted)]"
+          : "cursor-default"
       }`}
     >
       <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--accent-bg)] text-[var(--accent)]">
-        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <svg
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+        >
           <path d="M22 7 12 13 2 7" />
           <path d="M2 7v10l10 6 10-6V7L12 1z" />
         </svg>
@@ -110,7 +123,8 @@ export function ModuleDetailView({
         category: module_.category,
       });
       onAssigned?.();
-      const childName = childList.find((c) => c.id === childId)?.name || "child";
+      const childName =
+        childList.find((c) => c.id === childId)?.name || "child";
       showToast(`Assigned "${module_.title || "module"}" to ${childName}`);
     } catch (err) {
       setAssignError(err.message || "Failed to assign");
@@ -129,13 +143,26 @@ export function ModuleDetailView({
           aria-label="Back"
           className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)]"
         >
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted)]">
-            {isParentModule ? "Parent Module" : module_?.category === MODULE_CATEGORIES.CHILD ? "Child Module" : "Module"}
+            {isParentModule
+              ? "Parent Module"
+              : module_?.category === MODULE_CATEGORIES.CHILD
+                ? "Child Module"
+                : "Module"}
           </p>
           <h1 className="truncate text-xl font-semibold tracking-tight text-[var(--foreground)]">
             {module_?.title || (loading ? "Loading…" : "Module")}
@@ -172,10 +199,15 @@ export function ModuleDetailView({
             */}
             <div
               className={`grid gap-2 ${
-                module_.estimatedDuration || module_.difficulty ? "grid-cols-3" : "grid-cols-1"
+                module_.estimatedDuration || module_.difficulty
+                  ? "grid-cols-3"
+                  : "grid-cols-1"
               }`}
             >
-              <StatPill label="Lessons" value={module_.lessonCount ?? lessons.length} />
+              <StatPill
+                label="Lessons"
+                value={module_.lessonCount ?? lessons.length}
+              />
               {module_.estimatedDuration > 0 && (
                 <StatPill
                   label="Duration"
@@ -215,7 +247,9 @@ export function ModuleDetailView({
                   </div>
                 )}
                 {assignError && (
-                  <p className="text-[12px] text-[var(--danger)]">{assignError}</p>
+                  <p className="text-[12px] text-[var(--danger)]">
+                    {assignError}
+                  </p>
                 )}
               </div>
             )}

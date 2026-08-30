@@ -5,7 +5,11 @@
 // hardcoded Instagram/Discord/TikTok figures whenever the query comes back
 // empty. Invented usage is worse than no usage.
 
-import { aggregateApps, formatDuration, totalSeconds } from "../../lib/screenTime";
+import {
+  aggregateApps,
+  formatDuration,
+  totalSeconds,
+} from "../../lib/screenTime";
 
 // Enough colors for the row dots; reused cyclically past the end.
 const DOT_COLORS = [
@@ -49,8 +53,8 @@ export function ScreenTimeReport({ entries, days }) {
         <span className="text-[11.5px] text-[var(--muted)]">
           {syncedDays > 0 && (
             <>
-              {formatDuration(total / syncedDays)}/day ·{" "}
-              {syncedDays} of {days} days synced
+              {formatDuration(total / syncedDays)}/day · {syncedDays} of {days}{" "}
+              days synced
             </>
           )}
         </span>

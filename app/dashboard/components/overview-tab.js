@@ -72,7 +72,10 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         </div>
       </div>
 
-      <JojoBanner onTalk={() => go("chatbot")} onLearnMore={() => go("chatbot")} />
+      <JojoBanner
+        onTalk={() => go("chatbot")}
+        onLearnMore={() => go("chatbot")}
+      />
 
       <StatsGrid
         childrenCount={children.length}
@@ -89,7 +92,10 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           childName={selectedChild?.name}
           onFullReport={openReport}
         />
-        <ScreenTimeCard entry={latestScreenTime} childName={selectedChild?.name} />
+        <ScreenTimeCard
+          entry={latestScreenTime}
+          childName={selectedChild?.name}
+        />
         <QuickActionsCard
           onAddChild={() => setAddChildOpen(true)}
           onReports={openReport}
@@ -117,7 +123,10 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         }}
       />
 
-      <RecentActivityCard alerts={alertsForSelectedChild} childList={children} />
+      <RecentActivityCard
+        alerts={alertsForSelectedChild}
+        childList={children}
+      />
 
       <ChildFormModal
         open={addChildOpen}

@@ -71,7 +71,9 @@ export function Sidebar({
             <PanelIcon />
           </button>
         </div>
-        <div className={`flex flex-col gap-1 ${collapsed ? "items-center" : ""}`}>
+        <div
+          className={`flex flex-col gap-1 ${collapsed ? "items-center" : ""}`}
+        >
           {childrenLoading ? (
             <ChildrenSkeleton collapsed={collapsed} />
           ) : childList.length === 0 ? (
@@ -139,9 +141,13 @@ export function Sidebar({
                     {isSelected && (
                       <div className="w-4 h-4 rounded-full bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
                         <svg
-                          width="8" height="8"
-                          fill="none" stroke="white"
-                          strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                          width="8"
+                          height="8"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                           viewBox="0 0 24 24"
                         >
                           <polyline points="20 6 9 17 4 12" />
@@ -200,7 +206,9 @@ export function Sidebar({
       <div className="my-3 h-px bg-[var(--border)]" />
 
       {/* Main nav */}
-      <nav className={`flex-1 overflow-hidden space-y-0.5 ${collapsed ? "px-2" : "px-3"}`}>
+      <nav
+        className={`flex-1 overflow-hidden space-y-0.5 ${collapsed ? "px-2" : "px-3"}`}
+      >
         {sideNavItems.map((item) => (
           <NavButton
             key={item.id}
@@ -247,7 +255,9 @@ function NavButton({ item, isActive, onClick, collapsed, badge = 0 }) {
       title={collapsed ? item.label : undefined}
       aria-label={item.label}
       className={`relative flex items-center rounded-xl text-left transition-all group ${
-        collapsed ? "justify-center w-full px-0 py-2.5" : "gap-3 w-full px-3 py-3"
+        collapsed
+          ? "justify-center w-full px-0 py-2.5"
+          : "gap-3 w-full px-3 py-3"
       } ${isActive ? "bg-[var(--accent-bg)]" : "hover:bg-[var(--surface-muted)]"}`}
     >
       {isActive && !collapsed && !badge && (
@@ -255,7 +265,9 @@ function NavButton({ item, isActive, onClick, collapsed, badge = 0 }) {
       )}
       <span
         className={`relative flex-shrink-0 transition-colors ${
-          isActive ? "text-[var(--accent)]" : "text-[var(--muted)] group-hover:text-[var(--foreground)]"
+          isActive
+            ? "text-[var(--accent)]"
+            : "text-[var(--muted)] group-hover:text-[var(--foreground)]"
         }`}
       >
         {item.icon}
@@ -280,13 +292,19 @@ function ChildrenSkeleton({ collapsed }) {
     <>
       {[0, 1, 2].map((i) =>
         collapsed ? (
-          <div key={i} className="w-9 h-9 rounded-full bg-[var(--surface-muted)] animate-pulse" />
+          <div
+            key={i}
+            className="w-9 h-9 rounded-full bg-[var(--surface-muted)] animate-pulse"
+          />
         ) : (
-          <div key={i} className="flex items-center gap-3 px-3 py-2 animate-pulse">
+          <div
+            key={i}
+            className="flex items-center gap-3 px-3 py-2 animate-pulse"
+          >
             <div className="w-8 h-8 rounded-full bg-[var(--surface-muted)]" />
             <div className="h-3 flex-1 rounded bg-[var(--surface-muted)]" />
           </div>
-        )
+        ),
       )}
     </>
   );

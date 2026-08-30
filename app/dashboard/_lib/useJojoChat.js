@@ -42,10 +42,8 @@ export function useJojoChat() {
   // Live list of the user's sessions for the sidebar.
   useEffect(() => {
     if (!uid) return;
-    const unsub = listenToChatSessions(
-      uid,
-      setSessions,
-      (err) => console.error("[jojo] sessions listener:", err)
+    const unsub = listenToChatSessions(uid, setSessions, (err) =>
+      console.error("[jojo] sessions listener:", err),
     );
     return () => unsub();
   }, [uid]);
@@ -81,7 +79,7 @@ export function useJojoChat() {
         setMessages([]);
       }
     },
-    [activeId]
+    [activeId],
   );
 
   const sendMessage = useCallback(
@@ -102,28 +100,31 @@ export function useJojoChat() {
           setActiveId(sessionId);
         }
         addChatMessage(sessionId, userMsg).catch((err) =>
-          console.error("[jojo] persist user message:", err)
+          console.error("[jojo] persist user message:", err),
         );
 
         const reply = await sendJojoMessage({ messages: history });
         setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-        addChatMessage(sessionId, { role: "assistant", content: reply }).catch((err) =>
-          console.error("[jojo] persist assistant message:", err)
+        addChatMessage(sessionId, { role: "assistant", content: reply }).catch(
+          (err) => console.error("[jojo] persist assistant message:", err),
         );
         touchChatSession(sessionId).catch((err) =>
-          console.error("[jojo] touch session:", err)
+          console.error("[jojo] touch session:", err),
         );
       } catch (err) {
         const fallback =
           err instanceof JojoChatError
             ? err.message
             : "I couldn't reach the server. Check your connection and try again.";
-        setMessages((prev) => [...prev, { role: "assistant", content: fallback }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: fallback },
+        ]);
       } finally {
         setIsSending(false);
       }
     },
-    [activeId, isSending, messages, uid]
+    [activeId, isSending, messages, uid],
   );
 
   return {

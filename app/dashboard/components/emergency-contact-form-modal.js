@@ -23,7 +23,12 @@ function Field({ label, children }) {
   );
 }
 
-export function EmergencyContactFormModal({ open, onClose, parentUid, contact = null }) {
+export function EmergencyContactFormModal({
+  open,
+  onClose,
+  parentUid,
+  contact = null,
+}) {
   if (!open || typeof document === "undefined") return null;
   return <Content onClose={onClose} parentUid={parentUid} contact={contact} />;
 }
@@ -37,7 +42,9 @@ function Content({ onClose, parentUid, contact }) {
     contact?.relationship || RELATIONSHIP_OPTIONS[0],
   );
   const [notes, setNotes] = useState(contact?.notes || "");
-  const [isEmergency, setIsEmergency] = useState(contact?.isEmergency !== false);
+  const [isEmergency, setIsEmergency] = useState(
+    contact?.isEmergency !== false,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -115,7 +122,16 @@ function Content({ onClose, parentUid, contact }) {
               aria-label="Close"
               className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] transition-colors hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
@@ -190,7 +206,9 @@ function Content({ onClose, parentUid, contact }) {
             {editing ? (
               <button
                 type="button"
-                onClick={() => (confirmDelete ? handleDelete() : setConfirmDelete(true))}
+                onClick={() =>
+                  confirmDelete ? handleDelete() : setConfirmDelete(true)
+                }
                 disabled={submitting}
                 className="rounded-lg border border-rose-500/40 px-3 py-2 text-[12.5px] font-semibold text-rose-500 transition-colors hover:bg-rose-500/10 disabled:opacity-60"
               >

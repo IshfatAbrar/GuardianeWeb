@@ -33,7 +33,9 @@ function ContactRow({ contact, onEdit, isLast }) {
           {[contact.relationship, contact.phone].filter(Boolean).join(" · ")}
         </p>
         {contact.notes && (
-          <p className="mt-0.5 truncate text-[11px] text-[var(--muted)]">{contact.notes}</p>
+          <p className="mt-0.5 truncate text-[11px] text-[var(--muted)]">
+            {contact.notes}
+          </p>
         )}
       </div>
 
@@ -44,7 +46,16 @@ function ContactRow({ contact, onEdit, isLast }) {
             className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] text-[var(--accent)] transition-colors hover:bg-[var(--surface-muted)]"
             aria-label={`Call ${contact.name}`}
           >
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.6 3.38 2 2 0 0 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
           </a>
@@ -83,10 +94,14 @@ export function EmergencyContactsCard({ contacts, loading, onAdd, onEdit }) {
       </div>
 
       {loading ? (
-        <p className="px-4 py-8 text-center text-[13px] text-[var(--muted)]">Loading…</p>
+        <p className="px-4 py-8 text-center text-[13px] text-[var(--muted)]">
+          Loading…
+        </p>
       ) : contacts.length === 0 ? (
         <div className="px-4 py-8 text-center">
-          <p className="text-[13px] text-[var(--muted)]">No emergency contacts yet.</p>
+          <p className="text-[13px] text-[var(--muted)]">
+            No emergency contacts yet.
+          </p>
           <p className="mt-1 text-[11.5px] text-[var(--muted)]">
             Add one so your child has someone to reach in a crisis.
           </p>
