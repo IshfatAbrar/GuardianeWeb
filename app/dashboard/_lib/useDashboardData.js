@@ -84,7 +84,9 @@ export function useDashboardData() {
   const [modulesLoading, setModulesLoading] = useState(true);
 
   const [assignments, setAssignments] = useState([]);
+  const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
   const [progressById, setProgressById] = useState(EMPTY_PROGRESS);
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [moodHistory, setMoodHistory] = useState({ childId: null, rows: [] });
@@ -175,8 +177,14 @@ export function useDashboardData() {
     if (!uid) return undefined;
     return listenToAssignments(
       uid,
-      (rows) => setAssignments(rows),
-      () => setAssignments([]),
+      (rows) => {
+        setAssignments(rows);
+        setAssignmentsLoaded(true);
+      },
+      () => {
+        setAssignments([]);
+        setAssignmentsLoaded(true);
+      },
     );
   }, [uid]);
 
@@ -185,7 +193,10 @@ export function useDashboardData() {
     if (!childIdsKey) return undefined;
     return listenToLearningProgressForChildren(
       childIdsKey.split(","),
-      setProgressById,
+      (map) => {
+        setProgressById(map);
+        setProgressLoaded(true);
+      },
     );
   }, [childIdsKey]);
 
@@ -297,6 +308,9 @@ export function useDashboardData() {
     progressById: visibleProgress,
     completedAssignmentsCount: assignmentCounts.completed,
     inProgressAssignmentsCount: assignmentCounts.inProgress,
+    // Only true once both live listeners above have delivered their first
+    // snapshot — lets consumers tell "no data yet" apart from "no data".
+    moduleCompletionDataReady: assignmentsLoaded && progressLoaded,
 
     loading: authLoading || childrenLoading || modulesLoading,
   };
