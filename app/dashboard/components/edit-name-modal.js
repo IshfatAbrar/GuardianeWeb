@@ -46,7 +46,9 @@ function Content({ onClose, currentName, uid, onSaved }) {
       const trimmed = name.trim();
       await updateUserProfile(uid, { name: trimmed });
       if (auth.currentUser) {
-        await updateProfile(auth.currentUser, { displayName: trimmed }).catch(() => {});
+        await updateProfile(auth.currentUser, { displayName: trimmed }).catch(
+          () => {},
+        );
       }
       onSaved?.(trimmed);
       onClose();
@@ -79,7 +81,10 @@ function Content({ onClose, currentName, uid, onSaved }) {
             >
               Cancel
             </button>
-            <h1 id="edit-name-title" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+            <h1
+              id="edit-name-title"
+              className="text-lg font-semibold tracking-tight text-[var(--foreground)]"
+            >
               Edit Name
             </h1>
             <button

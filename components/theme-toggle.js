@@ -32,11 +32,7 @@ function getServerSnapshot() {
 }
 
 export function ThemeToggle({ disabled = false } = {}) {
-  const theme = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const { showToast } = useToast();
 
   function toggle() {

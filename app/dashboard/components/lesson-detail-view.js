@@ -9,7 +9,8 @@ const TYPE_LABEL = {
 };
 
 function QuestionPreview({ question, index }) {
-  const correctText = question.correctAnswer || question.acceptedAnswers?.[0] || "—";
+  const correctText =
+    question.correctAnswer || question.acceptedAnswers?.[0] || "—";
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="flex items-start justify-between gap-3">
@@ -21,24 +22,29 @@ function QuestionPreview({ question, index }) {
         </span>
       </div>
 
-      {question.type === QUESTION_TYPES.MULTIPLE_CHOICE && Array.isArray(question.options) && (
-        <ul className="mt-3 space-y-1 text-[12.5px]">
-          {question.options.map((opt, i) => {
-            const isAnswer = opt === question.correctAnswer || i === question.correctAnswerIndex;
-            return (
-              <li
-                key={i}
-                className={`flex items-center gap-2 rounded-lg px-2 py-1 ${
-                  isAnswer ? "bg-emerald-500/10 text-emerald-500" : "text-[var(--muted)]"
-                }`}
-              >
-                <span className="text-[10px]">{isAnswer ? "✓" : "○"}</span>
-                <span>{opt}</span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {question.type === QUESTION_TYPES.MULTIPLE_CHOICE &&
+        Array.isArray(question.options) && (
+          <ul className="mt-3 space-y-1 text-[12.5px]">
+            {question.options.map((opt, i) => {
+              const isAnswer =
+                opt === question.correctAnswer ||
+                i === question.correctAnswerIndex;
+              return (
+                <li
+                  key={i}
+                  className={`flex items-center gap-2 rounded-lg px-2 py-1 ${
+                    isAnswer
+                      ? "bg-emerald-500/10 text-emerald-500"
+                      : "text-[var(--muted)]"
+                  }`}
+                >
+                  <span className="text-[10px]">{isAnswer ? "✓" : "○"}</span>
+                  <span>{opt}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
       {question.type !== QUESTION_TYPES.MULTIPLE_CHOICE && (
         <p className="mt-2 text-[12.5px] text-[var(--muted)]">
@@ -56,7 +62,12 @@ function QuestionPreview({ question, index }) {
   );
 }
 
-export function LessonDetailView({ lesson, canTakeQuiz = true, onBack, onStartQuiz }) {
+export function LessonDetailView({
+  lesson,
+  canTakeQuiz = true,
+  onBack,
+  onStartQuiz,
+}) {
   if (!lesson) return null;
   const questions = Array.isArray(lesson.questions) ? lesson.questions : [];
   const canStart = canTakeQuiz && questions.length > 0;
@@ -71,7 +82,16 @@ export function LessonDetailView({ lesson, canTakeQuiz = true, onBack, onStartQu
           aria-label="Back"
           className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)]"
         >
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
@@ -96,7 +116,9 @@ export function LessonDetailView({ lesson, canTakeQuiz = true, onBack, onStartQu
 
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-center">
-            <p className="text-base font-bold text-[var(--accent)]">{questions.length}</p>
+            <p className="text-base font-bold text-[var(--accent)]">
+              {questions.length}
+            </p>
             <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
               Questions
             </p>
@@ -110,7 +132,10 @@ export function LessonDetailView({ lesson, canTakeQuiz = true, onBack, onStartQu
             </p>
           </div>
           <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-center">
-            <p className="truncate text-base font-bold text-amber-500" title={lesson.createdByName || "Unknown"}>
+            <p
+              className="truncate text-base font-bold text-amber-500"
+              title={lesson.createdByName || "Unknown"}
+            >
               {lesson.createdByName || "Unknown"}
             </p>
             <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">
@@ -131,7 +156,8 @@ export function LessonDetailView({ lesson, canTakeQuiz = true, onBack, onStartQu
 
         {!canTakeQuiz && (
           <p className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-center text-[12.5px] text-[var(--muted)]">
-            This lesson is meant for children. Assign the module to a child to let them take it.
+            This lesson is meant for children. Assign the module to a child to
+            let them take it.
           </p>
         )}
 

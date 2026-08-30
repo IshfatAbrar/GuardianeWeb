@@ -32,8 +32,7 @@ const VALID_TABS = new Set([
 ]);
 
 function userInitialFrom(profile, user) {
-  const source =
-    profile?.name || user?.displayName || user?.email || "";
+  const source = profile?.name || user?.displayName || user?.email || "";
   const first = source.trim()[0];
   return first ? first.toUpperCase() : "Y";
 }
@@ -77,14 +76,16 @@ function DashboardContent() {
     for (const mod of data.modules) m.set(mod.id, mod);
     return m;
   }, [data.modules]);
-  const { unseenCount: moduleCompletionsUnseen, markAllSeen: markModuleCompletionsSeen } =
-    useModuleCompletionAlerts({
-      parentId: data.user?.uid,
-      assignments: data.assignments,
-      progressById: data.progressById,
-      childById,
-      moduleById,
-    });
+  const {
+    unseenCount: moduleCompletionsUnseen,
+    markAllSeen: markModuleCompletionsSeen,
+  } = useModuleCompletionAlerts({
+    parentId: data.user?.uid,
+    assignments: data.assignments,
+    progressById: data.progressById,
+    childById,
+    moduleById,
+  });
 
   // Sync the URL ?tab= when the user clicks around. replaceState (not push)
   // so the browser-back button still leaves the dashboard rather than walking
@@ -161,7 +162,9 @@ function DashboardContent() {
       );
     if (activeNav === "chatbot") {
       return (
-        <JojoChatTab userInitial={userInitialFrom(data.userProfile, data.user)} />
+        <JojoChatTab
+          userInitial={userInitialFrom(data.userProfile, data.user)}
+        />
       );
     }
     if (activeNav === "learning")

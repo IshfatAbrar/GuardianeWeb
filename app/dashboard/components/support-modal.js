@@ -6,18 +6,15 @@ import { createPortal } from "react-dom";
 const HELP_TOPICS = [
   {
     title: "Linking your child's device",
-    body:
-      "Open the child app on the device you want to link, tap 'Scan to Link', and point the camera at the QR code shown next to your child's name in the sidebar.",
+    body: "Open the child app on the device you want to link, tap 'Scan to Link', and point the camera at the QR code shown next to your child's name in the sidebar.",
   },
   {
     title: "Assigning learning modules",
-    body:
-      "From Module Assignments → Assign Module, pick a child and a module, set a priority and optional due date, then tap Assign.",
+    body: "From Module Assignments → Assign Module, pick a child and a module, set a priority and optional due date, then tap Assign.",
   },
   {
     title: "What JoJo can help with",
-    body:
-      "JoJo is the in-app chatbot for teen safety, mental health, and digital well-being questions. JoJo offers general guidance, not medical or legal advice.",
+    body: "JoJo is the in-app chatbot for teen safety, mental health, and digital well-being questions. JoJo offers general guidance, not medical or legal advice.",
   },
 ];
 
@@ -57,7 +54,10 @@ function Content({ onClose, mode }) {
       >
         <div className="space-y-5 p-6">
           <div className="flex items-center justify-between gap-3">
-            <h1 id="support-title" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+            <h1
+              id="support-title"
+              className="text-lg font-semibold tracking-tight text-[var(--foreground)]"
+            >
               {isHelp ? "Help Center" : "Contact Support"}
             </h1>
             <button
@@ -66,7 +66,16 @@ function Content({ onClose, mode }) {
               aria-label="Close"
               className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <svg
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                viewBox="0 0 24 24"
+              >
                 <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
@@ -106,7 +115,17 @@ function Content({ onClose, mode }) {
                     Click to compose an email
                   </p>
                 </div>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="text-[var(--accent)]">
+                <svg
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  viewBox="0 0 24 24"
+                  className="text-[var(--accent)]"
+                >
                   <path d="M7 17 17 7M7 7h10v10" />
                 </svg>
               </a>

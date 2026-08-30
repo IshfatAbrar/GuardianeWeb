@@ -1,34 +1,36 @@
-import { useState } from 'react'
-import Link from 'next/link'
-import { inputCls, STRENGTH_META } from '../../_lib/constants'
-import { getPasswordStrength } from '../../_lib/helpers'
-import { ErrorBanner, Field, StepCard, StepFooter } from '../StepShell'
-import { PasswordInput } from '../../../../components/password-input'
+import { useState } from "react";
+import Link from "next/link";
+import { inputCls, STRENGTH_META } from "../../_lib/constants";
+import { getPasswordStrength } from "../../_lib/helpers";
+import { ErrorBanner, Field, StepCard, StepFooter } from "../StepShell";
+import { PasswordInput } from "../../../../components/password-input";
 
 export function StepAccount({ initial, onNext }) {
-  const [fullName, setFullName] = useState(initial?.fullName ?? '')
-  const [email, setEmail] = useState(initial?.email ?? '')
-  const [password, setPassword] = useState(initial?.password ?? '')
-  const [confirm, setConfirm] = useState(initial?.password ?? '')
-  const [agreed, setAgreed] = useState(initial?.agreed ?? false)
-  const [err, setErr] = useState('')
+  const [fullName, setFullName] = useState(initial?.fullName ?? "");
+  const [email, setEmail] = useState(initial?.email ?? "");
+  const [password, setPassword] = useState(initial?.password ?? "");
+  const [confirm, setConfirm] = useState(initial?.password ?? "");
+  const [agreed, setAgreed] = useState(initial?.agreed ?? false);
+  const [err, setErr] = useState("");
 
-  const strength = password ? getPasswordStrength(password) : 0
-  const meta = STRENGTH_META[Math.max(0, strength - 1)]
+  const strength = password ? getPasswordStrength(password) : 0;
+  const meta = STRENGTH_META[Math.max(0, strength - 1)];
 
   const handleNext = () => {
-    setErr('')
-    const trimmedName = fullName.trim()
-    if (!trimmedName) return setErr('Please enter your full name.')
-    if (!email) return setErr('Please enter your email address.')
-    if (!password || password.length < 8) return setErr('Password must be at least 8 characters.')
-    if (password !== confirm) return setErr('Passwords do not match.')
-    if (!agreed) return setErr('Please agree to the Terms of Service and Privacy Policy.')
+    setErr("");
+    const trimmedName = fullName.trim();
+    if (!trimmedName) return setErr("Please enter your full name.");
+    if (!email) return setErr("Please enter your email address.");
+    if (!password || password.length < 8)
+      return setErr("Password must be at least 8 characters.");
+    if (password !== confirm) return setErr("Passwords do not match.");
+    if (!agreed)
+      return setErr("Please agree to the Terms of Service and Privacy Policy.");
 
-    onNext({ fullName: trimmedName, email, password, agreed })
-  }
+    onNext({ fullName: trimmedName, email, password, agreed });
+  };
 
-  const requiredStar = <span className="ml-0.5 text-red-500">*</span>
+  const requiredStar = <span className="ml-0.5 text-red-500">*</span>;
 
   return (
     <StepCard title="Account details" sub="Tell us a bit about yourself">
@@ -70,12 +72,14 @@ export function StepAccount({ initial, onNext }) {
                     <div
                       key={i}
                       className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                        i <= strength ? meta.color : 'bg-[var(--border)]'
+                        i <= strength ? meta.color : "bg-[var(--border)]"
                       }`}
                     />
                   ))}
                 </div>
-                <p className="mt-1 text-[0.65rem] text-[var(--muted)]">{meta.label}</p>
+                <p className="mt-1 text-[0.65rem] text-[var(--muted)]">
+                  {meta.label}
+                </p>
               </div>
             )}
           </Field>
@@ -98,18 +102,28 @@ export function StepAccount({ initial, onNext }) {
           className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 accent-[var(--accent)]"
         />
         <span className="text-[0.75rem] leading-relaxed text-[var(--muted)]">
-          I agree to the{' '}
-          <Link href="#" className="text-[var(--accent)] no-underline hover:underline">
+          I agree to the{" "}
+          <Link
+            href="#"
+            className="text-[var(--accent)] no-underline hover:underline"
+          >
             Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="#" className="text-[var(--accent)] no-underline hover:underline">
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="#"
+            className="text-[var(--accent)] no-underline hover:underline"
+          >
             Privacy Policy
           </Link>
         </span>
       </label>
 
-      <StepFooter onNext={handleNext} nextLabel="Continue →" nextDisabled={!agreed} />
+      <StepFooter
+        onNext={handleNext}
+        nextLabel="Continue →"
+        nextDisabled={!agreed}
+      />
     </StepCard>
-  )
+  );
 }

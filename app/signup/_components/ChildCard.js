@@ -1,5 +1,5 @@
-import { Trash2 } from 'lucide-react'
-import { getAge, getInitials } from '../_lib/helpers'
+import { Trash2 } from "lucide-react";
+import { getAge, getInitials } from "../_lib/helpers";
 
 export function ChildCard({ child, onRemove }) {
   return (
@@ -8,7 +8,9 @@ export function ChildCard({ child, onRemove }) {
         {getInitials(child.name)}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="truncate text-[0.84rem] font-medium text-[var(--foreground)]">{child.name}</p>
+        <p className="truncate text-[0.84rem] font-medium text-[var(--foreground)]">
+          {child.name}
+        </p>
         <p className="text-[0.72rem] text-[var(--muted)]">
           {getAge(child.bday)} yrs · {child.grade} · {child.gender}
         </p>
@@ -21,5 +23,5 @@ export function ChildCard({ child, onRemove }) {
         <Trash2 className="h-4 w-4" />
       </button>
     </div>
-  )
+  );
 }

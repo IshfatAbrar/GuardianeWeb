@@ -56,7 +56,12 @@ function Toggle({ checked, onChange }) {
   );
 }
 
-function ActionButton({ children = "Edit", onClick, danger = false, disabled = false }) {
+function ActionButton({
+  children = "Edit",
+  onClick,
+  danger = false,
+  disabled = false,
+}) {
   return (
     <button
       type="button"
@@ -363,7 +368,16 @@ export function SettingsTab({ data }) {
                 disabled={!user?.uid}
                 className="inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--accent)] transition-colors hover:text-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <svg
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  viewBox="0 0 24 24"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 8v8M8 12h8" />
                 </svg>
@@ -424,7 +438,9 @@ export function SettingsTab({ data }) {
             <FieldRow
               label="Export my data"
               value="Download a JSON copy of your family's data"
-              trailing={<ActionButton onClick={handleExport}>Export</ActionButton>}
+              trailing={
+                <ActionButton onClick={handleExport}>Export</ActionButton>
+              }
             />
             <FieldRow
               label="Delete account"

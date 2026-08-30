@@ -32,10 +32,22 @@ const PRIORITY_OPTIONS = [
 ];
 
 const STATUS_META = {
-  [ASSIGNMENT_STATUS.ASSIGNED]: { label: "Assigned", className: "bg-sky-500/15 text-sky-500" },
-  [ASSIGNMENT_STATUS.IN_PROGRESS]: { label: "In progress", className: "bg-amber-500/15 text-amber-500" },
-  [ASSIGNMENT_STATUS.COMPLETED]: { label: "Completed", className: "bg-emerald-500/15 text-emerald-500" },
-  [ASSIGNMENT_STATUS.OVERDUE]: { label: "Overdue", className: "bg-rose-500/15 text-rose-500" },
+  [ASSIGNMENT_STATUS.ASSIGNED]: {
+    label: "Assigned",
+    className: "bg-sky-500/15 text-sky-500",
+  },
+  [ASSIGNMENT_STATUS.IN_PROGRESS]: {
+    label: "In progress",
+    className: "bg-amber-500/15 text-amber-500",
+  },
+  [ASSIGNMENT_STATUS.COMPLETED]: {
+    label: "Completed",
+    className: "bg-emerald-500/15 text-emerald-500",
+  },
+  [ASSIGNMENT_STATUS.OVERDUE]: {
+    label: "Overdue",
+    className: "bg-rose-500/15 text-rose-500",
+  },
 };
 
 const PRIORITY_DOT = {
@@ -47,7 +59,8 @@ const PRIORITY_DOT = {
 function formatDate(value) {
   if (!value) return null;
   try {
-    const d = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+    const d =
+      typeof value.toDate === "function" ? value.toDate() : new Date(value);
     return d.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
@@ -93,7 +106,9 @@ function FilterSelect({ value, onChange, options }) {
 function StatCard({ label, value, accent }) {
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-      <p className={`text-3xl font-semibold leading-none tracking-tight ${accent}`}>
+      <p
+        className={`text-3xl font-semibold leading-none tracking-tight ${accent}`}
+      >
         {value}
       </p>
       <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
@@ -114,10 +129,19 @@ function ProgressBar({ value }) {
   );
 }
 
-function AssignmentCard({ assignment, childName, moduleTitle, progressById, onOpen }) {
+function AssignmentCard({
+  assignment,
+  childName,
+  moduleTitle,
+  progressById,
+  onOpen,
+}) {
   const effStatus = effectiveAssignmentStatus(assignment, progressById);
-  const statusMeta = STATUS_META[effStatus] || STATUS_META[ASSIGNMENT_STATUS.ASSIGNED];
-  const priorityDot = PRIORITY_DOT[assignment.priority] || PRIORITY_DOT[ASSIGNMENT_PRIORITY.MEDIUM];
+  const statusMeta =
+    STATUS_META[effStatus] || STATUS_META[ASSIGNMENT_STATUS.ASSIGNED];
+  const priorityDot =
+    PRIORITY_DOT[assignment.priority] ||
+    PRIORITY_DOT[ASSIGNMENT_PRIORITY.MEDIUM];
   const overdue = isAssignmentOverdue(assignment, progressById);
   const dueText = assignment.dueDate ? formatDate(assignment.dueDate) : null;
   const progress = progressFor(assignment, progressById);
@@ -139,15 +163,21 @@ function AssignmentCard({ assignment, childName, moduleTitle, progressById, onOp
           </h3>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-            assignment.priority === ASSIGNMENT_PRIORITY.HIGH ? "bg-rose-500/15 text-rose-500" :
-            assignment.priority === ASSIGNMENT_PRIORITY.LOW ? "bg-emerald-500/15 text-emerald-500" :
-            "bg-amber-500/15 text-amber-500"
-          }`}>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+              assignment.priority === ASSIGNMENT_PRIORITY.HIGH
+                ? "bg-rose-500/15 text-rose-500"
+                : assignment.priority === ASSIGNMENT_PRIORITY.LOW
+                  ? "bg-emerald-500/15 text-emerald-500"
+                  : "bg-amber-500/15 text-amber-500"
+            }`}
+          >
             <span className={`h-1.5 w-1.5 rounded-full ${priorityDot}`} />
             {assignment.priority || "medium"}
           </span>
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusMeta.className}`}>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusMeta.className}`}
+          >
             {statusMeta.label}
           </span>
         </div>
@@ -236,7 +266,9 @@ export function ModulesTab({ data }) {
       .then((rows) => {
         if (!cancelled) setModules(rows);
       })
-      .catch((err) => console.error("[modules-tab] failed to fetch modules", err));
+      .catch((err) =>
+        console.error("[modules-tab] failed to fetch modules", err),
+      );
     return () => {
       cancelled = true;
     };
@@ -262,10 +294,16 @@ export function ModulesTab({ data }) {
   // a progress bar move here while the parent is actually looking at it. Keyed
   // on a joined id string so re-fetching children with the same ids doesn't
   // tear down and resubscribe.
-  const childIdsKey = (data?.children || []).map((c) => c.id).sort().join(",");
+  const childIdsKey = (data?.children || [])
+    .map((c) => c.id)
+    .sort()
+    .join(",");
   useEffect(() => {
     if (!childIdsKey) return undefined;
-    return listenToLearningProgressForChildren(childIdsKey.split(","), setProgressById);
+    return listenToLearningProgressForChildren(
+      childIdsKey.split(","),
+      setProgressById,
+    );
   }, [childIdsKey]);
 
   const childList = useMemo(() => data?.children || [], [data?.children]);
@@ -283,7 +321,8 @@ export function ModulesTab({ data }) {
   const filtered = useMemo(() => {
     return assignments.filter((a) => {
       if (statusFilter) {
-        if (effectiveAssignmentStatus(a, progressById) !== statusFilter) return false;
+        if (effectiveAssignmentStatus(a, progressById) !== statusFilter)
+          return false;
       }
       if (priorityFilter && a.priority !== priorityFilter) return false;
       if (childFilter && a.childId !== childFilter) return false;
@@ -294,12 +333,20 @@ export function ModulesTab({ data }) {
   // Stats — from unfiltered assignments to match iOS behavior
   const stats = useMemo(() => {
     const total = assignments.length;
-    const completed = assignments.filter((a) => isAssignmentCompleted(a, progressById)).length;
+    const completed = assignments.filter((a) =>
+      isAssignmentCompleted(a, progressById),
+    ).length;
     const pending = total - completed;
-    const overdue = assignments.filter((a) => isAssignmentOverdue(a, progressById)).length;
-    const avgProgress = total === 0
-      ? 0
-      : assignments.reduce((sum, a) => sum + progressFor(a, progressById), 0) / total;
+    const overdue = assignments.filter((a) =>
+      isAssignmentOverdue(a, progressById),
+    ).length;
+    const avgProgress =
+      total === 0
+        ? 0
+        : assignments.reduce(
+            (sum, a) => sum + progressFor(a, progressById),
+            0,
+          ) / total;
     return { total, completed, pending, overdue, avgProgress };
   }, [assignments, progressById]);
 
@@ -349,7 +396,16 @@ export function ModulesTab({ data }) {
           disabled={!parentId}
           className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <circle cx="12" cy="12" r="10" />
             <path d="M12 8v8M8 12h8" />
           </svg>
@@ -362,14 +418,26 @@ export function ModulesTab({ data }) {
       <div className="flex flex-col gap-5 p-6">
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Total" value={stats.total} accent="text-[var(--accent)]" />
-          <StatCard label="Completed" value={stats.completed} accent="text-emerald-500" />
+          <StatCard
+            label="Total"
+            value={stats.total}
+            accent="text-[var(--accent)]"
+          />
+          <StatCard
+            label="Completed"
+            value={stats.completed}
+            accent="text-emerald-500"
+          />
           <StatCard
             label="Avg Progress"
             value={`${Math.round(stats.avgProgress * 100)}%`}
             accent="text-amber-500"
           />
-          <StatCard label="Overdue" value={stats.overdue} accent="text-rose-500" />
+          <StatCard
+            label="Overdue"
+            value={stats.overdue}
+            accent="text-rose-500"
+          />
         </div>
 
         {/* Quick assign card */}
@@ -388,7 +456,16 @@ export function ModulesTab({ data }) {
             </p>
           </div>
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-white">
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v8M8 12h8" />
             </svg>
@@ -400,8 +477,16 @@ export function ModulesTab({ data }) {
           <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
             Filters
           </p>
-          <FilterSelect value={statusFilter} onChange={setStatusFilter} options={STATUS_OPTIONS} />
-          <FilterSelect value={priorityFilter} onChange={setPriorityFilter} options={PRIORITY_OPTIONS} />
+          <FilterSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+          />
+          <FilterSelect
+            value={priorityFilter}
+            onChange={setPriorityFilter}
+            options={PRIORITY_OPTIONS}
+          />
           <FilterSelect
             value={childFilter}
             onChange={setChildFilter}

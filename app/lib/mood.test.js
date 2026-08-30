@@ -124,7 +124,9 @@ describe("distribution", () => {
   });
 
   it("omits entries with no score", () => {
-    expect(distribution([entry(90), {}])).toEqual([{ mood: "great", count: 1 }]);
+    expect(distribution([entry(90), {}])).toEqual([
+      { mood: "great", count: 1 },
+    ]);
   });
 
   it("mostFrequentMood picks the top band, and is null when empty", () => {
@@ -159,7 +161,11 @@ describe("dailySeries", () => {
   const day = (n) => new Date(2026, 0, n, 9);
 
   it("fills gaps with a null score, ascending", () => {
-    const result = dailySeries([entry(80, day(1)), entry(40, day(3))], day(1), day(3));
+    const result = dailySeries(
+      [entry(80, day(1)), entry(40, day(3))],
+      day(1),
+      day(3),
+    );
     expect(result).toEqual([
       { date: expect.any(Date), score: 80 },
       { date: expect.any(Date), score: null },
@@ -188,13 +194,23 @@ describe("trend", () => {
 
   it("reports Improving when the second half gains more than 10 points", () => {
     expect(
-      trend([entry(30, at(1)), entry(35, at(2)), entry(80, at(3)), entry(85, at(4))]),
+      trend([
+        entry(30, at(1)),
+        entry(35, at(2)),
+        entry(80, at(3)),
+        entry(85, at(4)),
+      ]),
     ).toBe("Improving");
   });
 
   it("reports Declining when the second half loses more than 10 points", () => {
     expect(
-      trend([entry(85, at(1)), entry(80, at(2)), entry(35, at(3)), entry(30, at(4))]),
+      trend([
+        entry(85, at(1)),
+        entry(80, at(2)),
+        entry(35, at(3)),
+        entry(30, at(4)),
+      ]),
     ).toBe("Declining");
   });
 
@@ -222,13 +238,17 @@ describe("summarizeMood", () => {
   });
 
   it("ignores rows that carry no usable score", () => {
-    expect(summarizeMood([{ timestamp: daysAgo(0) }], { now: NOW }).latest).toBeNull();
+    expect(
+      summarizeMood([{ timestamp: daysAgo(0) }], { now: NOW }).latest,
+    ).toBeNull();
   });
 
   // The whole point of the change: GuardParent shows the newest entry however
   // old it is, and the web now matches instead of blanking the tile.
   it("surfaces the newest entry even when it is weeks old", () => {
-    const summary = summarizeMood([scored(77, 74), scored(92, 34)], { now: NOW });
+    const summary = summarizeMood([scored(77, 74), scored(92, 34)], {
+      now: NOW,
+    });
     expect(summary.latest.score).toBe(92);
     expect(summary.latestIsToday).toBe(false);
     expect(summary.average.score).toBe(85); // (77 + 92) / 2
@@ -246,21 +266,30 @@ describe("summarizeMood", () => {
   });
 
   it("does not call an entry today's when the child's own date disagrees", () => {
-    const row = { score: 80, timestamp: daysAgo(0), dateString: "Mon Jul 20 2026" };
+    const row = {
+      score: 80,
+      timestamp: daysAgo(0),
+      dateString: "Mon Jul 20 2026",
+    };
     expect(summarizeMood([row], { now: NOW }).latestIsToday).toBe(false);
   });
 
   it("averages only the window while the child is logging regularly", () => {
-    const summary = summarizeMood([scored(40, 1), scored(60, 3), scored(90, 30)], {
-      now: NOW,
-    });
+    const summary = summarizeMood(
+      [scored(40, 1), scored(60, 3), scored(90, 30)],
+      {
+        now: NOW,
+      },
+    );
     expect(summary.average.score).toBe(50); // the 30-day-old 90 is excluded
     expect(summary.average.days).toBe(7);
     expect(summary.average.count).toBe(2);
   });
 
   it("falls back to recent entries, and says so, once the window is empty", () => {
-    const summary = summarizeMood([scored(40, 20), scored(60, 40)], { now: NOW });
+    const summary = summarizeMood([scored(40, 20), scored(60, 40)], {
+      now: NOW,
+    });
     expect(summary.average.score).toBe(50);
     expect(summary.average.days).toBeNull(); // → the tile labels it "since <date>"
     expect(summary.average.count).toBe(2);
@@ -269,7 +298,9 @@ describe("summarizeMood", () => {
 
   it("caps the fallback at the ten most recent entries", () => {
     // Twelve stale entries: the oldest two (score 0) must not drag the average.
-    const rows = Array.from({ length: 12 }, (_, i) => scored(i < 10 ? 100 : 0, 30 + i));
+    const rows = Array.from({ length: 12 }, (_, i) =>
+      scored(i < 10 ? 100 : 0, 30 + i),
+    );
     expect(summarizeMood(rows, { now: NOW }).average).toMatchObject({
       score: 100,
       count: 10,

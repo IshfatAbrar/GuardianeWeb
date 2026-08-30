@@ -1,19 +1,28 @@
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
-import { ChildCard } from '../ChildCard'
-import { ChildForm } from '../ChildForm'
-import { StepCard, StepFooter } from '../StepShell'
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { ChildCard } from "../ChildCard";
+import { ChildForm } from "../ChildForm";
+import { StepCard, StepFooter } from "../StepShell";
 
-export function StepManageChildren({ childList, onAdd, onRemove, onNext, onBack }) {
-  const [showForm, setShowForm] = useState(false)
+export function StepManageChildren({
+  childList,
+  onAdd,
+  onRemove,
+  onNext,
+  onBack,
+}) {
+  const [showForm, setShowForm] = useState(false);
 
   const handleAdd = (child) => {
-    onAdd(child)
-    setShowForm(false)
-  }
+    onAdd(child);
+    setShowForm(false);
+  };
 
   return (
-    <StepCard title="Manage children" sub="Review and edit your children's profiles">
+    <StepCard
+      title="Manage children"
+      sub="Review and edit your children's profiles"
+    >
       <div className="grid gap-2.5">
         {childList.map((c, i) => (
           <ChildCard key={i} child={c} onRemove={() => onRemove(i)} />
@@ -22,7 +31,11 @@ export function StepManageChildren({ childList, onAdd, onRemove, onNext, onBack 
 
       {showForm ? (
         <div className="mt-4">
-          <ChildForm onSave={handleAdd} onCancel={() => setShowForm(false)} saveLabel="Save child" />
+          <ChildForm
+            onSave={handleAdd}
+            onCancel={() => setShowForm(false)}
+            saveLabel="Save child"
+          />
         </div>
       ) : (
         <button
@@ -36,5 +49,5 @@ export function StepManageChildren({ childList, onAdd, onRemove, onNext, onBack 
 
       <StepFooter onBack={onBack} onNext={onNext} nextLabel="Continue →" />
     </StepCard>
-  )
+  );
 }

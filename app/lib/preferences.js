@@ -73,17 +73,23 @@ export function useDarkMode() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   };
 
-  const isDark = useSyncExternalStore(subscribeTheme, getThemeSnapshot, () => false);
+  const isDark = useSyncExternalStore(
+    subscribeTheme,
+    getThemeSnapshot,
+    () => false,
+  );
 
-  const setDark = useCallback((next) => {
-    if (typeof window === "undefined") return;
-    const resolved =
-      typeof next === "function" ? next(isDark) : next;
-    const theme = resolved ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", theme);
-    window.localStorage.setItem("theme", theme);
-    window.dispatchEvent(new Event("themechange"));
-  }, [isDark]);
+  const setDark = useCallback(
+    (next) => {
+      if (typeof window === "undefined") return;
+      const resolved = typeof next === "function" ? next(isDark) : next;
+      const theme = resolved ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      window.localStorage.setItem("theme", theme);
+      window.dispatchEvent(new Event("themechange"));
+    },
+    [isDark],
+  );
 
   return [isDark, setDark];
 }

@@ -171,7 +171,12 @@ export function JojoPreviewCard() {
           <div className="min-w-0 flex-1 p-8 sm:p-10">
             <div className="flex items-center gap-3.5">
               <span className="relative flex h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]">
-                <Image src="/jojo.png" alt="JoJo" fill className="object-cover" />
+                <Image
+                  src="/jojo.png"
+                  alt="JoJo"
+                  fill
+                  className="object-cover"
+                />
               </span>
               <div className="min-w-0">
                 <p className="text-base font-semibold text-[var(--foreground)]">

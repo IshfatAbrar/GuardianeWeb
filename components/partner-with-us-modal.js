@@ -97,11 +97,7 @@ export function PartnerWithUsModal({
 
   const modal =
     isOpen && typeof document !== "undefined" ? (
-      <div
-        className="modal-backdrop"
-        role="presentation"
-        onClick={handleClose}
-      >
+      <div className="modal-backdrop" role="presentation" onClick={handleClose}>
         <div
           className={`modal-panel ${plain ? "modal-panel-plain" : ""}`}
           role="dialog"

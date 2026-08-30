@@ -136,11 +136,10 @@ const joinUsFaqs = [
     title: "Why join us?",
     content: (
       <p>
-        Join us in shaping the future of child safety, family wellbeing,
-        and responsible AI innovation. We welcome mission-driven
-        individuals passionate about applying technology, research,
-        education, and care to make a meaningful difference in
-        children&apos;s lives.
+        Join us in shaping the future of child safety, family wellbeing, and
+        responsible AI innovation. We welcome mission-driven individuals
+        passionate about applying technology, research, education, and care to
+        make a meaningful difference in children&apos;s lives.
       </p>
     ),
   },
@@ -158,15 +157,14 @@ const joinUsFaqs = [
     title: "$5,000 scholarship initiative",
     content: (
       <p>
-        The AI-Guardian Center believes every child deserves the
-        opportunity to grow, learn, and thrive. Through the Guardiané
-        Premium Care &amp; Growth plan, families are automatically
-        entered for a chance to receive a{" "}
+        The AI-Guardian Center believes every child deserves the opportunity to
+        grow, learn, and thrive. Through the Guardiané Premium Care &amp; Growth
+        plan, families are automatically entered for a chance to receive a{" "}
         <strong className="font-semibold text-[var(--foreground)]">
           $5,000 scholarship
         </strong>{" "}
-        to support summer study camps or other study-related
-        opportunities for their child.
+        to support summer study camps or other study-related opportunities for
+        their child.
       </p>
     ),
   },
@@ -230,12 +228,12 @@ export default function Home() {
         </section>
 
         {/* ── FLAGSHIP: GUARDIANÉ ── */}
-        <section
-          id="why"
-          className="scroll-mt-20"
-        >
+        <section id="why" className="scroll-mt-20">
           <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
-            <div data-reveal className="clarity-section-title mb-14 text-center">
+            <div
+              data-reveal
+              className="clarity-section-title mb-14 text-center"
+            >
               <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-xs font-medium text-[var(--muted)]">
                 Guardiané
               </span>
@@ -245,25 +243,24 @@ export default function Home() {
               </h2>
 
               <p className="clarity-prose mx-auto mt-5 max-w-4xl text-sm">
-                Guardiané pairs real-time risk detection with vetted
-                counselor support and educational tools, so families get
-                both the technology and the human care digital safety
-                requires.
+                Guardiané pairs real-time risk detection with vetted counselor
+                support and educational tools, so families get both the
+                technology and the human care digital safety requires.
               </p>
             </div>
 
-            <div data-reveal className="grid gap-12 lg:grid-cols-[1fr_1.35fr] lg:items-center">
+            <div
+              data-reveal
+              className="grid gap-12 lg:grid-cols-[1fr_1.35fr] lg:items-center"
+            >
               <div>
-                
                 <ul className="mt-9 space-y-3">
                   {guardianeFeatures.map((item, i) => {
                     const Icon = item.icon;
                     return (
                       <li
                         key={item.title}
-                        className={`flex items-start gap-3 rounded-xl p-4 ${
-                          "border border-transparent"
-                        }`}
+                        className={`flex items-start gap-3 rounded-xl p-4 ${"border border-transparent"}`}
                       >
                         <Icon
                           className="mt-0.5 h-5 w-5 shrink-0 text-[var(--accent)]"
@@ -304,29 +301,37 @@ export default function Home() {
         </section>
 
         {/* ── ABOUT THE CENTER + CORE TEAM ── */}
-        <section
-          id="about"
-          className="scroll-mt-20 p-5 px-8"
-        >
-          <div id="team" className="scroll-mt-20 py-24 pb-16 rounded-xl bg-gradient-to-t from-[#93c5fd] to-[#dbeafe] shadow-sm">
+        <section id="about" className="scroll-mt-20 p-5 px-8">
+          <div
+            id="team"
+            className="scroll-mt-20 py-24 pb-16 rounded-xl bg-gradient-to-t from-[#93c5fd] to-[#dbeafe] shadow-sm"
+          >
             <div className="clarity-wrap px-4 sm:px-6 lg:px-8">
-              <div data-reveal className="clarity-section-title mb-14 text-center">
-              <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-xs font-medium text-[var(--muted)]">
-                About Us
-              </span>
+              <div
+                data-reveal
+                className="clarity-section-title mb-14 text-center"
+              >
+                <span className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-xs font-medium text-[var(--muted)]">
+                  About Us
+                </span>
 
-              <h2 className="gradient-heading mt-5 text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
-                Building safer digital futures together.
-              </h2>
+                <h2 className="gradient-heading mt-5 text-4xl font-normal leading-[1.08] tracking-[-0.04em] sm:text-[3rem]">
+                  Building safer digital futures together.
+                </h2>
 
-              <p className="clarity-prose mx-auto mt-5 max-w-4xl text-sm">
-                We are a multidisciplinary team of experts in AI, education, mental health, and responsible technology, working together to protect children and support families in the digital world.
-              </p>
-            </div>
+                <p className="clarity-prose mx-auto mt-5 max-w-4xl text-sm">
+                  We are a multidisciplinary team of experts in AI, education,
+                  mental health, and responsible technology, working together to
+                  protect children and support families in the digital world.
+                </p>
+              </div>
             </div>
 
             {/* full-bleed auto-scrolling carousel */}
-            <div data-reveal className="marquee-row relative overflow-hidden py-2">
+            <div
+              data-reveal
+              className="marquee-row relative overflow-hidden py-2"
+            >
               <div className="marquee-track flex w-max gap-5 px-4">
                 {[...teamMembers, ...teamMembers].map((member, i) => (
                   <div
@@ -379,14 +384,10 @@ export default function Home() {
               ))}
             </div>
           </div>
-
         </section>
 
         {/* ── CAREERS + SCHOLARSHIP ── */}
-        <section
-          id="careers"
-          className="scroll-mt-20"
-        >
+        <section id="careers" className="scroll-mt-20">
           <div className="clarity-wrap px-4 py-24 sm:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
               <div data-reveal>
@@ -416,10 +417,7 @@ export default function Home() {
         </section>
 
         {/* ── FINAL CTA ── */}
-        <section
-          id="contact"
-          className="scroll-mt-20"
-        >
+        <section id="contact" className="scroll-mt-20">
           <div className="clarity-wrap relative flex flex-col overflow-hidden rounded-xl mb-14 px-4 py-24 sm:px-6 lg:px-8 shadow-sm">
             <div
               className="absolute inset-0 bg-cover bg-center"

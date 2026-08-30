@@ -1,30 +1,32 @@
-import { Smartphone } from 'lucide-react'
-import { ErrorBanner, StepCard, StepFooter } from '../StepShell'
+import { Smartphone } from "lucide-react";
+import { ErrorBanner, StepCard, StepFooter } from "../StepShell";
 
 const INSTRUCTIONS = [
   {
-    title: 'Download the Guardiané companion app',
+    title: "Download the Guardiané companion app",
     desc: 'Available on iOS App Store and Google Play. Search "Guardiané Child".',
   },
   {
-    title: 'Sign in with your parent account',
-    desc: 'Use the same email and password you just created.',
+    title: "Sign in with your parent account",
+    desc: "Use the same email and password you just created.",
   },
   {
     title: "Select the child's profile",
-    desc: 'Choose which profile to link to this device. You can connect multiple devices per child.',
+    desc: "Choose which profile to link to this device. You can connect multiple devices per child.",
   },
   {
-    title: 'Grant required permissions',
-    desc: 'Allow screen time, notifications, and accessibility as prompted. These are required for monitoring.',
+    title: "Grant required permissions",
+    desc: "Allow screen time, notifications, and accessibility as prompted. These are required for monitoring.",
   },
-]
+];
 
 export function StepDeviceSetup({ onFinish, onBack, submitting, error }) {
   return (
-    <StepCard title="Connect your child's device" sub="Follow these steps to link the device">
+    <StepCard
+      title="Connect your child's device"
+      sub="Follow these steps to link the device"
+    >
       <ErrorBanner msg={error} />
-
 
       <div className="divide-y divide-[var(--border)]">
         {INSTRUCTIONS.map((s, i) => (
@@ -33,8 +35,12 @@ export function StepDeviceSetup({ onFinish, onBack, submitting, error }) {
               {i + 1}
             </div>
             <div>
-              <p className="text-[0.84rem] font-semibold text-[var(--foreground)]">{s.title}</p>
-              <p className="mt-0.5 text-[0.75rem] leading-[1.6] text-[var(--muted)]">{s.desc}</p>
+              <p className="text-[0.84rem] font-semibold text-[var(--foreground)]">
+                {s.title}
+              </p>
+              <p className="mt-0.5 text-[0.75rem] leading-[1.6] text-[var(--muted)]">
+                {s.desc}
+              </p>
             </div>
           </div>
         ))}
@@ -43,9 +49,9 @@ export function StepDeviceSetup({ onFinish, onBack, submitting, error }) {
       <StepFooter
         onBack={onBack}
         onNext={onFinish}
-        nextLabel={submitting ? 'Creating account…' : 'Finish setup →'}
+        nextLabel={submitting ? "Creating account…" : "Finish setup →"}
         nextDisabled={submitting}
       />
     </StepCard>
-  )
+  );
 }

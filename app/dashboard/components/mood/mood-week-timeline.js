@@ -15,7 +15,10 @@ export function MoodWeekTimeline({ days }) {
   return (
     <div className="flex justify-between gap-1.5">
       {days.map((item) => (
-        <div key={item.date.getTime()} className="flex flex-1 flex-col items-center gap-1.5">
+        <div
+          key={item.date.getTime()}
+          className="flex flex-1 flex-col items-center gap-1.5"
+        >
           <div className="flex flex-col items-center">
             <span className="text-[10px] text-[var(--muted)]">
               {WEEKDAY[item.date.getDay()]}
@@ -36,12 +39,16 @@ export function MoodWeekTimeline({ days }) {
             </div>
           ) : (
             <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed border-[var(--border)] bg-[var(--surface-muted)]">
-              <span className="text-[14px] font-bold text-[var(--muted)]">-</span>
+              <span className="text-[14px] font-bold text-[var(--muted)]">
+                -
+              </span>
             </div>
           )}
 
           <span className="text-center text-[9px] leading-tight text-[var(--muted)]">
-            {item.score !== null ? moodLabel(moodBand(item.score)) : "No mood logged"}
+            {item.score !== null
+              ? moodLabel(moodBand(item.score))
+              : "No mood logged"}
           </span>
         </div>
       ))}

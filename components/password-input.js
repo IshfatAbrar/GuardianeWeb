@@ -1,25 +1,25 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 
 // Drop-in <input type="password"> replacement with an eye toggle on the right.
 // Forwards every prop straight to the underlying <input>; only the right padding
 // is added so the toggle doesn't overlap the typed text.
 
-export function PasswordInput({ className = '', ...rest }) {
-  const [visible, setVisible] = useState(false)
+export function PasswordInput({ className = "", ...rest }) {
+  const [visible, setVisible] = useState(false);
 
   return (
     <div className="relative">
       <input
         {...rest}
-        type={visible ? 'text' : 'password'}
+        type={visible ? "text" : "password"}
         className={`${className} pr-10`}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
         tabIndex={-1}
         className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded text-[var(--muted)] transition-colors hover:bg-white/5 hover:text-[var(--foreground)]"
@@ -57,5 +57,5 @@ export function PasswordInput({ className = '', ...rest }) {
         )}
       </button>
     </div>
-  )
+  );
 }

@@ -14,22 +14,44 @@ import {
 import { useToast } from "../../lib/useToast";
 
 const PRIORITY_META = {
-  [ASSIGNMENT_PRIORITY.LOW]: { label: "Low", className: "bg-emerald-500/15 text-emerald-500" },
-  [ASSIGNMENT_PRIORITY.MEDIUM]: { label: "Medium", className: "bg-amber-500/15 text-amber-500" },
-  [ASSIGNMENT_PRIORITY.HIGH]: { label: "High", className: "bg-rose-500/15 text-rose-500" },
+  [ASSIGNMENT_PRIORITY.LOW]: {
+    label: "Low",
+    className: "bg-emerald-500/15 text-emerald-500",
+  },
+  [ASSIGNMENT_PRIORITY.MEDIUM]: {
+    label: "Medium",
+    className: "bg-amber-500/15 text-amber-500",
+  },
+  [ASSIGNMENT_PRIORITY.HIGH]: {
+    label: "High",
+    className: "bg-rose-500/15 text-rose-500",
+  },
 };
 
 const STATUS_META = {
-  [ASSIGNMENT_STATUS.ASSIGNED]: { label: "Assigned", className: "bg-sky-500/15 text-sky-500" },
-  [ASSIGNMENT_STATUS.IN_PROGRESS]: { label: "In progress", className: "bg-amber-500/15 text-amber-500" },
-  [ASSIGNMENT_STATUS.COMPLETED]: { label: "Completed", className: "bg-emerald-500/15 text-emerald-500" },
-  [ASSIGNMENT_STATUS.OVERDUE]: { label: "Overdue", className: "bg-rose-500/15 text-rose-500" },
+  [ASSIGNMENT_STATUS.ASSIGNED]: {
+    label: "Assigned",
+    className: "bg-sky-500/15 text-sky-500",
+  },
+  [ASSIGNMENT_STATUS.IN_PROGRESS]: {
+    label: "In progress",
+    className: "bg-amber-500/15 text-amber-500",
+  },
+  [ASSIGNMENT_STATUS.COMPLETED]: {
+    label: "Completed",
+    className: "bg-emerald-500/15 text-emerald-500",
+  },
+  [ASSIGNMENT_STATUS.OVERDUE]: {
+    label: "Overdue",
+    className: "bg-rose-500/15 text-rose-500",
+  },
 };
 
 function formatDate(value) {
   if (!value) return "—";
   try {
-    const d = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+    const d =
+      typeof value.toDate === "function" ? value.toDate() : new Date(value);
     return d.toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
@@ -44,7 +66,9 @@ function DetailRow({ label, value, accent }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2.5">
       <span className="text-[12.5px] text-[var(--muted)]">{label}</span>
-      <span className={`text-[13px] font-semibold ${accent || "text-[var(--foreground)]"}`}>
+      <span
+        className={`text-[13px] font-semibold ${accent || "text-[var(--foreground)]"}`}
+      >
         {value}
       </span>
     </div>
@@ -68,10 +92,15 @@ export function AssignmentDetailView({
 
   const effStatus = effectiveAssignmentStatus(assignment, progressById);
   const overdue = isAssignmentOverdue(assignment, progressById);
-  const priorityMeta = PRIORITY_META[assignment.priority] || PRIORITY_META[ASSIGNMENT_PRIORITY.MEDIUM];
-  const statusMeta = STATUS_META[effStatus] || STATUS_META[ASSIGNMENT_STATUS.ASSIGNED];
+  const priorityMeta =
+    PRIORITY_META[assignment.priority] ||
+    PRIORITY_META[ASSIGNMENT_PRIORITY.MEDIUM];
+  const statusMeta =
+    STATUS_META[effStatus] || STATUS_META[ASSIGNMENT_STATUS.ASSIGNED];
   const progressPct = Math.round(progressFor(assignment, progressById) * 100);
-  const progressRow = progressById?.get(assignmentKey(assignment.childId, assignment.moduleId));
+  const progressRow = progressById?.get(
+    assignmentKey(assignment.childId, assignment.moduleId),
+  );
 
   async function handleUnassign() {
     setBusy(true);
@@ -79,7 +108,9 @@ export function AssignmentDetailView({
     try {
       await unassignModule(assignment.childId, assignment.moduleId);
       onChanged?.();
-      showToast(`Removed "${assignedModule?.title || "module"}" from ${child?.name || "child"}`);
+      showToast(
+        `Removed "${assignedModule?.title || "module"}" from ${child?.name || "child"}`,
+      );
       onBack?.();
     } catch (err) {
       setErrorMessage(err.message || "Failed to unassign");
@@ -97,7 +128,16 @@ export function AssignmentDetailView({
           aria-label="Back"
           className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] transition-colors hover:bg-[var(--surface-muted)]"
         >
-          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
             <path d="m15 18-6-6 6-6" />
           </svg>
         </button>
@@ -127,9 +167,12 @@ export function AssignmentDetailView({
               <p className="text-[13px] font-semibold text-[var(--foreground)]">
                 {assignedModule?.title || "Module"}
               </p>
-              {assignedModule?.subtitle && assignedModule.subtitle !== assignedModule.title && (
-                <p className="text-[12px] text-[var(--muted)]">{assignedModule.subtitle}</p>
-              )}
+              {assignedModule?.subtitle &&
+                assignedModule.subtitle !== assignedModule.title && (
+                  <p className="text-[12px] text-[var(--muted)]">
+                    {assignedModule.subtitle}
+                  </p>
+                )}
               {assignedModule?.description && (
                 <p className="line-clamp-3 text-[12.5px] leading-relaxed text-[var(--muted)]">
                   {assignedModule.description}
@@ -138,7 +181,8 @@ export function AssignmentDetailView({
               <div className="flex flex-wrap items-center gap-3 pt-1 text-[11.5px] text-[var(--muted)]">
                 {assignedModule?.estimatedDuration != null && (
                   <span>
-                    {Math.round((assignedModule.estimatedDuration || 0) / 60)} min
+                    {Math.round((assignedModule.estimatedDuration || 0) / 60)}{" "}
+                    min
                   </span>
                 )}
                 {assignedModule?.category && (
@@ -157,7 +201,9 @@ export function AssignmentDetailView({
             </p>
             {/* No "Update" control: progress is reported by the child's
                 device via learning_progress, not set by the parent. */}
-            <span className="text-[11px] text-[var(--muted)]">Reported by device</span>
+            <span className="text-[11px] text-[var(--muted)]">
+              Reported by device
+            </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-muted)]">
             <div
@@ -171,7 +217,12 @@ export function AssignmentDetailView({
             </span>
             {isAssignmentCompleted(assignment, progressById) && (
               <span className="inline-flex items-center gap-1 text-emerald-500">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  width="14"
+                  height="14"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14.5-4-4 1.5-1.5 2.5 2.5 5.5-5.5 1.5 1.5z" />
                 </svg>
                 Completed
@@ -187,7 +238,10 @@ export function AssignmentDetailView({
           </p>
           <div className="divide-y divide-[var(--border)]">
             <DetailRow label="Assigned to" value={child?.name || "Unknown"} />
-            <DetailRow label="Assigned date" value={formatDate(assignment.assignedAt)} />
+            <DetailRow
+              label="Assigned date"
+              value={formatDate(assignment.assignedAt)}
+            />
             {assignment.dueDate && (
               <DetailRow
                 label="Due date"
@@ -196,14 +250,20 @@ export function AssignmentDetailView({
               />
             )}
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-[12.5px] text-[var(--muted)]">Priority</span>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${priorityMeta.className}`}>
+              <span className="text-[12.5px] text-[var(--muted)]">
+                Priority
+              </span>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${priorityMeta.className}`}
+              >
                 {priorityMeta.label}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
               <span className="text-[12.5px] text-[var(--muted)]">Status</span>
-              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusMeta.className}`}>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusMeta.className}`}
+              >
                 {statusMeta.label}
               </span>
             </div>
@@ -220,7 +280,10 @@ export function AssignmentDetailView({
               />
             )}
             {progressRow?.lastUpdated && (
-              <DetailRow label="Last activity" value={formatDate(progressRow.lastUpdated)} />
+              <DetailRow
+                label="Last activity"
+                value={formatDate(progressRow.lastUpdated)}
+              />
             )}
           </div>
         </div>
@@ -235,8 +298,8 @@ export function AssignmentDetailView({
         <div className="space-y-2">
           {!isAssignmentCompleted(assignment, progressById) && (
             <p className="rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-[12.5px] text-[var(--muted)]">
-              Progress updates automatically as {child?.name || "your child"} completes
-              lessons on their device.
+              Progress updates automatically as {child?.name || "your child"}{" "}
+              completes lessons on their device.
             </p>
           )}
 
@@ -279,7 +342,6 @@ export function AssignmentDetailView({
           )}
         </div>
       </div>
-
     </div>
   );
 }

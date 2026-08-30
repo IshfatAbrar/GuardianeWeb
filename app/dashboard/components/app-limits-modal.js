@@ -48,7 +48,7 @@ function Content({ onClose, childList, initialChildId }) {
   const [childId, setChildId] = useState(
     initialChildId && childList.some((c) => c.id === initialChildId)
       ? initialChildId
-      : childList[0]?.id ?? null,
+      : (childList[0]?.id ?? null),
   );
   const [childDoc, setChildDoc] = useState(null);
   const [recentApps, setRecentApps] = useState([]);
@@ -126,7 +126,9 @@ function Content({ onClose, childList, initialChildId }) {
     () => new Set(limitEntries.map((e) => e.packageName)),
     [limitEntries],
   );
-  const pickableApps = recentApps.filter((a) => !limitedPackages.has(a.packageName));
+  const pickableApps = recentApps.filter(
+    (a) => !limitedPackages.has(a.packageName),
+  );
 
   const child = childList.find((c) => c.id === childId) ?? null;
 
@@ -210,15 +212,26 @@ function Content({ onClose, childList, initialChildId }) {
               )}
 
               <div className="flex items-start gap-2 rounded-xl bg-[var(--accent-bg)] p-3 text-[11.5px] leading-relaxed text-[var(--foreground)]">
-                <svg width="14" height="14" className="mt-0.5 flex-shrink-0" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <svg
+                  width="14"
+                  height="14"
+                  className="mt-0.5 flex-shrink-0"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  viewBox="0 0 24 24"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="16" x2="12" y2="12" />
                   <line x1="12" y1="8" x2="12.01" y2="8" />
                 </svg>
                 <span>
-                  Limits apply next time {child?.name?.split(" ")[0] || "your child"}&apos;s
-                  app syncs (usually a few minutes) and require the latest
-                  Guardiané child app.
+                  Limits apply next time{" "}
+                  {child?.name?.split(" ")[0] || "your child"}&apos;s app syncs
+                  (usually a few minutes) and require the latest Guardiané child
+                  app.
                 </span>
               </div>
 
@@ -228,7 +241,8 @@ function Content({ onClose, childList, initialChildId }) {
                 </h2>
                 {limitEntries.length === 0 ? (
                   <p className="rounded-xl bg-[var(--surface-muted)] px-3 py-3 text-center text-[12px] text-[var(--muted)]">
-                    No limits set for {child?.name?.split(" ")[0] || "this child"} yet.
+                    No limits set for{" "}
+                    {child?.name?.split(" ")[0] || "this child"} yet.
                   </p>
                 ) : (
                   <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-xl border border-[var(--border)]">
@@ -264,7 +278,9 @@ function Content({ onClose, childList, initialChildId }) {
                 </h2>
 
                 {appsLoading ? (
-                  <p className="text-[12px] text-[var(--muted)]">Loading recent apps…</p>
+                  <p className="text-[12px] text-[var(--muted)]">
+                    Loading recent apps…
+                  </p>
                 ) : pickableApps.length === 0 ? (
                   <p className="text-[12px] text-[var(--muted)]">
                     No recently-synced apps to pick from.

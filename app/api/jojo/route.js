@@ -32,7 +32,10 @@ function sanitizeHistory(input) {
         typeof m.content === "string",
     )
     .slice(-MAX_HISTORY)
-    .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_MESSAGE_LEN) }));
+    .map((m) => ({
+      role: m.role,
+      content: m.content.slice(0, MAX_MESSAGE_LEN),
+    }));
 }
 
 export async function POST(request) {
@@ -53,10 +56,7 @@ export async function POST(request) {
 
   const messages = sanitizeHistory(body?.messages);
   if (messages.length === 0) {
-    return Response.json(
-      { error: "No messages provided" },
-      { status: 400 },
-    );
+    return Response.json({ error: "No messages provided" }, { status: 400 });
   }
 
   let upstream;

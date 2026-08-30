@@ -12,18 +12,18 @@ import {
   sendEmailVerification,
   onAuthStateChanged,
   updateProfile,
-} from 'firebase/auth'
-import { auth } from './firebase'
-import { provisionParent, getUserProfile } from './database'
+} from "firebase/auth";
+import { auth } from "./firebase";
+import { provisionParent, getUserProfile } from "./database";
 
 /**
  * Sign in. Returns { user, profile } — the Firebase user and the matching
  * Firestore users/{uid} document.
  */
 export async function signIn(email, password) {
-  const credential = await signInWithEmailAndPassword(auth, email, password)
-  const profile = await getUserProfile(credential.user.uid)
-  return { user: credential.user, profile }
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  const profile = await getUserProfile(credential.user.uid);
+  return { user: credential.user, profile };
 }
 
 /**
@@ -34,12 +34,16 @@ export async function signIn(email, password) {
  * Returns { user, profile, childIds }.
  */
 export async function signUp(email, password, displayName, extras = {}) {
-  const fullName = (displayName || '').trim()
-  const credential = await createUserWithEmailAndPassword(auth, email, password)
-  const uid = credential.user.uid
+  const fullName = (displayName || "").trim();
+  const credential = await createUserWithEmailAndPassword(
+    auth,
+    email,
+    password,
+  );
+  const uid = credential.user.uid;
 
   if (fullName) {
-    await updateProfile(credential.user, { displayName: fullName })
+    await updateProfile(credential.user, { displayName: fullName });
   }
 
   // Best-effort verification email. Nothing gates on it — neither this app nor
@@ -48,30 +52,38 @@ export async function signUp(email, password, displayName, extras = {}) {
   // start enforcing it here without fixing GuardParent first, or every
   // Android-created parent would be locked out of the web.
   try {
-    await sendEmailVerification(credential.user)
+    await sendEmailVerification(credential.user);
   } catch (_) {}
 
-  const { children = [], phone } = extras
+  const { children = [], phone } = extras;
   try {
-    const result = await provisionParent({ uid, email, name: fullName, phone, children })
-    const profile = await getUserProfile(uid)
-    return { user: credential.user, profile, childIds: result.childIds }
+    const result = await provisionParent({
+      uid,
+      email,
+      name: fullName,
+      phone,
+      children,
+    });
+    const profile = await getUserProfile(uid);
+    return { user: credential.user, profile, childIds: result.childIds };
   } catch (err) {
     // The provision is a single batch, so nothing partial survives a failure.
     // Drop the Auth user too, otherwise it squats on the email with no profile.
-    try { await credential.user.delete() } catch (_) {}
-    throw err
+    try {
+      await credential.user.delete();
+    } catch (_) {}
+    throw err;
   }
 }
 
 /** Sign out the current user */
 export async function logOut() {
-  await signOut(auth)
+  await signOut(auth);
 }
 
 /** Send a password-reset email */
 export async function resetPassword(email) {
-  await sendPasswordResetEmail(auth, email)
+  await sendPasswordResetEmail(auth, email);
 }
 
 /**
@@ -79,10 +91,10 @@ export async function resetPassword(email) {
  * Returns the unsubscribe function — call it on component unmount.
  */
 export function onAuthChange(callback) {
-  return onAuthStateChanged(auth, callback)
+  return onAuthStateChanged(auth, callback);
 }
 
 /** Get the currently signed-in user (or null) */
 export function currentUser() {
-  return auth.currentUser
+  return auth.currentUser;
 }
