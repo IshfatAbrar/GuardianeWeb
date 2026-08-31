@@ -96,7 +96,7 @@ export function Sidebar({
                     onClick={() => setSelectedChildId(child.id)}
                     title={child.name || "Child"}
                     aria-label={child.name || "Child"}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border-2 transition-all ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border-[1.5px] transition-all ${
                       isSelected
                         ? "bg-[var(--surface)] border-[var(--accent)] text-[var(--accent)]"
                         : "bg-[var(--surface-muted)] border-[var(--border)] text-[var(--muted)] hover:border-[var(--accent-border)]"
@@ -121,7 +121,7 @@ export function Sidebar({
                     className="flex items-center gap-3 flex-1 min-w-0 px-3 py-2 text-left"
                   >
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border-2 ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border-[1.5px] ${
                         isSelected
                           ? "bg-[var(--surface)] border-[var(--accent-border)] text-[var(--accent)]"
                           : "bg-[var(--surface-muted)] border-[var(--border)] text-[var(--muted)]"

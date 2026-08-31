@@ -13,7 +13,10 @@ const epilogue = Epilogue({
 });
 
 export const metadata = {
-  title: "Guardiané",
+  title: {
+    default: "Guardiane AI",
+    template: "Guardiane AI | %s",
+  },
   description:
     "The AI-Guardian Center is an innovation and research hub advancing ethical AI solutions for child digital safety, adolescent emotional wellbeing, and family support. Home of Guardiané.",
   icons: {
@@ -27,6 +30,7 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       data-theme="light"
+      data-scroll-behavior="smooth"
       className={epilogue.variable}
       suppressHydrationWarning
     >

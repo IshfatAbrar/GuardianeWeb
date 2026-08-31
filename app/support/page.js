@@ -4,7 +4,7 @@ import { SiteFooter } from "../../components/site-footer";
 import { contactEmail, supportEmail } from "../../lib/siteConfig";
 
 export const metadata = {
-  title: "Support — Guardiané",
+  title: "Support",
   description:
     "Get help with Guardiané. Contact our support team, browse common topics, and find answers for parents and families.",
 };

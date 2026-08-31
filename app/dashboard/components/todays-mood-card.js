@@ -80,7 +80,7 @@ export function TodaysMoodCard({ mood, childName, onFullReport }) {
         </h2>
       </div>
 
-      <div className="flex-1 rounded-2xl bg-[var(--surface-muted)] flex flex-col items-center justify-center py-6 gap-2">
+      <div className="flex-1 rounded-2xl bg-[var(--surface-muted)] flex flex-col items-center justify-center py-4 gap-2">
         {meta ? (
           <>
             <Image src={meta.icon} alt="" aria-hidden width={60} height={60} />

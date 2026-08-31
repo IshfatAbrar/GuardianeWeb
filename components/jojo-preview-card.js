@@ -175,6 +175,8 @@ export function JojoPreviewCard() {
                   src="/jojo.png"
                   alt="JoJo"
                   fill
+                  priority
+                  sizes="48px"
                   className="object-cover"
                 />
               </span>

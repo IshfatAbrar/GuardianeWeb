@@ -16,6 +16,7 @@ import { EmergencyContactsCard } from "./emergency-contacts-card";
 import { EmergencyContactFormModal } from "./emergency-contact-form-modal";
 import { EmergencyCallModal } from "./emergency-call-modal";
 import { LiveChatModal } from "./live-chat-modal";
+import { RiskAlertsPage } from "./risk-alerts-page";
 
 // Was iOS's AlertCenterViewModel.escalationChain, previously re-exported from
 // the deleted safetyIncidents module. It is static presentation — nothing
@@ -362,10 +363,18 @@ export function EmergencyTab({ data }) {
     return m;
   }, [childList]);
 
-  const alerts = useMemo(() => data?.alerts || [], [data?.alerts]);
+  const selectedChildId = data?.selectedChildId || null;
+
+  // Scoped to whichever child is selected in the sidebar — this tab shows one
+  // child's risk picture at a time, not the whole family's merged together.
+  const alerts = useMemo(
+    () => data?.alertsForSelectedChild || [],
+    [data?.alertsForSelectedChild],
+  );
   const activeAlerts = useMemo(
-    () => data?.activeAlerts || [],
-    [data?.activeAlerts],
+    () =>
+      (data?.activeAlerts || []).filter((a) => a.childId === selectedChildId),
+    [data?.activeAlerts, selectedChildId],
   );
   const critical = useMemo(
     () => activeAlerts.filter((a) => a.severity === "critical"),
@@ -373,6 +382,11 @@ export function EmergencyTab({ data }) {
   );
   const activeSOS = critical.length > 0;
 
+  // Family-wide, uncapped — feeds the "View all" data page, which is
+  // deliberately NOT scoped to the selected child.
+  const allAlerts = useMemo(() => data?.allAlerts || [], [data?.allAlerts]);
+
+  const [view, setView] = useState("overview"); // 'overview' | 'all-alerts'
   const [contacts, setContacts] = useState([]);
   const [contactsLoading, setContactsLoading] = useState(true);
   const [callOpen, setCallOpen] = useState(false);
@@ -404,9 +418,19 @@ export function EmergencyTab({ data }) {
     setFormOpen(true);
   }
 
+  if (view === "all-alerts") {
+    return (
+      <RiskAlertsPage
+        alerts={allAlerts}
+        childList={childList}
+        onBack={() => setView("overview")}
+      />
+    );
+  }
+
   return (
     <div>
-      <div className="flex items-start justify-between gap-3 p-6">
+      <div className="flex flex-wrap items-end justify-between gap-4 p-6">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
             Crisis Management
@@ -415,6 +439,30 @@ export function EmergencyTab({ data }) {
             Emergency Response System
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setView("all-alerts")}
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-4 py-2 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[var(--accent-hover)] active:translate-y-0.5"
+        >
+          <svg
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          View All Risk Alerts
+        </button>
       </div>
 
       <div className="h-px w-full bg-[var(--border)]" />

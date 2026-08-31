@@ -219,7 +219,14 @@ function DashboardContent() {
       <CriticalAlertPopup
         alerts={unreadAlerts}
         childList={data.children}
-        onGoToEmergency={() => setActiveNav("emergency")}
+        onGoToEmergency={(childId) => {
+          // Crisis Management now scopes its Risk alerts card to the selected
+          // child — jump to the alert's own child first, or landing on the
+          // tab could show a different child's (non-critical) alerts instead
+          // of the one that triggered this popup.
+          if (childId) data.setSelectedChildId(childId);
+          setActiveNav("emergency");
+        }}
       />
     </AuthGuard>
   );
