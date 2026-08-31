@@ -1,7 +1,7 @@
 export const metadata = {
-  title: "Guardiané — Clarity for parents. Calm for families.",
+  title: "Sign Up",
   description:
-    "Mood boards, screen-time intelligence, learning progress, family messaging, and smart alerts—including threat-aware signals on texts. The parent dashboard that turns signals into action.",
+    "Create your Guardiané account and start protecting your family today.",
 };
 
 export default function GuardianeLayout({ children }) {

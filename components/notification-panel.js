@@ -35,11 +35,15 @@ export function NotificationPanel({ open, onClose }) {
   // panel everywhere, not just inside the dashboard — since /dashboard reads
   // ?tab= itself on load. The `alert` param lets the Emergency tab scroll to
   // and highlight this specific one instead of just landing on the tab.
+  // `child` is required too now that Crisis Management scopes its Risk
+  // alerts card to the selected child — without it, a bell alert for a child
+  // other than whichever one happens to be selected would land on the tab
+  // but never actually be in the (now-filtered) list to scroll to.
   function goToAlert(alert) {
     onClose?.();
-    router.push(
-      `/dashboard?tab=emergency&alert=${encodeURIComponent(alert.id)}`,
-    );
+    const params = new URLSearchParams({ tab: "emergency", alert: alert.id });
+    if (alert.childId) params.set("child", alert.childId);
+    router.push(`/dashboard?${params.toString()}`);
   }
 
   useEffect(() => {

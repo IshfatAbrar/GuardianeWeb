@@ -16,6 +16,8 @@ export function JojoBanner({ onTalk, onLearnMore }) {
             src="/jojo_full.png"
             alt="JoJo"
             fill
+            priority
+            sizes="112px"
             className="object-cover"
           />
         </div>

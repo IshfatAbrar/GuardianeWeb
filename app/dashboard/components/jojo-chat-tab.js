@@ -121,7 +121,13 @@ function JojoAvatar({ size = 30 }) {
       className="relative flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]"
       style={{ width: size, height: size }}
     >
-      <Image src="/jojo.png" alt="JoJo" fill className="object-cover" />
+      <Image
+        src="/jojo.png"
+        alt="JoJo"
+        fill
+        sizes={`${size}px`}
+        className="object-cover"
+      />
     </div>
   );
 }

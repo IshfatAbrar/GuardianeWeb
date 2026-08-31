@@ -299,6 +299,10 @@ export function useDashboardData() {
     // Same alerts, scoped to selectedChildId — used by the Overview's Recent
     // Activity card so switching children doesn't bleed another child's alerts in.
     alertsForSelectedChild,
+    // Uncapped, family-wide — the "View all" Risk Alerts page. `alerts` above
+    // is deliberately truncated to MAX_FEED_ALERTS for the small feed widget;
+    // this is the same underlying list without that cap.
+    allAlerts: visibleAlerts,
 
     // Unread (child-sent, non-alert) chat messages across every child —
     // backs the Messages sidebar badge.

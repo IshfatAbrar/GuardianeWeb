@@ -79,7 +79,7 @@ export function AiInsightsCard({ insights, loading, childName }) {
     <section className="space-y-3">
       <div className="flex items-center gap-3">
         <span className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]">
-          <Image src="/jojo.png" alt="" fill className="object-cover" />
+          <Image src="/jojo.png" alt="" fill sizes="24px" className="object-cover" />
         </span>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           AI insights

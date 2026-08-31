@@ -185,7 +185,7 @@ export function CriticalAlertPopup({ alerts, childList, onGoToEmergency }) {
               type="button"
               onClick={() => {
                 dismiss();
-                onGoToEmergency?.();
+                onGoToEmergency?.(current.childId);
               }}
               className="flex-1 rounded-xl bg-rose-500 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-rose-600"
             >
