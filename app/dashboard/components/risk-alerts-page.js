@@ -209,7 +209,11 @@ export function RiskAlertsPage({ alerts, childList, onBack }) {
             value={stats.warning}
             accent="text-amber-500"
           />
-          <StatCard label="Unread" value={stats.unread} accent="text-blue-500" />
+          <StatCard
+            label="Unread"
+            value={stats.unread}
+            accent="text-blue-500"
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
