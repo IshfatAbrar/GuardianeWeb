@@ -1,7 +1,8 @@
 "use client";
 
-// Full-screen interrupt for a critical (Suicidal Reference) risk alert — the
-// one severity where "the parent will see it eventually in the bell" isn't
+// Full-screen interrupt for a critical risk alert (Suicidal Reference, or a
+// child-triggered SOS) — the one severity where "the parent will see it
+// eventually in the bell" isn't
 // good enough. Shows as soon as an unread critical alert the parent hasn't
 // already been shown for arrives, with an audible cue, and lets the parent
 // jump straight to the Emergency tab or dismiss it.

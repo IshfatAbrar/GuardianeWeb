@@ -97,6 +97,7 @@ export function isAlertMessage(message) {
 // still surfaces to the parent.
 const SEVERITY_BY_CLASSIFICATION = {
   "Suicidal Reference": "critical",
+  "SOS Emergency": "critical",
   "Attacking Behavior": "warning",
   "Emotional Distress": "warning",
   "Explicit Content": "warning",
