@@ -216,6 +216,25 @@ export const quickActions = [
     ),
   },
   {
+    id: "screenTimeLimit",
+    label: "Screen Time Limit",
+    icon: (
+      <svg
+        width="26"
+        height="26"
+        fill="none"
+        style={{ stroke: "var(--accent)" }}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        viewBox="0 0 24 24"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+  },
+  {
     id: "assignModule",
     label: "Assign Module",
     icon: (

@@ -13,6 +13,7 @@ import { ChildFormModal } from "./child-form-modal";
 import { EmergencyCallModal } from "./emergency-call-modal";
 import { MoodAnalyticsModal } from "./mood-analytics-modal";
 import { AppLimitsModal } from "./app-limits-modal";
+import { ScreenTimeLimitModal } from "./screen-time-limit-modal";
 
 function firstName(profile, user) {
   const full = profile?.name || user?.displayName || "";
@@ -49,6 +50,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [appLimitsOpen, setAppLimitsOpen] = useState(false);
+  const [screenTimeLimitOpen, setScreenTimeLimitOpen] = useState(false);
 
   const greetingName = firstName(userProfile, user);
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? null;
@@ -102,6 +104,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           onMessages={() => go("messaging")}
           onEmergency={() => setEmergencyOpen(true)}
           onAppLimits={() => setAppLimitsOpen(true)}
+          onScreenTimeLimit={() => setScreenTimeLimitOpen(true)}
           onAssignModule={() => go("modules")}
         />
       </div>
@@ -149,6 +152,13 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
       <AppLimitsModal
         open={appLimitsOpen}
         onClose={() => setAppLimitsOpen(false)}
+        childList={children}
+        initialChildId={selectedChildId}
+      />
+
+      <ScreenTimeLimitModal
+        open={screenTimeLimitOpen}
+        onClose={() => setScreenTimeLimitOpen(false)}
         childList={children}
         initialChildId={selectedChildId}
       />

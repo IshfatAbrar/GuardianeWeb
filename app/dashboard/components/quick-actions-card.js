@@ -6,6 +6,7 @@ export function QuickActionsCard({
   onMessages,
   onEmergency,
   onAppLimits,
+  onScreenTimeLimit,
   onAssignModule,
 }) {
   const handlers = {
@@ -14,6 +15,7 @@ export function QuickActionsCard({
     messages: onMessages,
     emergency: onEmergency,
     appLimits: onAppLimits,
+    screenTimeLimit: onScreenTimeLimit,
     assignModule: onAssignModule,
   };
 
