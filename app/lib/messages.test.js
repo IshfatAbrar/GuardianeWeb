@@ -129,6 +129,11 @@ describe("alertSeverity", () => {
     ).toBe("critical");
     expect(
       alertSeverity(
+        childAlert({ metadata: { classification: "SOS Emergency" } }),
+      ),
+    ).toBe("critical");
+    expect(
+      alertSeverity(
         childAlert({ metadata: { classification: "Attacking Behavior" } }),
       ),
     ).toBe("warning");

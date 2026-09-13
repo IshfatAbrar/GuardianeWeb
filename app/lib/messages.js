@@ -90,11 +90,14 @@ export function isAlertMessage(message) {
 
 // The child app's classifier stack (services/TextClassifier.js — remote
 // chatWithAgent classification plus the rule-based VulgarContentDetector and
-// IncognitoDetector tiers) emits exactly these five risk labels
-// (TextClassifier.isRiskLabel / RemoteTextClassifier.REMOTE_LABELS); the sixth,
-// 'Safe/Neutral', is filtered out by isAlertMessage before this runs. Anything
-// unrecognised degrades to 'info' rather than being dropped, so a future label
-// still surfaces to the parent.
+// IncognitoDetector tiers) emits five risk labels (TextClassifier.isRiskLabel /
+// RemoteTextClassifier.REMOTE_LABELS); the sixth, 'Safe/Neutral', is filtered
+// out by isAlertMessage before this runs. 'SOS Emergency' is a seventh label,
+// not from the classifier — it's what the kid apps' manual SOS/crisis button
+// writes (see the iOS kid app's AlertMessageContract.swift), and is always
+// critical: it's a deliberate child-initiated distress signal, not a model
+// guess. Anything else unrecognised degrades to 'info' rather than being
+// dropped, so a future label still surfaces to the parent.
 const SEVERITY_BY_CLASSIFICATION = {
   "Suicidal Reference": "critical",
   "SOS Emergency": "critical",
