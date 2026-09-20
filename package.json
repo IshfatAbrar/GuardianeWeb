@@ -12,9 +12,11 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@blobatar/react": "^2.7.0",
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
     "@fortawesome/react-fontawesome": "^3.3.0",
+    "blobatar": "^2.7.0",
     "firebase": "^12.13.0",
     "lucide-react": "^1.14.0",
     "next": "^16.2.9",

@@ -1,3 +1,5 @@
+import { TitleIcon } from "../../../components/title-icon";
+
 const SEVERITY_DOT = {
   critical: "bg-[var(--danger)]",
   error: "bg-[var(--danger)]",
@@ -28,21 +30,17 @@ export function RecentActivityCard({ alerts = [], childList = [] }) {
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-[var(--accent-bg)] flex items-center justify-center">
+        <TitleIcon>
           <svg
             width="18"
             height="18"
-            fill="none"
-            style={{ stroke: "var(--accent)" }}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            fill="var(--accent)"
             viewBox="0 0 24 24"
+            aria-hidden
           >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z" />
           </svg>
-        </div>
+        </TitleIcon>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Recent Activity
         </h2>

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { JojoAvatar } from "../../../components/jojo-avatar";
 
 // Gemini-written insights for the selected child, mirroring GuardParent's
 // "AI Powered Insights" section (app/index.js) card for card and in the same
@@ -76,17 +76,9 @@ export function AiInsightsCard({ insights, loading, childName }) {
   const childFirst = childName?.split(" ")[0];
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-1">
       <div className="flex items-center gap-3">
-        <span className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]">
-          <Image
-            src="/jojo.png"
-            alt=""
-            fill
-            sizes="24px"
-            className="object-cover"
-          />
-        </span>
+        <JojoAvatar size={36} alt="" className="flex-shrink-0" />
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           AI insights
         </h2>

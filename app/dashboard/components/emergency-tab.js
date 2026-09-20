@@ -38,7 +38,7 @@ const SEVERITY_META = {
     color: "#F59E0B",
     bg: "rgba(245, 158, 11, 0.16)",
   },
-  info: { label: "Info", color: "#3B82F6", bg: "rgba(59, 130, 246, 0.16)" },
+  info: { label: "Info", color: "#0284c7", bg: "rgba(2, 132, 199, 0.16)" },
 };
 
 function relativeTime(ts) {
@@ -197,8 +197,8 @@ function EmergencyActions({ onBeacon, onChat, onCall }) {
         />
         <ActionTile
           label="Live Chat"
-          color="#3B82F6"
-          bg="rgba(59, 130, 246, 0.18)"
+          color="#0284c7"
+          bg="rgba(2, 132, 199, 0.18)"
           onClick={onChat}
           icon={
             <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24">

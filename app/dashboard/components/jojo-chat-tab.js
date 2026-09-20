@@ -1,7 +1,7 @@
 "use client";
 
+import { JojoAvatar as SharedJojoAvatar } from "../../../components/jojo-avatar";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { useJojoChat } from "../_lib/useJojoChat";
 
 const SUGGESTIONS = [
@@ -115,21 +115,8 @@ const TrashIcon = (p) => (
 
 // ── Chat pieces ──────────────────────────────────────────────────────────────
 
-function JojoAvatar({ size = 30 }) {
-  return (
-    <div
-      className="relative flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]"
-      style={{ width: size, height: size }}
-    >
-      <Image
-        src="/jojo.png"
-        alt="JoJo"
-        fill
-        sizes={`${size}px`}
-        className="object-cover"
-      />
-    </div>
-  );
+function JojoAvatar({ size = 44 }) {
+  return <SharedJojoAvatar size={size} className="flex-shrink-0" />;
 }
 
 function TypingDots() {
@@ -294,7 +281,7 @@ function ChatSidebar({
       {/* Header */}
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <div className="flex items-center gap-2">
-          <JojoAvatar size={26} />
+          <JojoAvatar size={40} />
           <span className="text-[14px] font-semibold text-[var(--foreground)]">
             JoJo
           </span>

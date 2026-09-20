@@ -1,7 +1,7 @@
 import { quickActions } from "../data/nav";
+import { TitleIcon } from "../../../components/title-icon";
 
 export function QuickActionsCard({
-  onAddChild,
   onReports,
   onMessages,
   onEmergency,
@@ -10,7 +10,6 @@ export function QuickActionsCard({
   onAssignModule,
 }) {
   const handlers = {
-    addChild: onAddChild,
     reports: onReports,
     messages: onMessages,
     emergency: onEmergency,
@@ -22,16 +21,17 @@ export function QuickActionsCard({
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-[var(--accent-bg)] flex items-center justify-center">
+        <TitleIcon>
           <svg
             width="18"
             height="18"
             style={{ fill: "var(--accent)" }}
             viewBox="0 0 24 24"
+            aria-hidden
           >
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
           </svg>
-        </div>
+        </TitleIcon>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Quick Actions
         </h2>

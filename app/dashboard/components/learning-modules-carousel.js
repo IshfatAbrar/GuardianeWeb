@@ -1,4 +1,6 @@
-import { moduleColors } from "../data/modules";
+import { LibraryBig } from "lucide-react";
+import { TitleIcon } from "../../../components/title-icon";
+import { moduleColorFor } from "../data/modules";
 
 // Collapse modules that share a title (case-insensitive, trimmed) so the
 // carousel doesn't show the same card twice when Firestore has duplicates.
@@ -25,21 +27,9 @@ export function LearningModulesCarousel({
   return (
     <div>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-[var(--accent-bg)] flex items-center justify-center">
-          <svg
-            width="18"
-            height="18"
-            fill="none"
-            style={{ stroke: "var(--accent)" }}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            viewBox="0 0 24 24"
-          >
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-          </svg>
-        </div>
+        <TitleIcon>
+          <LibraryBig size={18} strokeWidth={2} fill="currentColor" />
+        </TitleIcon>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Learning Modules
         </h2>
@@ -63,8 +53,8 @@ export function LearningModulesCarousel({
           className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1"
           style={{ scrollbarWidth: "none" }}
         >
-          {unique.map((mod, i) => {
-            const color = moduleColors[i % moduleColors.length];
+          {unique.map((mod) => {
+            const color = moduleColorFor(mod.id);
             const title = mod.title || mod.name || "Untitled module";
             const meta = [mod.ageGroup, mod.difficulty]
               .filter(Boolean)
@@ -93,13 +83,13 @@ export function LearningModulesCarousel({
                 <div className="flex items-start justify-between">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(255,255,255,0.2)" }}
+                    style={{ background: color.icon }}
                   >
                     <svg
                       width="20"
                       height="20"
                       fill="none"
-                      stroke="white"
+                      stroke={color.ink}
                       strokeWidth="1.8"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -111,8 +101,8 @@ export function LearningModulesCarousel({
                   </div>
                   {mod.difficulty && (
                     <span
-                      className="text-[10px] font-semibold uppercase tracking-wider text-white px-2 py-0.5 rounded-full"
-                      style={{ background: color.badge }}
+                      className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full"
+                      style={{ background: color.badge, color: color.ink }}
                     >
                       {mod.difficulty}
                     </span>
@@ -120,21 +110,30 @@ export function LearningModulesCarousel({
                 </div>
 
                 <div>
-                  <p className="text-[16px] font-bold text-white leading-tight line-clamp-2">
+                  <p
+                    className="text-[15px] font-semibold leading-tight line-clamp-2"
+                    style={{ color: color.ink }}
+                  >
                     {title}
                   </p>
                 </div>
 
                 <div className="flex items-center justify-between mt-auto pt-1">
                   {duration ? (
-                    <span className="text-[11px] font-semibold text-white opacity-90">
+                    <span
+                      className="text-[11px] font-medium opacity-70"
+                      style={{ color: color.ink }}
+                    >
                       {duration}
                     </span>
                   ) : (
                     <span />
                   )}
                   {mod.isActive === false && (
-                    <span className="text-[10px] font-semibold text-white opacity-70 uppercase tracking-wider">
+                    <span
+                      className="text-[10px] font-medium opacity-60 uppercase tracking-wider"
+                      style={{ color: color.ink }}
+                    >
                       Draft
                     </span>
                   )}

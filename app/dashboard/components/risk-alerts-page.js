@@ -18,7 +18,7 @@ const SEVERITY_META = {
     color: "#F59E0B",
     bg: "rgba(245, 158, 11, 0.16)",
   },
-  info: { label: "Info", color: "#3B82F6", bg: "rgba(59, 130, 246, 0.16)" },
+  info: { label: "Info", color: "#0284c7", bg: "rgba(2, 132, 199, 0.16)" },
 };
 
 function fullTime(ts) {
@@ -209,11 +209,7 @@ export function RiskAlertsPage({ alerts, childList, onBack }) {
             value={stats.warning}
             accent="text-amber-500"
           />
-          <StatCard
-            label="Unread"
-            value={stats.unread}
-            accent="text-blue-500"
-          />
+          <StatCard label="Unread" value={stats.unread} accent="text-sky-500" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

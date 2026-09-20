@@ -34,14 +34,6 @@ const COLOR = {
   poor: "#FF5722",
 };
 
-// Custom mood-face art, one file per band — see public/mood/.
-const ICON = {
-  great: "/mood/great.png",
-  good: "/mood/good.png",
-  fair: "/mood/fair.png",
-  poor: "/mood/poor.png",
-};
-
 const LABEL = {
   great: "Great",
   good: "Good",
@@ -75,10 +67,6 @@ export function entryBand(entry) {
 
 export function moodColor(band) {
   return COLOR[band] ?? COLOR.fair;
-}
-
-export function moodIcon(band) {
-  return ICON[band] ?? ICON.fair;
 }
 
 export function moodLabel(band) {

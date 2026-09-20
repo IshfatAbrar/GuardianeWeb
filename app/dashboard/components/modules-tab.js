@@ -13,6 +13,7 @@ import {
   progressFor,
   listenToLearningProgressForChildren,
 } from "../../lib/learningModules";
+import { moduleColorFor } from "../data/modules";
 import { AssignmentFormModal } from "./assignment-form-modal";
 import { AssignmentDetailView } from "./assignment-detail-view";
 
@@ -118,12 +119,15 @@ function StatCard({ label, value, accent }) {
   );
 }
 
-function ProgressBar({ value }) {
+function ProgressBar({ value, fill }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-muted)]">
       <div
-        className="h-full rounded-full bg-[var(--accent)] transition-all"
-        style={{ width: `${Math.round(value * 100)}%` }}
+        className={`h-full rounded-full transition-all ${fill ? "" : "bg-[var(--accent)]"}`}
+        style={{
+          width: `${Math.round(value * 100)}%`,
+          ...(fill ? { background: fill } : null),
+        }}
       />
     </div>
   );
@@ -146,6 +150,10 @@ function AssignmentCard({
   const dueText = assignment.dueDate ? formatDate(assignment.dueDate) : null;
   const progress = progressFor(assignment, progressById);
   const pct = Math.round(progress * 100);
+  // Same color the module has on the home carousel and in the Learning Hub.
+  // Only a small tile and the progress fill carry it; the card itself stays
+  // white so the priority/status pills keep their own colors without clashing.
+  const color = moduleColorFor(assignment.moduleId);
 
   return (
     <button
@@ -154,13 +162,23 @@ function AssignmentCard({
       className="flex w-full flex-col gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-left transition-all hover:-translate-y-0.5 hover:border-[var(--accent-border)] hover:shadow-[var(--shadow-card)]"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
-            Assigned to {childName}
-          </p>
-          <h3 className="line-clamp-2 text-base font-semibold tracking-tight text-[var(--foreground)]">
-            {moduleTitle}
-          </h3>
+        <div
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl"
+          style={{ background: color.bg, color: color.ink }}
+        >
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            viewBox="0 0 24 24"
+          >
+            <path d="M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z" />
+            <path d="M4 4v12a4 4 0 0 0 4 4" />
+          </svg>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <span
@@ -183,6 +201,15 @@ function AssignmentCard({
         </div>
       </div>
 
+      <div className="min-w-0 space-y-1">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--muted)]">
+          Assigned to {childName}
+        </p>
+        <h3 className="line-clamp-2 text-base font-semibold tracking-tight text-[var(--foreground)]">
+          {moduleTitle}
+        </h3>
+      </div>
+
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[11px] font-medium text-[var(--muted)]">
           <span>{pct}% complete</span>
@@ -193,7 +220,7 @@ function AssignmentCard({
             </span>
           )}
         </div>
-        <ProgressBar value={progress} />
+        <ProgressBar value={progress} fill={color.solid} />
       </div>
     </button>
   );
