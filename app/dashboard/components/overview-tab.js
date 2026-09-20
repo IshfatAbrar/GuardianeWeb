@@ -9,7 +9,6 @@ import { ScreenTimeCard } from "./screen-time-card";
 import { LearningModulesCarousel } from "./learning-modules-carousel";
 import { RecentActivityCard } from "./recent-activity-card";
 import { AiInsightsCard } from "./ai-insights-card";
-import { ChildFormModal } from "./child-form-modal";
 import { EmergencyCallModal } from "./emergency-call-modal";
 import { MoodAnalyticsModal } from "./mood-analytics-modal";
 import { AppLimitsModal } from "./app-limits-modal";
@@ -46,7 +45,6 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
     selectedChildId,
   } = data;
 
-  const [addChildOpen, setAddChildOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [appLimitsOpen, setAppLimitsOpen] = useState(false);
@@ -99,7 +97,6 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           childName={selectedChild?.name}
         />
         <QuickActionsCard
-          onAddChild={() => setAddChildOpen(true)}
           onReports={openReport}
           onMessages={() => go("messaging")}
           onEmergency={() => setEmergencyOpen(true)}
@@ -129,12 +126,6 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
       <RecentActivityCard
         alerts={alertsForSelectedChild}
         childList={children}
-      />
-
-      <ChildFormModal
-        open={addChildOpen}
-        onClose={() => setAddChildOpen(false)}
-        parentUid={user?.uid}
       />
 
       <EmergencyCallModal

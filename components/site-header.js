@@ -90,7 +90,7 @@ function ProfileMenu({ user, profile, compact = false }) {
           aria-expanded={open}
           className="flex cursor-pointer items-center gap-2 rounded-sm border border-[var(--border)] bg-[var(--background)] px-3 py-2 transition-colors hover:bg-white/5"
         >
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#3b82f6] text-[9px] font-semibold text-white">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0284c7] text-[9px] font-semibold text-white">
             {initials}
           </div>
 

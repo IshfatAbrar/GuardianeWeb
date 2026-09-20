@@ -1,4 +1,5 @@
 import { moodBand, moodLabel } from "../../lib/mood";
+import { RollingNumber } from "../../../components/rolling-number";
 
 /**
  * `wellbeing` is `summarizeMood(...).average` for the selected child: the mean
@@ -70,7 +71,7 @@ export function StatsGrid({
               s.danger ? "text-[var(--danger)]" : "text-[var(--accent)]"
             }`}
           >
-            {s.value}
+            <RollingNumber value={s.value} />
           </p>
           <p className="mt-1.5 text-[10px] text-[var(--muted)]">{s.sub}</p>
         </div>

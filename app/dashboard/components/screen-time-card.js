@@ -1,5 +1,7 @@
 "use client";
 
+import { TitleIcon } from "../../../components/title-icon";
+
 // Today's screen time for the selected child.
 //
 // Source: `screen_time_entries`, written by Guardiane_Android's
@@ -51,21 +53,17 @@ export function ScreenTimeCard({ entry, childName }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
       <div className="mb-2 flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--accent-bg)]">
+        <TitleIcon>
           <svg
             width="18"
             height="18"
-            fill="none"
-            style={{ stroke: "var(--accent)" }}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            fill="var(--accent)"
             viewBox="0 0 24 24"
+            aria-hidden
           >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
+            <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z" />
           </svg>
-        </div>
+        </TitleIcon>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Screen Time
         </h2>

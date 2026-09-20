@@ -1,11 +1,6 @@
-import Image from "next/image";
-import {
-  entryScore,
-  entryBand,
-  moodIcon,
-  moodLabel,
-  moodColor,
-} from "../../lib/mood";
+import { MoodAvatar } from "../../../components/mood-avatar";
+import { entryScore, entryBand, moodLabel, moodColor } from "../../lib/mood";
+import { TitleIcon } from "../../../components/title-icon";
 
 // A mood_entries row carries a 0–100 wellbeing score, not an emotion name, so
 // show the score and the band it falls in. Returns null when there is no entry
@@ -16,7 +11,7 @@ function moodMeta(entry) {
   const band = entryBand(entry);
   if (score === null || !band) return null;
   return {
-    icon: moodIcon(band),
+    band,
     label: moodLabel(band),
     color: moodColor(band),
     score: Math.round(score),
@@ -65,16 +60,17 @@ export function TodaysMoodCard({ mood, childName, onFullReport }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-9 h-9 rounded-xl bg-[var(--accent-bg)] flex items-center justify-center">
+        <TitleIcon>
           <svg
             width="18"
             height="18"
-            style={{ fill: "var(--accent)" }}
+            fill="var(--accent)"
             viewBox="0 0 24 24"
+            aria-hidden
           >
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
           </svg>
-        </div>
+        </TitleIcon>
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           {mood?.latestIsToday ? "Today's Mood" : "Latest Mood"}
         </h2>
@@ -83,7 +79,7 @@ export function TodaysMoodCard({ mood, childName, onFullReport }) {
       <div className="flex-1 rounded-2xl bg-[var(--surface-muted)] flex flex-col items-center justify-center py-4 gap-2">
         {meta ? (
           <>
-            <Image src={meta.icon} alt="" aria-hidden width={60} height={60} />
+            <MoodAvatar band={meta.band} name={childName} size={96} />
             <span
               className="text-[14px] font-semibold"
               style={{ color: meta.color }}

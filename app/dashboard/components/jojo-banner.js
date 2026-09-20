@@ -1,25 +1,13 @@
-import Image from "next/image";
+import { JojoAvatar } from "../../../components/jojo-avatar";
 
 export function JojoBanner({ onTalk, onLearnMore }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-gradient-to-l from-[var(--accent-bg)] to-[var(--surface)] p-3.5 sm:p-4">
-      {/* Decorative blob */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-14 -top-14 h-60 w-60 rounded-full bg-[var(--accent)] opacity-10 blur-2xl"
-      />
-
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--accent-bg)] p-3.5 sm:p-4">
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        {/* Avatar */}
-        <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden">
-          <Image
-            src="/jojo_full.png"
-            alt="JoJo"
-            fill
-            priority
-            sizes="112px"
-            className="object-cover"
-          />
+        {/* Avatar. The blob's viewBox has empty margin around the triangle
+            (most of it below), so pull the box in to trim the dead space. */}
+        <div className="flex-shrink-0" style={{ margin: "-12px -12px -30px" }}>
+          <JojoAvatar size={144} follow />
         </div>
 
         {/* Copy */}

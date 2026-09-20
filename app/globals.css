@@ -37,13 +37,26 @@
   --glass-border: rgba(31, 35, 41, 0.08);
   --shadow-card: 0 10px 28px rgba(31, 35, 41, 0.05);
   --shadow-elevated: 0 26px 70px rgba(31, 35, 41, 0.08);
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-border: rgba(59, 130, 246, 0.35);
-  --accent-bg: rgba(59, 130, 246, 0.08);
-  --accent-bg-hover: rgba(59, 130, 246, 0.16);
+  --accent: #0284c7;
+  --accent-hover: #0369a1;
+  --accent-border: rgba(2, 132, 199, 0.35);
+  --accent-bg: rgba(2, 132, 199, 0.08);
+  --accent-bg-hover: rgba(2, 132, 199, 0.16);
   --danger: hsl(0, 68%, 42%);
   --danger-bg: hsl(0, 68%, 96%);
+  /* Module card palette (see app/dashboard/data/modules.js): Papaya Cream,
+     Mango Sorbet, Lagoon Blue, Mint Gelato. bg = card fill, solid = deeper tone
+     for progress fills, ink = text, chip = translucent pill/icon backing. */
+  --mod-1-bg: #ffbe9e;
+  --mod-1-solid: #f2a582;
+  --mod-2-bg: #ffd48a;
+  --mod-2-solid: #f0bc5c;
+  --mod-3-bg: #afe5f3;
+  --mod-3-solid: #8ccde3;
+  --mod-4-bg: #cdeed5;
+  --mod-4-solid: #9ed8ae;
+  --mod-ink: #2b2f36;
+  --mod-chip: rgba(255, 255, 255, 0.55);
   color-scheme: light;
 }
 
@@ -82,13 +95,25 @@ html[data-theme="dark"] {
   --glass-border: rgba(242, 239, 233, 0.08);
   --shadow-card: 0 14px 36px rgba(0, 0, 0, 0.28);
   --shadow-elevated: 0 28px 70px rgba(0, 0, 0, 0.35);
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --accent-border: rgba(96, 165, 250, 0.35);
-  --accent-bg: rgba(59, 130, 246, 0.12);
-  --accent-bg-hover: rgba(96, 165, 250, 0.22);
+  --accent: #0ea5e9;
+  --accent-hover: #38bdf8;
+  --accent-border: rgba(56, 189, 248, 0.35);
+  --accent-bg: rgba(14, 165, 233, 0.12);
+  --accent-bg-hover: rgba(56, 189, 248, 0.22);
   --danger: hsl(0, 75%, 62%);
   --danger-bg: hsla(0, 70%, 40%, 0.18);
+  /* Same four hues as light mode, at the same saturation but a lower
+     lightness: still clearly papaya / mango / lagoon / mint, without glowing. */
+  --mod-1-bg: #a8583a;
+  --mod-1-solid: #ffb693;
+  --mod-2-bg: #a3781c;
+  --mod-2-solid: #ffd676;
+  --mod-3-bg: #2c7f96;
+  --mod-3-solid: #8fdcf0;
+  --mod-4-bg: #3f8457;
+  --mod-4-solid: #a4e6b8;
+  --mod-ink: #fbf7f0;
+  --mod-chip: rgba(255, 255, 255, 0.18);
   color-scheme: dark;
 }
 
@@ -191,7 +216,7 @@ blockquote {
 }
 
 .mockup-shadow {
-  box-shadow: 0 40px 150px -8px rgba(59, 130, 246, 0.55);
+  box-shadow: 0 40px 150px -8px rgba(2, 132, 199, 0.55);
 }
 
 .brand-btn {

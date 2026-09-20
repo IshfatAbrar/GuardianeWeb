@@ -13,7 +13,7 @@ import { SupportModal } from "./support-modal";
 const APP_VERSION = "1.0.0 (web)";
 
 const AVATAR_PALETTE = [
-  { fg: "#3B82F6", bg: "rgba(59, 130, 246, 0.18)" },
+  { fg: "#0284c7", bg: "rgba(2, 132, 199, 0.18)" },
   { fg: "#A855F7", bg: "rgba(168, 85, 247, 0.18)" },
   { fg: "#EC4899", bg: "rgba(236, 72, 153, 0.18)" },
   { fg: "#10B981", bg: "rgba(16, 185, 129, 0.18)" },

@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { JojoAvatar as SharedJojoAvatar } from "../../components/jojo-avatar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { sendJojoMessage, JojoChatError } from "../lib/jojoChat";
 import { useJojoAuth } from "./lib/jojoAuth";
@@ -336,21 +336,8 @@ const MenuIcon = (p) => (
 
 // ── Chat pieces ──────────────────────────────────────────────────────────────
 
-function JojoAvatar({ size = 30 }) {
-  return (
-    <div
-      className="relative flex-shrink-0 overflow-hidden rounded-full border border-[var(--border)]"
-      style={{ width: size, height: size }}
-    >
-      <Image
-        src="/jojo.png"
-        alt="JoJo"
-        fill
-        sizes={`${size}px`}
-        className="object-cover"
-      />
-    </div>
-  );
+function JojoAvatar({ size = 44 }) {
+  return <SharedJojoAvatar size={size} className="flex-shrink-0" />;
 }
 
 function TypingDots() {
@@ -515,7 +502,7 @@ function ChatSidebar({
       {/* Header */}
       <div className="flex items-center justify-between px-3 pt-3 pb-1">
         <div className="flex items-center gap-2">
-          <JojoAvatar size={26} />
+          <JojoAvatar size={40} />
           <span className="text-[14px] font-semibold text-[var(--foreground)]">
             JoJo
           </span>
@@ -654,7 +641,7 @@ function SignupGate({ open, onClose, onSuccess }) {
         className="my-auto w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl"
       >
         <div className="mb-4 flex flex-col items-center text-center">
-          <JojoAvatar size={48} />
+          <JojoAvatar size={72} />
           <h2
             id="jojo-signup-gate-title"
             className="mt-3 text-[19px] font-semibold tracking-tight text-[var(--foreground)]"

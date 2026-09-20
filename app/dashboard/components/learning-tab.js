@@ -7,22 +7,19 @@ import { LessonDetailView } from "./lesson-detail-view";
 import { LessonQuizModal } from "./lesson-quiz-modal";
 import { useAuth } from "../../context/AuthContext";
 import { fetchAllModules, MODULE_CATEGORIES } from "../../lib/learningModules";
+import { moduleColorFor } from "../data/modules";
 
 const CATEGORY_LABEL = {
   [MODULE_CATEGORIES.PARENT]: "Parent",
   [MODULE_CATEGORIES.CHILD]: "Child",
 };
 
-function CategoryPill({ category }) {
+function CategoryPill({ category, color }) {
   const label = CATEGORY_LABEL[category] || category || "Module";
-  const isParent = category === MODULE_CATEGORIES.PARENT;
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-        isParent
-          ? "bg-amber-500/15 text-amber-500"
-          : "bg-[var(--accent)] text-white"
-      }`}
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+      style={{ background: color.badge, color: color.ink }}
     >
       {label}
     </span>
@@ -31,18 +28,20 @@ function CategoryPill({ category }) {
 
 function ModuleCard({ module, isYours, onOpen }) {
   const totalLessons = module.lessonCount ?? module.lessons?.length ?? 0;
+  // Same color the home carousel gives this module (chosen from its id).
+  const color = moduleColorFor(module.id);
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={`flex flex-col gap-4 rounded-2xl border bg-[var(--surface)] p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)] ${
-        isYours
-          ? "border-emerald-500/40 hover:border-emerald-500"
-          : "border-[var(--border)] hover:border-[var(--accent-border)]"
-      }`}
+      className="flex flex-col gap-4 rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
+      style={{ background: color.bg, color: color.ink }}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-bg)] text-[var(--accent)]">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          style={{ background: color.icon }}
+        >
           <svg
             width="22"
             height="22"
@@ -58,9 +57,12 @@ function ModuleCard({ module, isYours, onOpen }) {
           </svg>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <CategoryPill category={module.category} />
+          <CategoryPill category={module.category} color={color} />
           {isYours && (
-            <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-500">
+            <span
+              className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+              style={{ background: color.badge, color: color.ink }}
+            >
               Your module
             </span>
           )}
@@ -68,17 +70,17 @@ function ModuleCard({ module, isYours, onOpen }) {
       </div>
 
       <div className="space-y-1.5">
-        <h3 className="text-base font-semibold tracking-tight text-[var(--foreground)]">
+        <h3 className="text-[15px] font-semibold tracking-tight">
           {module.title}
         </h3>
         {module.description && (
-          <p className="line-clamp-3 text-[12.5px] leading-relaxed text-[var(--muted)]">
+          <p className="line-clamp-3 text-[12.5px] leading-relaxed opacity-65">
             {module.description}
           </p>
         )}
       </div>
 
-      <div className="mt-auto flex items-center justify-between text-[11px] font-medium text-[var(--muted)]">
+      <div className="mt-auto flex items-center justify-between text-[11px] font-medium opacity-60">
         <span className="truncate">By {module.createdByName || "Unknown"}</span>
         <span className="flex-shrink-0">
           {totalLessons} {totalLessons === 1 ? "lesson" : "lessons"}
