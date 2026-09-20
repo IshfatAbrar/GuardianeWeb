@@ -189,7 +189,7 @@ export default function Home() {
                   </span>
                   <span
                     className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
-                    style={{ background: "var(--accent)" }}
+                    style={{ background: "#6078bb" }}
                   >
                     M
                   </span>

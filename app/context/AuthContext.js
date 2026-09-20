@@ -32,6 +32,7 @@ import {
   listenToDoc,
   COLLECTIONS,
 } from "../lib/database";
+import { isVerified } from "../lib/emailVerification";
 
 const AuthContext = createContext({
   user: null,
@@ -61,6 +62,22 @@ export function AuthProvider({ children }) {
       }
 
       if (!fbUser) {
+        setUser(null);
+        setUserProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      // Email-verification gate (mirrors iOS): an unverified account is treated
+      // as signed out everywhere — guards, header, dashboard — and we never read
+      // its profile. A persisted session's `emailVerified` can be stale (they may
+      // have just clicked the link), so refresh it once before deciding.
+      if (!isVerified(fbUser)) {
+        try {
+          await fbUser.reload();
+        } catch (_) {}
+      }
+      if (!isVerified(fbUser)) {
         setUser(null);
         setUserProfile(null);
         setLoading(false);

@@ -75,6 +75,10 @@ export default function LoginPage() {
         code === "auth/invalid-credential"
       ) {
         setError("Incorrect email or password. Please try again.");
+      } else if (code === "auth/email-not-verified") {
+        setError(
+          "Please verify your email before signing in. We've sent you a new verification link — check your inbox.",
+        );
       } else if (code === "auth/too-many-requests") {
         setError("Too many attempts. Please wait a moment and try again.");
       } else if (code === "auth/user-disabled") {
