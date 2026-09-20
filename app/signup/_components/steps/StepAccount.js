@@ -2,14 +2,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { inputCls, STRENGTH_META } from "../../_lib/constants";
 import { getPasswordStrength } from "../../_lib/helpers";
+import { isValidPhone, PHONE_ERROR } from "../../../lib/phone";
 import { ErrorBanner, Field, StepCard, StepFooter } from "../StepShell";
 import { PasswordInput } from "../../../../components/password-input";
 
 export function StepAccount({ initial, onNext }) {
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
   const [password, setPassword] = useState(initial?.password ?? "");
-  const [confirm, setConfirm] = useState(initial?.password ?? "");
   const [agreed, setAgreed] = useState(initial?.agreed ?? false);
   const [err, setErr] = useState("");
 
@@ -21,13 +22,19 @@ export function StepAccount({ initial, onNext }) {
     const trimmedName = fullName.trim();
     if (!trimmedName) return setErr("Please enter your full name.");
     if (!email) return setErr("Please enter your email address.");
+    if (!isValidPhone(phone)) return setErr(PHONE_ERROR);
     if (!password || password.length < 8)
       return setErr("Password must be at least 8 characters.");
-    if (password !== confirm) return setErr("Passwords do not match.");
     if (!agreed)
       return setErr("Please agree to the Terms of Service and Privacy Policy.");
 
-    onNext({ fullName: trimmedName, email, password, agreed });
+    onNext({
+      fullName: trimmedName,
+      email,
+      phone: phone.trim(),
+      password,
+      agreed,
+    });
   };
 
   const requiredStar = <span className="ml-0.5 text-red-500">*</span>;
@@ -40,6 +47,7 @@ export function StepAccount({ initial, onNext }) {
           <Field label={<>Full name{requiredStar}</>}>
             <input
               type="text"
+              autoComplete="name"
               className={inputCls}
               placeholder="Sarah Johnson"
               value={fullName}
@@ -50,6 +58,7 @@ export function StepAccount({ initial, onNext }) {
           <Field label={<>Email address{requiredStar}</>}>
             <input
               type="email"
+              autoComplete="email"
               className={inputCls}
               placeholder="you@example.com"
               value={email}
@@ -57,9 +66,23 @@ export function StepAccount({ initial, onNext }) {
             />
           </Field>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+          <Field label={<>Phone number{requiredStar}</>}>
+            <input
+              type="tel"
+              autoComplete="tel"
+              className={inputCls}
+              placeholder="+1 555 123 4567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <p className="mt-1 text-[0.65rem] text-[var(--muted)]">
+              Your child can call this number from their crisis screen.
+            </p>
+          </Field>
           <Field label={<>Password{requiredStar}</>}>
             <PasswordInput
+              autoComplete="new-password"
               className={inputCls}
               placeholder="Min. 8 characters"
               value={password}
@@ -82,14 +105,6 @@ export function StepAccount({ initial, onNext }) {
                 </p>
               </div>
             )}
-          </Field>
-          <Field label={<>Confirm password{requiredStar}</>}>
-            <PasswordInput
-              className={inputCls}
-              placeholder="Repeat password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-            />
           </Field>
         </div>
       </div>

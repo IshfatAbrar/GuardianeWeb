@@ -11,7 +11,8 @@ import { describe, it, expect, vi } from "vitest";
 // a real Firebase app from env vars that don't exist under vitest.
 vi.mock("./firebase", () => ({ db: {} }));
 
-const { childQrPayload, ageFromBirthDate } = await import("./database.js");
+const { childQrPayload, ageFromBirthDate, buildParentDoc } =
+  await import("./database.js");
 
 describe("childQrPayload", () => {
   it("is the child's raw document id, with nothing added", () => {
@@ -74,5 +75,37 @@ describe("ageFromBirthDate", () => {
     expect(
       ageFromBirthDate(`01/01/${new Date().getFullYear() + 5}`),
     ).toBeNull();
+  });
+});
+
+describe("buildParentDoc", () => {
+  const base = {
+    uid: "u1",
+    email: "a@b.co",
+    name: "Sarah",
+    phone: " +1 555 123 4567 ",
+  };
+
+  it("matches the shared parent shape, including the iOS-only fields", () => {
+    const doc = buildParentDoc({ ...base, childIds: ["c1", "c2"] });
+    expect(doc).toMatchObject({
+      uid: "u1",
+      name: "Sarah",
+      email: "a@b.co",
+      phone: "+1 555 123 4567",
+      role: "parent",
+      numberOfChildren: 2,
+      linkedChildren: ["c1", "c2"],
+      hasCompletedOnboarding: true,
+      isActive: true,
+    });
+    expect(doc.createdAt).toBeDefined();
+    expect(doc.updatedAt).toBeDefined();
+  });
+
+  it("only marks onboarding complete once a child exists", () => {
+    expect(
+      buildParentDoc({ ...base, childIds: [] }).hasCompletedOnboarding,
+    ).toBe(false);
   });
 });

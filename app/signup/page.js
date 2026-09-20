@@ -35,10 +35,11 @@ const whyGuardianeFaqs = [
 
 export default function SignupPage() {
   const [step, setStep] = useState(0); // 0–3, then 'done'
-  const [account, setAccount] = useState(null); // { fullName, email, password, agreed }
+  const [account, setAccount] = useState(null); // { fullName, email, phone, password, agreed }
   const [children, setChildren] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [verifyEmail, setVerifyEmail] = useState(null); // set when they must verify before signing in
 
   const addChild = (child) => setChildren((prev) => [...prev, child]);
   const removeChild = (i) =>
@@ -53,7 +54,16 @@ export default function SignupPage() {
     setSubmitError("");
     try {
       const trimmedName = account.fullName.trim();
-      await signUp(account.email, account.password, trimmedName, { children });
+      const result = await signUp(
+        account.email,
+        account.password,
+        trimmedName,
+        {
+          children,
+          phone: account.phone,
+        },
+      );
+      setVerifyEmail(result.needsVerification ? account.email : null);
       setStep("done");
     } catch (e) {
       const code = e?.code ?? "";
@@ -117,7 +127,7 @@ export default function SignupPage() {
           />
         );
       case "done":
-        return <StepDone />;
+        return <StepDone verifyEmail={verifyEmail} />;
     }
   };
 

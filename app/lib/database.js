@@ -32,6 +32,7 @@ import {
   arrayRemove,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { isValidPhone, PHONE_ERROR } from "./phone";
 
 export const COLLECTIONS = {
   USERS: "users",
@@ -230,6 +231,33 @@ function buildChildDoc({
 }
 
 /**
+ * Build the parent's users/{uid} document.
+ *
+ * `hasCompletedOnboarding` and `isActive` are the iOS parent app's additive
+ * fields (Android ignores them). Web signup collects the children up front, so
+ * onboarding is complete as soon as there is at least one — writing it here keeps
+ * a web parent from being dropped into iOS's onboarding flow. `isActive` is
+ * `true` for every live account (iOS reads a missing value as true too).
+ * Both are Booleans: iOS accepts Bool/Int/String, and `true` is what iOS itself
+ * writes once onboarding is done.
+ */
+export function buildParentDoc({ uid, email, name, phone, childIds }) {
+  return {
+    uid,
+    name: name || "",
+    email,
+    phone: phone.trim(),
+    role: "parent",
+    numberOfChildren: childIds.length,
+    linkedChildren: childIds,
+    hasCompletedOnboarding: childIds.length > 0,
+    isActive: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+}
+
+/**
  * Provision a brand-new parent account: writes users/{uid} with role 'parent'
  * and one users/{auto} per child with role 'child'.
  *
@@ -242,6 +270,9 @@ function buildChildDoc({
  * Returns { childIds }.
  */
 export async function provisionParent({ uid, email, name, phone, children }) {
+  // The child app's crisis screen dials this number; without it the child has
+  // no way to call their parent. Enforced here so no signup path can skip it.
+  if (!isValidPhone(phone)) throw new Error(PHONE_ERROR);
   const childrenArr = Array.isArray(children) ? children : [];
   const batch = writeBatch(db);
 
@@ -265,17 +296,7 @@ export async function provisionParent({ uid, email, name, phone, children }) {
     );
   });
 
-  batch.set(userRef, {
-    uid,
-    name: name || "",
-    email,
-    phone: phone || "",
-    role: "parent",
-    numberOfChildren: childrenArr.length,
-    linkedChildren: childIds,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+  batch.set(userRef, buildParentDoc({ uid, email, name, phone, childIds }));
 
   await batch.commit();
   return { childIds };

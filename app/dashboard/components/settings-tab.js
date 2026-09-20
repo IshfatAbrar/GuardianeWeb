@@ -7,6 +7,7 @@ import { usePreference, useDarkMode } from "../../lib/preferences";
 import { ageFromBirthDate } from "../../lib/database";
 import { ChildFormModal } from "./child-form-modal";
 import { EditNameModal } from "./edit-name-modal";
+import { EditPhoneModal } from "./edit-phone-modal";
 import { DeleteAccountModal } from "./delete-account-modal";
 import { SupportModal } from "./support-modal";
 
@@ -212,6 +213,7 @@ export function SettingsTab({ data }) {
   const accountName =
     profile?.name || user?.displayName || user?.email?.split("@")[0] || "";
   const accountEmail = user?.email || "";
+  const accountPhone = profile?.phone || "";
 
   const [section, setSection] = useState("general");
 
@@ -233,6 +235,7 @@ export function SettingsTab({ data }) {
 
   // Modals
   const [editName, setEditName] = useState(false);
+  const [editPhone, setEditPhone] = useState(false);
   const [addChildOpen, setAddChildOpen] = useState(false);
   const [editChild, setEditChild] = useState(null);
   const [supportMode, setSupportMode] = useState(null); // "help" | "contact" | null
@@ -291,6 +294,27 @@ export function SettingsTab({ data }) {
               name={accountName}
               email={accountEmail}
               onEditName={() => setEditName(true)}
+            />
+            <FieldRow
+              label="Phone number"
+              value={
+                accountPhone ? (
+                  accountPhone
+                ) : (
+                  <span className="text-[var(--danger)]">
+                    Not set — your child can&apos;t call you from their crisis
+                    screen
+                  </span>
+                )
+              }
+              trailing={
+                <ActionButton
+                  onClick={() => setEditPhone(true)}
+                  disabled={!user?.uid}
+                >
+                  {accountPhone ? "Edit" : "Add"}
+                </ActionButton>
+              }
             />
             <FieldRow
               label="Dark mode"
@@ -542,6 +566,13 @@ export function SettingsTab({ data }) {
           {renderPanel()}
         </div>
       </div>
+
+      <EditPhoneModal
+        open={editPhone}
+        onClose={() => setEditPhone(false)}
+        currentPhone={accountPhone}
+        uid={user?.uid}
+      />
 
       <EditNameModal
         open={editName}
