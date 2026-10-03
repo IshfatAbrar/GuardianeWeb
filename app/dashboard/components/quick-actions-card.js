@@ -8,6 +8,7 @@ export function QuickActionsCard({
   onAppLimits,
   onScreenTimeLimit,
   onAssignModule,
+  hiddenActions = [],
 }) {
   const handlers = {
     reports: onReports,
@@ -42,21 +43,23 @@ export function QuickActionsCard({
           the final tile across both columns when the count is odd, so it
           doesn't sit orphaned alone on the left of its own row. */}
       <div className="grid grid-cols-2 gap-4">
-        {quickActions.map((qa) => (
-          <button
-            key={qa.id}
-            type="button"
-            onClick={handlers[qa.id]}
-            className="flex flex-col items-center gap-2.5 group last:odd:col-span-2"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center group-hover:bg-[var(--accent-bg-hover)] transition-colors">
-              {qa.icon}
-            </div>
-            <span className="text-[12px] font-medium text-[var(--foreground)] text-center leading-tight">
-              {qa.label}
-            </span>
-          </button>
-        ))}
+        {quickActions
+          .filter((qa) => !hiddenActions.includes(qa.id))
+          .map((qa) => (
+            <button
+              key={qa.id}
+              type="button"
+              onClick={handlers[qa.id]}
+              className="flex flex-col items-center gap-2.5 group last:odd:col-span-2"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center group-hover:bg-[var(--accent-bg-hover)] transition-colors">
+                {qa.icon}
+              </div>
+              <span className="text-[12px] font-medium text-[var(--foreground)] text-center leading-tight">
+                {qa.label}
+              </span>
+            </button>
+          ))}
       </div>
     </div>
   );

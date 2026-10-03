@@ -14,6 +14,11 @@ import { TitleIcon } from "../../../components/title-icon";
 // parent seeing "no data".
 
 import { formatDuration } from "../../lib/screenTime";
+import {
+  childPlatform,
+  CHILD_PLATFORM,
+  iosScreenTimeStatus,
+} from "../../lib/childDevice";
 
 const MAX_APPS = 4;
 
@@ -30,7 +35,52 @@ function syncedLabel(entry) {
     : `Last synced ${date.toLocaleDateString([], { month: "short", day: "numeric" })}`;
 }
 
-export function ScreenTimeCard({ entry, childName }) {
+// An iOS child never writes `screen_time_entries` — Apple's FamilyControls
+// gives apps a limit-reached callback, not usage numbers. Show the limit the
+// device is enforcing (from its self-reported screenTimeStatus) instead of a
+// misleading "no sync".
+function IosStatus({ status, childFirst }) {
+  if (!status) {
+    return (
+      <p className="text-[13px] text-[var(--muted)]">
+        {childFirst ? `${childFirst}'s iPhone` : "This iPhone"} hasn&apos;t
+        reported its Screen Time setup yet.
+      </p>
+    );
+  }
+  const active = status.authorized && status.isMonitoring;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline gap-2">
+        <span className="text-[26px] font-bold leading-none text-[var(--foreground)]">
+          {formatDuration(status.limitMinutes * 60)}
+        </span>
+        <span className="text-[12px] text-[var(--muted)]">daily limit</span>
+      </div>
+      {status.bonusMinutesToday > 0 && (
+        <p className="text-[12px] text-[var(--muted)]">
+          Includes {status.bonusMinutesToday} bonus min earned today
+        </p>
+      )}
+      <p
+        className={`text-[12.5px] font-medium ${active ? "text-[var(--foreground)]" : "text-amber-600"}`}
+      >
+        {active
+          ? `Limit active on ${status.selectedItemCount} ${status.selectedItemCount === 1 ? "app or category" : "apps and categories"}`
+          : !status.authorized
+            ? "Screen Time permission not granted on the device"
+            : "No apps picked to limit on the device yet"}
+      </p>
+      <p className="pt-1 text-[11px] text-[var(--muted)]">
+        iPhone doesn&apos;t share per-app usage with apps, so only the limit is
+        shown.
+      </p>
+    </div>
+  );
+}
+
+export function ScreenTimeCard({ entry, childName, child }) {
+  const isIos = childPlatform(child) === CHILD_PLATFORM.IOS;
   const childFirst = childName?.split(" ")[0];
 
   // `topApps` is pre-sorted and pre-truncated by the child app; fall back to
@@ -69,7 +119,12 @@ export function ScreenTimeCard({ entry, childName }) {
         </h2>
       </div>
 
-      {!entry ? (
+      {!entry && isIos ? (
+        <IosStatus
+          status={iosScreenTimeStatus(child)}
+          childFirst={childName?.split(" ")[0]}
+        />
+      ) : !entry ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-2xl bg-[var(--surface-muted)] py-8">
           <svg
             width="28"

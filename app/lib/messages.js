@@ -88,6 +88,20 @@ export function isAlertMessage(message) {
   );
 }
 
+// Child-app status events that ride the messages collection but aren't chat:
+// the iOS kid app posts "<module> has been completed successfully!" with
+// messageType 'module_completed' when a child finishes a learning module. Shown
+// as a system line in the conversation, never counted as an unread message.
+const ACTIVITY_MESSAGE_TYPES = new Set(["module_completed"]);
+
+/** Is this a child-app activity event rather than something the child typed? */
+export function isActivityMessage(message) {
+  return (
+    message?.senderType === "child" &&
+    ACTIVITY_MESSAGE_TYPES.has(message?.messageType)
+  );
+}
+
 // The child app's classifier stack (services/TextClassifier.js — remote
 // chatWithAgent classification plus the rule-based VulgarContentDetector and
 // IncognitoDetector tiers) emits five risk labels (TextClassifier.isRiskLabel /
@@ -196,7 +210,7 @@ export function listenToConversationPreview({ parentId, childId }, callback) {
     (snap) => {
       unreadCount = snap.docs
         .map(rowFrom)
-        .filter((m) => !isAlertMessage(m)).length;
+        .filter((m) => !isAlertMessage(m) && !isActivityMessage(m)).length;
       emit();
     },
     () => {
@@ -212,7 +226,7 @@ export function listenToConversationPreview({ parentId, childId }, callback) {
 }
 
 /**
- * Live total count of unread (child-sent, non-alert) messages across every
+ * Live total count of unread (child-sent, non-alert, non-activity) messages across every
  * given child — for a nav badge that needs just a number, not a preview per
  * child. Lighter than listenToConversationPreview: skips its last-message
  * listener, and shares the same query shape as markChildMessagesAsRead.
@@ -243,7 +257,9 @@ export function listenToUnreadMessageCount({ parentId, childIds }, callback) {
       (snap) => {
         byChild.set(
           childId,
-          snap.docs.map(rowFrom).filter((m) => !isAlertMessage(m)).length,
+          snap.docs
+            .map(rowFrom)
+            .filter((m) => !isAlertMessage(m) && !isActivityMessage(m)).length,
         );
         emit();
       },
