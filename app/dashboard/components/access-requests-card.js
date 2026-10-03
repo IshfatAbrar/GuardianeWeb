@@ -2,8 +2,8 @@
 
 // Pending "can I use my apps?" requests from the children's devices — see
 // app/lib/accessRequests.js. Approving grants extra Screen Time for today,
-// applied by the child's device as soon as it sees the answer. Renders nothing
-// when there's nothing waiting, so it never clutters the overview.
+// applied by the child's device as soon as it sees the answer. Always shown,
+// with an empty state when nothing is waiting, so parents know where requests land.
 
 import { useState } from "react";
 import { TitleIcon } from "../../../components/title-icon";
@@ -89,7 +89,6 @@ function RequestRow({ request, childList }) {
 }
 
 export function AccessRequestsCard({ requests = [], childList = [] }) {
-  if (requests.length === 0) return null;
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
@@ -107,15 +106,29 @@ export function AccessRequestsCard({ requests = [], childList = [] }) {
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Requests
         </h2>
-        <span className="rounded-full bg-[var(--accent-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)]">
-          {requests.length}
-        </span>
+        {requests.length > 0 && (
+          <span className="rounded-full bg-[var(--accent-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)]">
+            {requests.length}
+          </span>
+        )}
       </div>
-      <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-        {requests.map((r) => (
-          <RequestRow key={r.id} request={r} childList={childList} />
-        ))}
-      </ul>
+      {requests.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 text-center">
+          <p className="text-[14px] text-[var(--muted)]">
+            No requests right now
+          </p>
+          <p className="text-[12px] text-[var(--muted)]">
+            When your child asks for extra app time to finish a module, it shows
+            up here.
+          </p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          {requests.map((r) => (
+            <RequestRow key={r.id} request={r} childList={childList} />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
