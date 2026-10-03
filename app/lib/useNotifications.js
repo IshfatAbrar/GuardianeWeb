@@ -41,6 +41,12 @@ import {
   markMessagesReadByIds,
 } from "./messages";
 import { readCachedAlerts, writeCachedAlerts } from "./notificationsCache";
+import {
+  nextSeenAt,
+  saveAlertsSeenAt,
+  seenAtMillis,
+  unseenAlerts,
+} from "./alertSeen";
 
 const MAX_ALERTS = 50;
 const EMPTY_ALERTS = [];
@@ -48,8 +54,11 @@ const EMPTY_ALERTS = [];
 const NotificationsContext = createContext({
   alerts: [],
   unreadCount: 0,
+  unseenAlerts: [],
+  unseenCount: 0,
   loading: true,
   markAllRead: () => {},
+  markAllSeen: () => {},
 });
 
 function toMillis(ts) {
@@ -76,8 +85,11 @@ function serializeAlert(raw) {
 }
 
 export function NotificationsProvider({ children }) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const parentId = user?.uid ?? null;
+  // Optimistic local copy of the seen watermark, so badges clear the moment
+  // the bell opens instead of after the profile listener round-trips.
+  const [localSeenAtMs, setLocalSeenAtMs] = useState(0);
 
   // null means "children not fetched yet", distinct from '' meaning "this
   // parent genuinely has none" — the two need different loading answers.
@@ -97,6 +109,7 @@ export function NotificationsProvider({ children }) {
     setChildIdsKey(null);
     setAlertsState([]);
     setLoadingState(true);
+    setLocalSeenAtMs(0);
   }
 
   // Alerts are scoped per child, so the child list is a prerequisite for the
@@ -192,9 +205,33 @@ export function NotificationsProvider({ children }) {
 
   const unreadCount = alerts.length;
 
+  // Red badges and the critical popup only fire for alerts the parent hasn't
+  // looked at yet — see alertSeen.js for seen vs read.
+  const seenAtMs = Math.max(seenAtMillis(userProfile), localSeenAtMs);
+  const unseen = useMemo(
+    () => unseenAlerts(alerts, seenAtMs),
+    [alerts, seenAtMs],
+  );
+
+  // Called when the parent opens the bell or the Crisis tab.
+  const markAllSeen = useCallback(() => {
+    const next = nextSeenAt(alerts, seenAtMs);
+    if (next === null) return;
+    setLocalSeenAtMs(next);
+    saveAlertsSeenAt(parentId, next).catch(() => {});
+  }, [alerts, seenAtMs, parentId]);
+
   const value = useMemo(
-    () => ({ alerts, unreadCount, loading, markAllRead }),
-    [alerts, unreadCount, loading, markAllRead],
+    () => ({
+      alerts,
+      unreadCount,
+      unseenAlerts: unseen,
+      unseenCount: unseen.length,
+      loading,
+      markAllRead,
+      markAllSeen,
+    }),
+    [alerts, unreadCount, unseen, loading, markAllRead, markAllSeen],
   );
 
   return (
