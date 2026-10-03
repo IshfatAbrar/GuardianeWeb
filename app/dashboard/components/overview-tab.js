@@ -13,6 +13,8 @@ import { EmergencyCallModal } from "./emergency-call-modal";
 import { MoodAnalyticsModal } from "./mood-analytics-modal";
 import { AppLimitsModal } from "./app-limits-modal";
 import { ScreenTimeLimitModal } from "./screen-time-limit-modal";
+import { AccessRequestsCard } from "./access-requests-card";
+import { supportsAppLimits, supportsDailyLimit } from "../../lib/childDevice";
 
 function firstName(profile, user) {
   const full = profile?.name || user?.displayName || "";
@@ -43,6 +45,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
     completedAssignmentsCount,
     inProgressAssignmentsCount,
     selectedChildId,
+    pendingAccessRequests,
   } = data;
 
   const [emergencyOpen, setEmergencyOpen] = useState(false);
@@ -52,6 +55,16 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
 
   const greetingName = firstName(userProfile, user);
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? null;
+  // iOS children get the whole-device daily limit, Android children per-app
+  // limits; a child whose device hasn't reported its platform gets both.
+  const hiddenActions = [
+    ...(selectedChild && !supportsAppLimits(selectedChild)
+      ? ["appLimits"]
+      : []),
+    ...(selectedChild && !supportsDailyLimit(selectedChild)
+      ? ["screenTimeLimit"]
+      : []),
+  ];
 
   const go = (tab) => onNavigate?.(tab);
   const openReport = () => {
@@ -95,6 +108,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         <ScreenTimeCard
           entry={latestScreenTime}
           childName={selectedChild?.name}
+          child={selectedChild}
         />
         <QuickActionsCard
           onReports={openReport}
@@ -103,6 +117,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           onAppLimits={() => setAppLimitsOpen(true)}
           onScreenTimeLimit={() => setScreenTimeLimitOpen(true)}
           onAssignModule={() => go("modules")}
+          hiddenActions={hiddenActions}
         />
       </div>
 
@@ -121,6 +136,11 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           if (mod?.id && onOpenModule) onOpenModule(mod.id);
           else go("learning");
         }}
+      />
+
+      <AccessRequestsCard
+        requests={pendingAccessRequests ?? []}
+        childList={children}
       />
 
       <RecentActivityCard
@@ -143,14 +163,14 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
       <AppLimitsModal
         open={appLimitsOpen}
         onClose={() => setAppLimitsOpen(false)}
-        childList={children}
+        childList={children.filter(supportsAppLimits)}
         initialChildId={selectedChildId}
       />
 
       <ScreenTimeLimitModal
         open={screenTimeLimitOpen}
         onClose={() => setScreenTimeLimitOpen(false)}
-        childList={children}
+        childList={children.filter(supportsDailyLimit)}
         initialChildId={selectedChildId}
       />
     </div>

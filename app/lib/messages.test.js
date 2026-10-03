@@ -8,8 +8,12 @@ import { describe, it, expect, vi } from "vitest";
 
 vi.mock("./firebase", () => ({ db: {} }));
 
-const { isAlertMessage, messageClassification, alertSeverity } =
-  await import("./messages.js");
+const {
+  isAlertMessage,
+  isActivityMessage,
+  messageClassification,
+  alertSeverity,
+} = await import("./messages.js");
 
 // The shape AlertService actually writes.
 const childAlert = (overrides = {}) => ({
@@ -163,5 +167,41 @@ describe("alertSeverity", () => {
     expect(
       alertSeverity({ senderType: "child", message: "Risk detected: ..." }),
     ).toBe("info");
+  });
+});
+
+// The iOS kid app posts module completions into the conversation. They are
+// status events, not chat: never an alert, never an unread message.
+describe("isActivityMessage", () => {
+  const completed = {
+    senderType: "child",
+    message: "Safety has been completed successfully!",
+    messageType: "module_completed",
+  };
+
+  it("recognises a child's module completion", () => {
+    expect(isActivityMessage(completed)).toBe(true);
+    expect(isAlertMessage(completed)).toBe(false);
+  });
+
+  it("ignores ordinary chat and parent messages", () => {
+    expect(isActivityMessage({ senderType: "child", message: "hi" })).toBe(
+      false,
+    );
+    expect(isActivityMessage({ ...completed, senderType: "parent" })).toBe(
+      false,
+    );
+  });
+
+  it("the iOS kid app's Jojo risk alert is an alert, not activity", () => {
+    const jojo = {
+      senderType: "child",
+      message: "Risk detected: Suicidal Reference (0.92): I want to die",
+      messageType: "risk_alert",
+      metadata: { source: "Jojo Chat", classification: "Suicidal Reference" },
+    };
+    expect(isActivityMessage(jojo)).toBe(false);
+    expect(isAlertMessage(jojo)).toBe(true);
+    expect(alertSeverity(jojo)).toBe("critical");
   });
 });

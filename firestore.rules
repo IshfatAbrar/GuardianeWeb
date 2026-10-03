@@ -28,7 +28,9 @@
 // Collections that are read/written by the no-auth child app and so remain
 // publicly accessible by necessity: users(get), mood_entries, screen_time_entries,
 // messages, alerts, conversations, learning_progress, lesson_streaks,
-// module_assignments, modules(+lessons), emergency_contacts(read).
+// module_assignments, modules(+lessons), emergency_contacts(read),
+// access_requests, rewards. The child may also update exactly two status
+// fields on its own users doc (see isChildDeviceStatusUpdate).
 // ───────────────────────────────────────────────────────────────────────────
 
 rules_version = '2';
@@ -41,6 +43,11 @@ service cloud.firestore {
 
     function isOwner(uid) {
       return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Only these fields changed on an update.
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
     // ── users ────────────────────────────────────────────────────────────────
@@ -60,6 +67,18 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() &&
                        (userId == request.auth.uid ||
                         resource.data.parentId == request.auth.uid);
+
+      // The iOS child app (unauthenticated, like every child client) reports
+      // its Screen Time status and that it is an iOS device, so the parent
+      // dashboard can show the right controls. Child docs only, and nothing
+      // else on the doc may change — not the parent link, not the limit.
+      allow update: if resource.data.role == 'child' &&
+                       onlyChanges(['screenTimeStatus', 'devicePlatform']) &&
+                       request.resource.data.get('screenTimeStatus', {}) is map &&
+                       request.resource.data.get('screenTimeStatus', {}).keys().hasOnly([
+                         'authorized', 'isMonitoring', 'limitMinutes', 'baseLimitMinutes',
+                         'bonusMinutesToday', 'selectedItemCount', 'updatedAt']) &&
+                       request.resource.data.get('devicePlatform', 'ios') in ['ios', 'android'];
 
       // GuardParent stores its JoJo history under the parent's own user doc.
       match /jojoConversations/{conversationId} {
@@ -168,6 +187,55 @@ service cloud.firestore {
     match /lesson_streaks/{childId} {
       allow read, create, update: if true;
       allow delete: if false;
+    }
+
+    // ── access_requests (child asks for extra app time) ──────────────────────
+    // Created by the unauthenticated iOS child app — strictly shape-checked and
+    // always pending. Only the owning parent answers. The child's device may
+    // then stamp `appliedAt`, once, after granting the approved minutes.
+    function validAccessRequest(data) {
+      return data.keys().hasOnly(['childId', 'parentId', 'moduleId', 'moduleTitle',
+                                  'requestType', 'status', 'requestedAt']) &&
+             data.childId is string && data.parentId is string &&
+             data.moduleId is string && data.moduleId.size() <= 200 &&
+             data.moduleTitle is string && data.moduleTitle.size() <= 200 &&
+             data.requestType == 'app_access' &&
+             data.status == 'pending' &&
+             data.requestedAt is timestamp;
+    }
+    match /access_requests/{requestId} {
+      allow read: if true;
+      allow create: if validAccessRequest(request.resource.data);
+      allow update: if (isAuthenticated() &&
+                        resource.data.parentId == request.auth.uid &&
+                        onlyChanges(['status', 'grantedMinutes', 'respondedAt']) &&
+                        request.resource.data.status in ['approved', 'denied'] &&
+                        (request.resource.data.status == 'denied' ||
+                         (request.resource.data.grantedMinutes is int &&
+                          request.resource.data.grantedMinutes >= 1 &&
+                          request.resource.data.grantedMinutes <= 240))) ||
+                       (resource.data.status == 'approved' &&
+                        !('appliedAt' in resource.data) &&
+                        onlyChanges(['appliedAt']));
+      allow delete: if isAuthenticated() && resource.data.parentId == request.auth.uid;
+    }
+
+    // ── rewards (badges the child claims) ────────────────────────────────────
+    // Created once by the unauthenticated iOS child app (deterministic id per
+    // badge, so re-claiming is an update and is refused). Read-only after.
+    match /rewards/{rewardId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['childId', 'parentId', 'type', 'badge',
+                                                             'title', 'reason', 'claimedAt']) &&
+                       request.resource.data.childId is string &&
+                       request.resource.data.parentId is string &&
+                       request.resource.data.type == 'badge' &&
+                       request.resource.data.badge is string && request.resource.data.badge.size() <= 60 &&
+                       request.resource.data.title is string && request.resource.data.title.size() <= 100 &&
+                       request.resource.data.reason is string && request.resource.data.reason.size() <= 200 &&
+                       request.resource.data.claimedAt is timestamp;
+      allow update: if false;
+      allow delete: if isAuthenticated() && resource.data.parentId == request.auth.uid;
     }
 
     // ── aiInsights (GuardParent only, authenticated) ─────────────────────────

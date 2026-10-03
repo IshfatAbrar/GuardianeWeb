@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Sidebar } from "./components/sidebar";
 import { OverviewTab } from "./components/overview-tab";
@@ -64,7 +64,12 @@ function DashboardContent() {
     initialTab === "chatbot" || initialTab === "messaging",
   );
   const data = useDashboardData();
-  const { alerts: unreadAlerts } = useNotifications();
+  const {
+    unseenAlerts,
+    unseenCount: unseenAlertsCount,
+    markAllSeen: markAlertsSeen,
+    loading: notificationsLoading,
+  } = useNotifications();
 
   const childById = useMemo(() => {
     const m = new Map();
@@ -147,6 +152,22 @@ function DashboardContent() {
     if (activeNav === "modules") markModuleCompletionsSeen();
   }
 
+  // Opening the Crisis tab counts as seeing the current alerts, same as the
+  // bell: its badge and the critical popup stay quiet until a newer one.
+  // An effect, not the during-render block above — markAlertsSeen writes to
+  // another component's state and to Firestore.
+  // Only on entering the tab (and once alerts have loaded): a new critical
+  // alert arriving while the tab sits open must still pop up with its siren.
+  const markAlertsSeenRef = useRef(markAlertsSeen);
+  useEffect(() => {
+    markAlertsSeenRef.current = markAlertsSeen;
+  });
+  const enteredEmergency = activeNav === "emergency";
+  const alertsLoaded = !notificationsLoading;
+  useEffect(() => {
+    if (enteredEmergency && alertsLoaded) markAlertsSeenRef.current();
+  }, [enteredEmergency, alertsLoaded]);
+
   const openLearningModule = (moduleId) => {
     setPendingModuleId(moduleId);
     setActiveNav("learning");
@@ -206,7 +227,7 @@ function DashboardContent() {
             onToggleCollapsed={() => setSidebarCollapsed((c) => !c)}
             badges={{
               messaging: data.unreadMessagesCount,
-              emergency: data.activeAlerts.length,
+              emergency: unseenAlertsCount,
               modules: moduleCompletionsUnseen,
             }}
           />
@@ -217,7 +238,7 @@ function DashboardContent() {
       </div>
 
       <CriticalAlertPopup
-        alerts={unreadAlerts}
+        alerts={unseenAlerts}
         childList={data.children}
         onGoToEmergency={(childId) => {
           // Crisis Management now scopes its Risk alerts card to the selected

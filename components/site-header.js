@@ -253,19 +253,26 @@ function NavDropdown({ label, items }) {
 
 function NotificationsBell() {
   const [open, setOpen] = useState(false);
-  const { unreadCount } = useNotifications();
+  const { unseenCount, markAllSeen } = useNotifications();
   const wrapperRef = useRef(null);
+
+  // Opening the bell counts as seeing everything in it: the red badge stays
+  // off until a newer alert arrives (the list keeps them until marked read).
+  const toggle = () => {
+    if (!open) markAllSeen();
+    setOpen((v) => !v);
+  };
 
   return (
     <div ref={wrapperRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={
-          unreadCount > 0
-            ? `Notifications — ${unreadCount} unread`
+          unseenCount > 0
+            ? `Notifications — ${unseenCount} new`
             : "Notifications"
         }
         className="relative flex h-7 w-7 items-center justify-center rounded-sm text-[var(--muted)] transition-colors hover:bg-white/5 hover:text-[var(--foreground)]"
@@ -284,9 +291,9 @@ function NotificationsBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
 
-        {unreadCount > 0 && (
+        {unseenCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-semibold leading-none text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
+            {unseenCount > 9 ? "9+" : unseenCount}
           </span>
         )}
       </button>

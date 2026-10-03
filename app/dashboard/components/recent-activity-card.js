@@ -5,6 +5,7 @@ const SEVERITY_DOT = {
   error: "bg-[var(--danger)]",
   warning: "bg-amber-500",
   info: "bg-[var(--accent)]",
+  reward: "bg-emerald-500",
 };
 
 function relativeTime(ts) {
@@ -62,7 +63,7 @@ export function RecentActivityCard({ alerts = [], childList = [] }) {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p className="text-[14px] text-[var(--muted)]">No recent alerts</p>
+          <p className="text-[14px] text-[var(--muted)]">No recent activity</p>
         </div>
       ) : (
         <ul className="divide-y divide-[var(--border)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">

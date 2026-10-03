@@ -21,6 +21,11 @@ import {
   progressFor,
 } from "../../lib/learningModules";
 import { listenToInsightsForChild } from "../../lib/aiInsights";
+import {
+  listenToAccessRequests,
+  pendingRequests,
+} from "../../lib/accessRequests";
+import { listenToRewards, rewardLabel } from "../../lib/rewards";
 import { summarizeMood } from "../../lib/mood";
 
 const MAX_FEED_ALERTS = 10;
@@ -28,6 +33,19 @@ const EMPTY_ALERTS = [];
 const EMPTY_PROGRESS = new Map();
 // Derived rather than written out, so it can't drift from summarizeMood's shape.
 const EMPTY_MOOD = summarizeMood([]);
+
+// Shape a claimed reward into the same row shape so it can share the feed.
+function toRewardRow(reward) {
+  return {
+    id: `reward:${reward.id}`,
+    childId: reward.childId,
+    severity: "reward",
+    type: rewardLabel(reward),
+    timestamp: reward.claimedAt,
+    isRead: true,
+    status: null,
+  };
+}
 
 // Shape a `messages` alert row into what the activity feed and stats expect.
 // `type` is the short label the feed shows in bold; the raw `message` is the
@@ -68,6 +86,8 @@ function toAlertRow(message) {
  *   • assignments this parent handed out      → module_assignments (live)
  *   • child-written progress on those         → learning_progress (live)
  *   • cached Gemini insights for that child   → aiInsights (live)
+ *   • children's app-access requests          → access_requests (live)
+ *   • badges children claimed                 → rewards (live)
  *
  * It also owns `selectedChildId` and defaults it to the first fetched child.
  */
@@ -95,6 +115,20 @@ export function useDashboardData() {
     childId: null,
     data: null,
   });
+  const [accessRequests, setAccessRequests] = useState([]);
+  const [rewards, setRewards] = useState([]);
+
+  // Requests and rewards the children's devices write, addressed to this
+  // parent. Single equality on parentId each — no composite index.
+  useEffect(() => {
+    if (!uid) return undefined;
+    const unsubRequests = listenToAccessRequests(uid, setAccessRequests);
+    const unsubRewards = listenToRewards(uid, setRewards);
+    return () => {
+      unsubRequests();
+      unsubRewards();
+    };
+  }, [uid]);
 
   // Children, live. Selection is reconciled against every snapshot rather than
   // only set once: a listener can shrink the list (a child removed from
@@ -147,13 +181,21 @@ export function useDashboardData() {
   // than after: filtering the already-capped family-wide `alerts` below would
   // mean a child with older alerts could show fewer than MAX_FEED_ALERTS just
   // because a sibling's alerts crowded them out of the top 10 merged.
-  const alertsForSelectedChild = useMemo(
-    () =>
-      visibleAlerts
-        .filter((a) => a.childId === selectedChildId)
-        .slice(0, MAX_FEED_ALERTS),
-    [visibleAlerts, selectedChildId],
-  );
+  // Rewards share the feed with alerts, newest first.
+  const alertsForSelectedChild = useMemo(() => {
+    const rewardRows = rewards
+      .filter((r) => r.childId === selectedChildId)
+      .map(toRewardRow);
+    return [
+      ...visibleAlerts.filter((a) => a.childId === selectedChildId),
+      ...rewardRows,
+    ]
+      .sort(
+        (a, b) =>
+          (b.timestamp?.toMillis?.() ?? 0) - (a.timestamp?.toMillis?.() ?? 0),
+      )
+      .slice(0, MAX_FEED_ALERTS);
+  }, [visibleAlerts, rewards, selectedChildId]);
 
   // Modules are readable by any signed-in parent — not scoped to this family.
   useEffect(() => {
@@ -283,6 +325,7 @@ export function useDashboardData() {
     setSelectedChildId,
 
     // per-child data
+    selectedChild: children.find((c) => c.id === selectedChildId) ?? null,
     mood,
     latestScreenTime,
     insights,
@@ -303,6 +346,9 @@ export function useDashboardData() {
     // is deliberately truncated to MAX_FEED_ALERTS for the small feed widget;
     // this is the same underlying list without that cap.
     allAlerts: visibleAlerts,
+
+    // App-access requests still waiting on this parent, family-wide.
+    pendingAccessRequests: uid ? pendingRequests(accessRequests) : [],
 
     // Unread (child-sent, non-alert) chat messages across every child —
     // backs the Messages sidebar badge.

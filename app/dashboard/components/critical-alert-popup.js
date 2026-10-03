@@ -13,6 +13,10 @@
 // read — the bell and Emergency tab still show it until the parent actually
 // acknowledges it there. "Unannounced" here means "not yet shown as a
 // popup," tracked in its own localStorage set, separate from `isRead`.
+//
+// It is fed only alerts the parent hasn't *seen* (lib/alertSeen.js): once they
+// open the bell or the Crisis tab, the alerts on screen there no longer pop up
+// here either — only newer ones do.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";

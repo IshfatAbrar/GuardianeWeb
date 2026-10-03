@@ -15,6 +15,7 @@ import {
   listenToConversationPreview,
   sendMessage,
   markChildMessagesAsRead,
+  isActivityMessage,
   isAlertMessage,
   messageClassification,
 } from "../../lib/messages";
@@ -150,6 +151,17 @@ function MessageBubble({ message, childName, isLast }) {
             {timeLabel(message)}
           </p>
         </div>
+      </li>
+    );
+  }
+
+  if (isActivityMessage(message)) {
+    return (
+      <li className="flex justify-center">
+        <p className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-center text-[11.5px] text-[var(--muted)]">
+          {childName ? `${childName}: ` : ""}
+          {message.message} · {timeLabel(message)}
+        </p>
       </li>
     );
   }
