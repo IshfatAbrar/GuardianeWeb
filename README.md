@@ -254,3 +254,12 @@ Firestore security rules live in `firestore.rules` and are deployed with the Fir
 Rishabh Bhargav — Lead Developer
 </content>
 </invoke>
+
+## Observability (OpenTelemetry)
+
+`instrumentation.js` registers OpenTelemetry via `@vercel/otel` (service name `guardiane-web`). Route handlers, server rendering, and outgoing `fetch` calls are traced automatically.
+
+- **On Vercel:** add an OpenTelemetry-compatible integration (e.g. Datadog, Honeycomb, Grafana) or a trace drain in the project settings.
+- **Anywhere else:** set `OTEL_EXPORTER_OTLP_ENDPOINT` (e.g. `https://otlp-gateway-prod-us-east-0.grafana.net/otlp`) and, if the collector needs auth, `OTEL_EXPORTER_OTLP_HEADERS` (e.g. `Authorization=Basic <token>`).
+
+With neither configured, spans are dropped and nothing is sent.
