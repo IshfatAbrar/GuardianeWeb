@@ -453,7 +453,7 @@ export function SettingsTab({ data }) {
             />
             {/*
               App blocking now lives on the dashboard home page (Quick Actions
-              → App Limits), not here — see app-limits-modal.js and
+              → App Limits), not here — see app-limits-page.js and
               lib/appLimits.js. The child app (Guardiane_Android) reads the
               parent's Firestore-set caps via ParentAppLimitsService and
               folds them into its own enforcement, taking the stricter of the

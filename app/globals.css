@@ -117,6 +117,17 @@ html[data-theme="dark"] {
   color-scheme: dark;
 }
 
+/* Public (no sign-in) pages use blue-500 instead of the sky accent. Scoped via
+   :has() on <html> so the shared header and footer pick it up too, with no
+   flash on first paint. */
+html:has(.marketing-theme) {
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-border: rgba(59, 130, 246, 0.35);
+  --accent-bg: rgba(59, 130, 246, 0.08);
+  --accent-bg-hover: rgba(59, 130, 246, 0.16);
+}
+
 @theme inline {
   --font-sans: var(--font-epilogue), Epilogue, system-ui, sans-serif;
   --font-mono:
@@ -216,7 +227,7 @@ blockquote {
 }
 
 .mockup-shadow {
-  box-shadow: 0 40px 150px -8px rgba(2, 132, 199, 0.55);
+  box-shadow: 0 40px 150px -8px rgba(59, 130, 246, 0.55);
 }
 
 .brand-btn {

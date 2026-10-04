@@ -134,7 +134,7 @@ export default function SignupPage() {
   return (
     <AuthGuard mode="public">
       {/* TEMP: forced white background for now */}
-      <div className="bg-white text-[var(--foreground)]">
+      <div className="marketing-theme bg-white text-[var(--foreground)]">
         {/* ── HERO / SIGNUP ── */}
         <section className="bg-white">
           <HeroHalfBox>

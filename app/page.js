@@ -173,7 +173,7 @@ const joinUsFaqs = [
 export default function Home() {
   return (
     <>
-      <main className="min-h-screen overflow-x-clip text-[var(--foreground)]">
+      <main className="marketing-theme min-h-screen overflow-x-clip text-[var(--foreground)]">
         {/* ── HERO ── */}
         <section className="bg-[var(--background)]">
           <HeroHalfBox>
@@ -183,19 +183,19 @@ export default function Home() {
                 <div className="flex -space-x-2">
                   <span
                     className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
-                    style={{ background: "#1d4ed8" }}
+                    style={{ background: "#2563eb" }}
                   >
                     J
                   </span>
                   <span
                     className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
-                    style={{ background: "#6078bb" }}
+                    style={{ background: "#3b82f6" }}
                   >
                     M
                   </span>
                   <span
                     className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[var(--surface)] text-[10px] font-semibold text-white"
-                    style={{ background: "#93c5fd" }}
+                    style={{ background: "#60a5fa" }}
                   >
                     A
                   </span>

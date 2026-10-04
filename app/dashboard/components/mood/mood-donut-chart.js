@@ -6,8 +6,8 @@
 
 import { moodColor } from "../../../lib/mood";
 
-const SIZE = 140;
-const STROKE = 22;
+const SIZE = 180;
+const STROKE = 24;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const CENTER = SIZE / 2;
@@ -63,10 +63,12 @@ export function MoodDonutChart({ distribution, average }) {
         )}
       </svg>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[22px] font-bold leading-none text-[var(--foreground)]">
-          {Math.round(average)}%
+        <span className="text-[30px] font-bold leading-none text-[var(--foreground)]">
+          {Math.round(average)}
         </span>
-        <span className="mt-1 text-[10.5px] text-[var(--muted)]">Average</span>
+        <span className="mt-1 text-[11px] font-medium uppercase tracking-wider text-[var(--muted)]">
+          Average
+        </span>
       </div>
     </div>
   );

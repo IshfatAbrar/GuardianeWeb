@@ -31,7 +31,7 @@ const HELP_TOPICS = [
 export default function SupportPage() {
   return (
     <>
-      <main className="border-t border-[var(--border)]">
+      <main className="marketing-theme border-t border-[var(--border)]">
         <div className="clarity-wrap px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
           <div className="mx-auto max-w-2xl">
             <p className="clarity-kicker mb-4 text-[var(--accent)]">

@@ -8,6 +8,7 @@ export function QuickActionsCard({
   onAppLimits,
   onScreenTimeLimit,
   onAssignModule,
+  onLearningHub,
   hiddenActions = [],
 }) {
   const handlers = {
@@ -17,7 +18,12 @@ export function QuickActionsCard({
     appLimits: onAppLimits,
     screenTimeLimit: onScreenTimeLimit,
     assignModule: onAssignModule,
+    learningHub: onLearningHub,
   };
+
+  const shown = quickActions.filter((qa) => !hiddenActions.includes(qa.id));
+  const core = shown.filter((qa) => !qa.evenOut);
+  const actions = core.length % 2 === 0 ? core : shown;
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
@@ -39,27 +45,25 @@ export function QuickActionsCard({
       </div>
 
       {/* Two per row — the card shares a row with the mood and screen-time
-          cards, so four across squeezes the labels. `last:col-span-2` spans
-          the final tile across both columns when the count is odd, so it
-          doesn't sit orphaned alone on the left of its own row. */}
+          cards, so four across squeezes the labels. The `evenOut` action
+          fills an odd count to a full last row; `last:odd:col-span-2` is the
+          fallback if the count is still odd. */}
       <div className="grid grid-cols-2 gap-4">
-        {quickActions
-          .filter((qa) => !hiddenActions.includes(qa.id))
-          .map((qa) => (
-            <button
-              key={qa.id}
-              type="button"
-              onClick={handlers[qa.id]}
-              className="flex flex-col items-center gap-2.5 group last:odd:col-span-2"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center group-hover:bg-[var(--accent-bg-hover)] transition-colors">
-                {qa.icon}
-              </div>
-              <span className="text-[12px] font-medium text-[var(--foreground)] text-center leading-tight">
-                {qa.label}
-              </span>
-            </button>
-          ))}
+        {actions.map((qa) => (
+          <button
+            key={qa.id}
+            type="button"
+            onClick={handlers[qa.id]}
+            className="flex flex-col items-center gap-2.5 group last:odd:col-span-2"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-[var(--accent-bg)] flex items-center justify-center group-hover:bg-[var(--accent-bg-hover)] transition-colors">
+              {qa.icon}
+            </div>
+            <span className="text-[12px] font-medium text-[var(--foreground)] text-center leading-tight">
+              {qa.label}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
