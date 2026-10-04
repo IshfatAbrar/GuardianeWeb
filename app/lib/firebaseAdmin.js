@@ -1,5 +1,6 @@
-// Server-only Firebase Admin, used to mint password-reset links so we can send
-// our own branded email instead of Firebase's stock one.
+// Server-only Firebase Admin: mints password-reset / verification links for our
+// branded emails, and reads/writes the Admin-only `screen_time_unlocks`
+// collection (see screenTimeUnlock.js).
 //
 // Needs a service-account key (Firebase console → Project settings → Service
 // accounts → Generate new private key). Never import this from client code.
@@ -12,8 +13,9 @@
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
-export function getAdminAuth() {
+function getAdminApp() {
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim();
   const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
     /\\n/g,
@@ -22,10 +24,21 @@ export function getAdminAuth() {
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
   if (!clientEmail || !privateKey || !projectId) return null;
 
-  const app =
+  return (
     getApps()[0] ??
     initializeApp({
       credential: cert({ projectId, clientEmail, privateKey }),
-    });
-  return getAuth(app);
+    })
+  );
+}
+
+export function getAdminAuth() {
+  const app = getAdminApp();
+  return app ? getAuth(app) : null;
+}
+
+/** Admin Firestore (bypasses security rules), or null when unconfigured. */
+export function getAdminFirestore() {
+  const app = getAdminApp();
+  return app ? getFirestore(app) : null;
 }

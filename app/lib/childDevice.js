@@ -59,6 +59,30 @@ export function iosScreenTimeStatus(child) {
     baseLimitMinutes: toInt(s.baseLimitMinutes),
     bonusMinutesToday: toInt(s.bonusMinutesToday),
     selectedItemCount: toInt(s.selectedItemCount),
+    // "child" = Apple Family Sharing authorization: the child can't remove the
+    // permission or delete the app without the parent. "individual" = the
+    // child's own approval, which they can revoke in iPhone Settings.
+    authorizationMode:
+      s.authorizationMode === "child" || s.authorizationMode === "individual"
+        ? s.authorizationMode
+        : null,
+    // Re-reported every time the app opens, so it doubles as "last seen".
     updatedAt: s.updatedAt ?? null,
   };
+}
+
+// A device that hasn't checked in for this long may have had the app removed.
+export const STALE_DEVICE_MS = 2 * 86_400_000;
+
+/** Days since the device last reported, or null when unknown. */
+export function daysSinceSeen(status, now = Date.now()) {
+  const ms = status?.updatedAt?.toMillis?.();
+  if (typeof ms !== "number") return null;
+  return Math.max(0, Math.floor((now - ms) / 86_400_000));
+}
+
+/** True when the device's last check-in is old enough to worry about. */
+export function isDeviceStale(status, now = Date.now()) {
+  const ms = status?.updatedAt?.toMillis?.();
+  return typeof ms === "number" && now - ms > STALE_DEVICE_MS;
 }

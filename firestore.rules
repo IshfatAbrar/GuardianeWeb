@@ -77,7 +77,8 @@ service cloud.firestore {
                        request.resource.data.get('screenTimeStatus', {}) is map &&
                        request.resource.data.get('screenTimeStatus', {}).keys().hasOnly([
                          'authorized', 'isMonitoring', 'limitMinutes', 'baseLimitMinutes',
-                         'bonusMinutesToday', 'selectedItemCount', 'updatedAt']) &&
+                         'bonusMinutesToday', 'selectedItemCount', 'authorizationMode',
+                         'updatedAt']) &&
                        request.resource.data.get('devicePlatform', 'ios') in ['ios', 'android'];
 
       // GuardParent stores its JoJo history under the parent's own user doc.
@@ -237,6 +238,11 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isAuthenticated() && resource.data.parentId == request.auth.uid;
     }
+
+    // ── screen_time_unlocks — deliberately absent ────────────────────────────
+    // One-time codes that unlock the Screen Time settings on a child's iPhone.
+    // Only the web server's Admin SDK touches them (app/api/screen-time/*), so
+    // no client may read or write them: the default deny below covers it.
 
     // ── aiInsights (GuardParent only, authenticated) ─────────────────────────
     match /aiInsights/{childId} {

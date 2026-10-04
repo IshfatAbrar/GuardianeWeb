@@ -18,7 +18,7 @@
 // there is no push channel to the child's device in this schema.
 
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import { COLLECTIONS } from "./database";
 
 /** Set (or replace) the daily screen time limit, in minutes, for one child. */
@@ -29,4 +29,29 @@ export async function setScreenTimeLimit(childId, minutes) {
   await updateDoc(doc(db, COLLECTIONS.USERS, childId), {
     screenTimeLimitMinutes: Math.round(minutes),
   });
+}
+
+/**
+ * Ask the server for a one-time code that unlocks the Screen Time settings on
+ * this child's iPhone (see app/api/screen-time/unlock-code and
+ * screenTimeUnlock.js). Returns { code, expiresAt: Date }.
+ */
+export async function requestScreenTimeUnlockCode(childId) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in again.");
+  if (!childId) throw new Error("Missing childId");
+  const token = await user.getIdToken();
+  const res = await fetch("/api/screen-time/unlock-code", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ childId }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || !body.code) {
+    throw new Error(body.error || "Couldn't create a code. Try again.");
+  }
+  return { code: body.code, expiresAt: new Date(body.expiresAt) };
 }
