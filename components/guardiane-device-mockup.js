@@ -18,11 +18,11 @@ export function GuardianeDeviceMockup({ laptopSrc, phoneSrc }) {
   return (
     <div className="relative mx-auto w-full max-w-[100%]">
       {/* laptop */}
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-elevated)] sm:p-4">
-        <div className="flex items-center gap-1.5 px-1.5 pb-2.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--border)]" />
+      <div className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 pb-3 pt-2 shadow-[var(--shadow-elevated)] sm:px-4 sm:pb-4 sm:pt-2.5">
+        <div className="flex items-center gap-1.5 px-1.5 pb-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-neutral-600" />
+          <span className="h-2.5 w-2.5 rounded-full bg-neutral-600" />
+          <span className="h-2.5 w-2.5 rounded-full bg-neutral-600" />
         </div>
 
         <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-[var(--surface-muted)]">
@@ -40,7 +40,7 @@ export function GuardianeDeviceMockup({ laptopSrc, phoneSrc }) {
       </div>
 
       {/* phone — sits on the left, bottom-aligned with the laptop */}
-      <div className="absolute -left-12 bottom-0 z-10 w-32 rounded-[1.7rem] border border-[var(--border)] bg-[var(--surface)] p-2 shadow-[var(--shadow-elevated)] sm:-left-12 sm:w-44">
+      <div className="absolute -left-12 bottom-0 z-10 w-32 rounded-[1.7rem] border border-neutral-700 bg-neutral-800 p-2 shadow-[var(--shadow-elevated)] sm:-left-12 sm:w-44">
         <div className="relative aspect-[9/19] overflow-hidden rounded-[1.3rem] bg-[var(--surface-muted)]">
           {phoneSrc ? (
             // eslint-disable-next-line @next/next/no-img-element

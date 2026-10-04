@@ -49,25 +49,33 @@ export async function POST(request) {
     );
   }
 
-  const child = await db.collection("users").doc(childId).get();
-  if (
-    !child.exists ||
-    child.get("role") !== "child" ||
-    child.get("parentId") !== uid
-  ) {
-    return Response.json({ error: "Not your child." }, { status: 403 });
-  }
-
   const code = generateCode();
   const { expiresAtMs, ...unlock } = newUnlock({ code, parentUid: uid });
-  await db
-    .collection(UNLOCKS_COLLECTION)
-    .doc(childId)
-    .set({
-      ...unlock,
-      expiresAt: Timestamp.fromMillis(expiresAtMs),
-      createdAt: Timestamp.now(),
-    });
+  try {
+    const child = await db.collection("users").doc(childId).get();
+    if (
+      !child.exists ||
+      child.get("role") !== "child" ||
+      child.get("parentId") !== uid
+    ) {
+      return Response.json({ error: "Not your child." }, { status: 403 });
+    }
+
+    await db
+      .collection(UNLOCKS_COLLECTION)
+      .doc(childId)
+      .set({
+        ...unlock,
+        expiresAt: Timestamp.fromMillis(expiresAtMs),
+        createdAt: Timestamp.now(),
+      });
+  } catch (e) {
+    console.error("[unlock-code] Firestore failed:", e?.code, e?.message);
+    return Response.json(
+      { error: "Couldn't reach the database. Try again in a moment." },
+      { status: 502 },
+    );
+  }
 
   return Response.json({
     code,

@@ -17,19 +17,26 @@ import { getFirestore } from "firebase-admin/firestore";
 
 function getAdminApp() {
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim();
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
-    /\\n/g,
-    "\n",
-  );
+  // Hosting dashboards often keep the quotes from a pasted .env line, which
+  // makes cert() throw — strip them along with escaped newlines.
+  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.trim()
+    .replace(/^"|"$/g, "")
+    .replace(/\\n/g, "\n");
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim();
   if (!clientEmail || !privateKey || !projectId) return null;
 
-  return (
-    getApps()[0] ??
-    initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-    })
-  );
+  try {
+    return (
+      getApps()[0] ??
+      initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
+      })
+    );
+  } catch (e) {
+    // A malformed key must not 500 every caller; treat it as unconfigured.
+    console.error("[firebaseAdmin] init failed:", e?.message);
+    return null;
+  }
 }
 
 export function getAdminAuth() {
