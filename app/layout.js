@@ -14,8 +14,8 @@ const epilogue = Epilogue({
 
 export const metadata = {
   title: {
-    default: "Guardiane AI",
-    template: "Guardiane AI | %s",
+    default: "GuardianeAI",
+    template: "GuardianeAI | %s",
   },
   description:
     "The AI-Guardian Center is an innovation and research hub advancing ethical AI solutions for child digital safety, adolescent emotional wellbeing, and family support. Home of Guardiané.",

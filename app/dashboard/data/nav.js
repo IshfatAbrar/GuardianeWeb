@@ -210,6 +210,28 @@ export const quickActions = [
       </svg>
     ),
   },
+  // Only shown when the rest come to an odd number (quick-actions-card.js),
+  // so the two-column grid always ends on a full row.
+  {
+    id: "learningHub",
+    label: "Learning Hub",
+    evenOut: true,
+    icon: (
+      <svg
+        width="26"
+        height="26"
+        fill="none"
+        style={{ stroke: "var(--accent)" }}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        viewBox="0 0 24 24"
+      >
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      </svg>
+    ),
+  },
 ];
 
 // Static labels used by PlaceholderTab when a non-overview sidebar item is active

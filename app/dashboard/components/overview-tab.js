@@ -10,9 +10,9 @@ import { LearningModulesCarousel } from "./learning-modules-carousel";
 import { RecentActivityCard } from "./recent-activity-card";
 import { AiInsightsCard } from "./ai-insights-card";
 import { EmergencyCallModal } from "./emergency-call-modal";
-import { MoodAnalyticsModal } from "./mood-analytics-modal";
-import { AppLimitsModal } from "./app-limits-modal";
-import { ScreenTimeLimitModal } from "./screen-time-limit-modal";
+import { MoodReportPage } from "./mood-report-page";
+import { AppLimitsPage } from "./app-limits-page";
+import { ScreenTimePage } from "./screen-time-page";
 import { AccessRequestsCard } from "./access-requests-card";
 import { supportsAppLimits, supportsDailyLimit } from "../../lib/childDevice";
 
@@ -49,9 +49,9 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
   } = data;
 
   const [emergencyOpen, setEmergencyOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
-  const [appLimitsOpen, setAppLimitsOpen] = useState(false);
-  const [screenTimeLimitOpen, setScreenTimeLimitOpen] = useState(false);
+  // Report, Screen Time and App Limits open as full pages in place of the
+  // Home content: null | "report" | "screenTime" | "appLimits".
+  const [subpage, setSubpage] = useState(null);
 
   const greetingName = firstName(userProfile, user);
   const selectedChild = children.find((c) => c.id === selectedChildId) ?? null;
@@ -68,8 +68,31 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
 
   const go = (tab) => onNavigate?.(tab);
   const openReport = () => {
-    if (selectedChild) setReportOpen(true);
+    if (selectedChild) setSubpage("report");
   };
+  const closeSubpage = () => setSubpage(null);
+
+  if (subpage === "report" && selectedChild) {
+    return <MoodReportPage child={selectedChild} onBack={closeSubpage} />;
+  }
+  if (subpage === "screenTime") {
+    return (
+      <ScreenTimePage
+        childList={children.filter(supportsDailyLimit)}
+        initialChildId={selectedChildId}
+        onBack={closeSubpage}
+      />
+    );
+  }
+  if (subpage === "appLimits") {
+    return (
+      <AppLimitsPage
+        childList={children.filter(supportsAppLimits)}
+        initialChildId={selectedChildId}
+        onBack={closeSubpage}
+      />
+    );
+  }
 
   return (
     <div className="space-y-7 p-6">
@@ -109,15 +132,16 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           entry={latestScreenTime}
           childName={selectedChild?.name}
           child={selectedChild}
-          onManage={() => setScreenTimeLimitOpen(true)}
+          onManage={() => setSubpage("screenTime")}
         />
         <QuickActionsCard
           onReports={openReport}
           onMessages={() => go("messaging")}
           onEmergency={() => setEmergencyOpen(true)}
-          onAppLimits={() => setAppLimitsOpen(true)}
-          onScreenTimeLimit={() => setScreenTimeLimitOpen(true)}
+          onAppLimits={() => setSubpage("appLimits")}
+          onScreenTimeLimit={() => setSubpage("screenTime")}
           onAssignModule={() => go("modules")}
+          onLearningHub={() => go("learning")}
           hiddenActions={hiddenActions}
         />
       </div>
@@ -153,26 +177,6 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
         open={emergencyOpen}
         onClose={() => setEmergencyOpen(false)}
         onConfirm={placeEmergencyCall}
-      />
-
-      <MoodAnalyticsModal
-        open={reportOpen}
-        onClose={() => setReportOpen(false)}
-        child={selectedChild}
-      />
-
-      <AppLimitsModal
-        open={appLimitsOpen}
-        onClose={() => setAppLimitsOpen(false)}
-        childList={children.filter(supportsAppLimits)}
-        initialChildId={selectedChildId}
-      />
-
-      <ScreenTimeLimitModal
-        open={screenTimeLimitOpen}
-        onClose={() => setScreenTimeLimitOpen(false)}
-        childList={children.filter(supportsDailyLimit)}
-        initialChildId={selectedChildId}
       />
     </div>
   );

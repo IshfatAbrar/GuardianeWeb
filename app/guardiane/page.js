@@ -101,7 +101,7 @@ const whatYouGetFaqs = [
 export default function GuardianePage() {
   return (
     <>
-      <main className="min-h-screen overflow-x-clip bg-white text-[var(--foreground)]">
+      <main className="marketing-theme min-h-screen overflow-x-clip bg-white text-[var(--foreground)]">
         <section className="bg-white mt-10">
           <div className="clarity-wrap px-6 py-12 mt-6">
             <div className="grid gap-2 lg:grid-cols-2 lg:items-center ">

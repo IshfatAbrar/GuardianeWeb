@@ -1,15 +1,10 @@
 "use client";
 
-// Screen-time breakdown for a date range — the "Screen Time Report" section of
-// GuardParent's Report screen (app/report.js), minus its behaviour of filling in
-// hardcoded Instagram/Discord/TikTok figures whenever the query comes back
-// empty. Invented usage is worse than no usage.
+// Per-app screen-time breakdown for the report page: one row per app with a
+// share bar. Takes `aggregateApps(...)` output. Never fills in invented usage
+// when there's no data (GuardParent did) — invented usage is worse than none.
 
-import {
-  aggregateApps,
-  formatDuration,
-  totalSeconds,
-} from "../../lib/screenTime";
+import { formatDuration } from "../../lib/screenTime";
 
 // Enough colors for the row dots; reused cyclically past the end.
 const DOT_COLORS = [
@@ -23,62 +18,54 @@ const DOT_COLORS = [
   "#64748B",
 ];
 
-export function ScreenTimeReport({ entries, days }) {
-  const rows = Array.isArray(entries) ? entries : [];
-  const apps = aggregateApps(rows);
-  const total = totalSeconds(rows);
-
-  if (!rows.length || apps.length === 0) {
+export function ScreenTimeReport({ apps }) {
+  if (!apps?.length) {
     return (
-      <p className="py-2 text-[13px] text-[var(--muted)]">
-        No screen-time syncs in this period.
-      </p>
+      <div className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-[var(--border)] px-6 py-10 text-center">
+        <p className="text-[13.5px] font-semibold text-[var(--foreground)]">
+          No screen time synced
+        </p>
+        <p className="max-w-sm text-[12.5px] leading-relaxed text-[var(--muted)]">
+          Usage shows up here once the child&apos;s Android app syncs. iPhones
+          don&apos;t share per-app usage.
+        </p>
+      </div>
     );
   }
 
-  // Days that actually reported, not the length of the window — dividing by the
-  // window would quietly understate a child who only syncs a few days a week.
-  const syncedDays = new Set(
-    rows
-      .map((r) => r.dateString || r.createdAt?.toDate?.()?.toDateString())
-      .filter(Boolean),
-  ).size;
-
   return (
-    <div className="space-y-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[22px] font-bold leading-none text-[var(--foreground)]">
-          {formatDuration(total)}
-        </span>
-        <span className="text-[11.5px] text-[var(--muted)]">
-          {syncedDays > 0 && (
-            <>
-              {formatDuration(total / syncedDays)}/day · {syncedDays} of {days}{" "}
-              days synced
-            </>
-          )}
-        </span>
-      </div>
-
-      <ul className="flex flex-col gap-2.5">
-        {apps.map((app, i) => (
-          <li key={app.key} className="flex items-center gap-2.5">
-            <span
-              className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-              style={{ backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }}
-            />
-            <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-[var(--foreground)]">
-              {app.appName}
-            </span>
-            <span className="flex-shrink-0 text-[11.5px] text-[var(--muted)]">
-              {Math.round(app.percentage)}%
-            </span>
-            <span className="w-16 flex-shrink-0 text-right text-[11.5px] font-medium text-[var(--foreground)]">
-              {formatDuration(app.timeSpent)}
-            </span>
+    <ul className="space-y-4">
+      {apps.map((app, i) => {
+        const color = DOT_COLORS[i % DOT_COLORS.length];
+        return (
+          <li key={app.key} className="space-y-1.5">
+            <div className="flex items-center gap-2.5 text-[13px]">
+              <span
+                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span className="min-w-0 flex-1 truncate font-medium text-[var(--foreground)]">
+                {app.appName}
+              </span>
+              <span className="text-[12px] text-[var(--muted)]">
+                {Math.round(app.percentage)}%
+              </span>
+              <span className="w-16 text-right font-semibold text-[var(--foreground)]">
+                {formatDuration(app.timeSpent)}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-[var(--border)]">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.max(2, Math.min(100, app.percentage))}%`,
+                  backgroundColor: color,
+                }}
+              />
+            </div>
           </li>
-        ))}
-      </ul>
-    </div>
+        );
+      })}
+    </ul>
   );
 }

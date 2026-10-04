@@ -99,7 +99,7 @@ export default function LoginPage() {
   return (
     <AuthGuard mode="public">
       {/* TEMP: forced white background for now */}
-      <div className="bg-white text-[var(--foreground)]">
+      <div className="marketing-theme bg-white text-[var(--foreground)]">
         {/* ── HERO / LOGIN ── */}
         <section className="bg-white">
           <div className="mx-auto grid max-w-[1120px] gap-16 px-10 py-10 mt-6 mb-12 lg:grid-cols-[minmax(0,1fr)_480px] lg:px-8 rounded-xl bg-gradient-to-t from-[#c2dfff] to-white to-70%">
