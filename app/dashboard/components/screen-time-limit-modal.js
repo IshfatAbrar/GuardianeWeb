@@ -1,7 +1,11 @@
 "use client";
 
-// Parent-set daily Screen Time limit, opened from the dashboard home page's
-// Quick Actions. Writes to the child's own users/{childId} doc under
+// Screen Time for one child, opened from the dashboard's Quick Actions or the
+// Screen Time card: the parent-set daily limit, plus — for an iPhone — its
+// status and the one-time code that unlocks its settings
+// (screen-time-device-section.js).
+//
+// The daily limit: Writes to the child's own users/{childId} doc under
 // `screenTimeLimitMinutes` (see ../../lib/screenTimeLimit.js) — read by the
 // iOS child app's ScreenTimeManager. Which apps/categories the limit applies
 // to is chosen on the child's own device (Apple platform restriction, not a
@@ -14,6 +18,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { listenToDoc } from "../../lib/database";
 import { setScreenTimeLimit } from "../../lib/screenTimeLimit";
+import { childPlatform, CHILD_PLATFORM } from "../../lib/childDevice";
+import { ScreenTimeDeviceSection } from "./screen-time-device-section";
 
 const PRESET_MINUTES = [
   { label: "30 min", value: 30 },
@@ -113,7 +119,7 @@ function Content({ onClose, childList, initialChildId }) {
             id="screen-time-limit-title"
             className="text-[15px] font-semibold tracking-tight text-[var(--foreground)]"
           >
-            Screen Time Limit
+            Screen Time
           </h1>
           <button
             type="button"
@@ -223,6 +229,12 @@ function Content({ onClose, childList, initialChildId }) {
                   <p className="text-[11.5px] text-rose-500">{error}</p>
                 )}
               </div>
+
+              {/* Android has no device-side setup to unlock. Unknown devices get
+                  it too, since the first setup itself needs a code. */}
+              {childPlatform(childDoc) !== CHILD_PLATFORM.ANDROID && (
+                <ScreenTimeDeviceSection child={child} childDoc={childDoc} />
+              )}
             </>
           )}
         </div>

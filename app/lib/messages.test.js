@@ -205,3 +205,19 @@ describe("isActivityMessage", () => {
     expect(alertSeverity(jojo)).toBe("critical");
   });
 });
+
+// The iOS kid app's alert when its Screen Time limit is switched off without
+// the parent's code: a warning, never the critical siren.
+describe("screen time tampering alerts", () => {
+  it("is a warning-level alert", () => {
+    const tamper = {
+      senderType: "child",
+      message:
+        "Risk detected: Screen Time Tampering (1.00): Screen Time was turned off on Cole's iPhone",
+      messageType: "screen_time_tamper",
+      metadata: { classification: "Screen Time Tampering" },
+    };
+    expect(isAlertMessage(tamper)).toBe(true);
+    expect(alertSeverity(tamper)).toBe("warning");
+  });
+});

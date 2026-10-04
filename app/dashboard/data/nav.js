@@ -173,7 +173,7 @@ export const quickActions = [
   },
   {
     id: "screenTimeLimit",
-    label: "Screen Time Limit",
+    label: "Screen Time",
     icon: (
       <svg
         width="26"

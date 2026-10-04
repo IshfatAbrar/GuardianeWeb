@@ -7,6 +7,8 @@ import {
   supportsAppLimits,
   supportsDailyLimit,
   iosScreenTimeStatus,
+  daysSinceSeen,
+  isDeviceStale,
 } from "./childDevice.js";
 
 describe("childPlatform", () => {
@@ -80,5 +82,33 @@ describe("iosScreenTimeStatus", () => {
     expect(s.limitMinutes).toBe(0);
     expect(s.bonusMinutesToday).toBe(0);
     expect(s.authorized).toBe(false);
+  });
+});
+
+describe("authorization mode and last seen", () => {
+  const ts = (ms) => ({ toMillis: () => ms });
+  const NOW = 1_700_000_000_000;
+
+  it("keeps only the two real authorization modes", () => {
+    const mode = (m) =>
+      iosScreenTimeStatus({ screenTimeStatus: { authorizationMode: m } })
+        .authorizationMode;
+    expect(mode("child")).toBe("child");
+    expect(mode("individual")).toBe("individual");
+    expect(mode("hacked")).toBeNull();
+  });
+
+  it("counts whole days since the last check-in", () => {
+    expect(daysSinceSeen({ updatedAt: ts(NOW - 3600_000) }, NOW)).toBe(0);
+    expect(daysSinceSeen({ updatedAt: ts(NOW - 3 * 86_400_000) }, NOW)).toBe(3);
+    expect(daysSinceSeen(null, NOW)).toBeNull();
+  });
+
+  it("flags a device quiet for more than two days", () => {
+    expect(isDeviceStale({ updatedAt: ts(NOW - 86_400_000) }, NOW)).toBe(false);
+    expect(isDeviceStale({ updatedAt: ts(NOW - 3 * 86_400_000) }, NOW)).toBe(
+      true,
+    );
+    expect(isDeviceStale(null, NOW)).toBe(false);
   });
 });

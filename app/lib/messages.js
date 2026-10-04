@@ -119,6 +119,9 @@ const SEVERITY_BY_CLASSIFICATION = {
   "Emotional Distress": "warning",
   "Explicit Content": "warning",
   "Incognito Browsing": "warning",
+  // Written by the iOS kid app when its Screen Time limit is turned off on the
+  // device without the parent's unlock code (ScreenTimeManager).
+  "Screen Time Tampering": "warning",
 };
 
 /** Severity bucket for an alert message, for the activity feed's colour dot. */

@@ -17,7 +17,9 @@ import { formatDuration } from "../../lib/screenTime";
 import {
   childPlatform,
   CHILD_PLATFORM,
+  daysSinceSeen,
   iosScreenTimeStatus,
+  isDeviceStale,
 } from "../../lib/childDevice";
 
 const MAX_APPS = 4;
@@ -71,6 +73,12 @@ function IosStatus({ status, childFirst }) {
             ? "Screen Time permission not granted on the device"
             : "No apps picked to limit on the device yet"}
       </p>
+      {isDeviceStale(status) && (
+        <p className="text-[12px] font-medium text-amber-600">
+          Not seen for {daysSinceSeen(status)} days — Guardiané may have been
+          removed from the phone
+        </p>
+      )}
       <p className="pt-1 text-[11px] text-[var(--muted)]">
         iPhone doesn&apos;t share per-app usage with apps, so only the limit is
         shown.
@@ -79,7 +87,7 @@ function IosStatus({ status, childFirst }) {
   );
 }
 
-export function ScreenTimeCard({ entry, childName, child }) {
+export function ScreenTimeCard({ entry, childName, child, onManage }) {
   const isIos = childPlatform(child) === CHILD_PLATFORM.IOS;
   const childFirst = childName?.split(" ")[0];
 
@@ -117,6 +125,15 @@ export function ScreenTimeCard({ entry, childName, child }) {
         <h2 className="text-[18px] font-bold text-[var(--foreground)]">
           Screen Time
         </h2>
+        {isIos && onManage && (
+          <button
+            type="button"
+            onClick={onManage}
+            className="ml-auto text-[12px] font-semibold text-[var(--accent)] hover:opacity-80"
+          >
+            Manage
+          </button>
+        )}
       </div>
 
       {!entry && isIos ? (

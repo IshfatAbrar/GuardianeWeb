@@ -109,6 +109,7 @@ export function OverviewTab({ data, onNavigate, onOpenModule }) {
           entry={latestScreenTime}
           childName={selectedChild?.name}
           child={selectedChild}
+          onManage={() => setScreenTimeLimitOpen(true)}
         />
         <QuickActionsCard
           onReports={openReport}
