@@ -90,18 +90,18 @@ function ModuleCard({ module, isYours, onOpen }) {
   );
 }
 
-function Section({ title, count, accent, children }) {
+function Section({ title, count, children }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
           {title}
         </h2>
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-            accent === "emerald"
-              ? "bg-emerald-500/15 text-emerald-500"
-              : "bg-[var(--accent-bg)] text-[var(--accent)]"
+          className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[12px] font-bold tabular-nums leading-none ${
+            count > 0
+              ? "bg-[var(--accent)] text-white"
+              : "bg-[var(--border)] text-[var(--muted)]"
           }`}
         >
           {count}
@@ -301,7 +301,6 @@ function HubContent({
               <Section
                 title="Your Modules"
                 count={yourModules.length}
-                accent="emerald"
               >
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {yourModules.map((m) => (
