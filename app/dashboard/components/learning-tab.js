@@ -298,10 +298,7 @@ function HubContent({
         ) : (
           <>
             {yourModules.length > 0 && (
-              <Section
-                title="Your Modules"
-                count={yourModules.length}
-              >
+              <Section title="Your Modules" count={yourModules.length}>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {yourModules.map((m) => (
                     <ModuleCard
