@@ -12,7 +12,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-guardiane \"vitest run --config vitest.rules.config.mjs\""
   },
   "dependencies": {
     "@blobatar/react": "^2.7.0",
@@ -36,6 +37,7 @@
     "resend": "^6.10.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",

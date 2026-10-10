@@ -89,7 +89,7 @@ Profile (display name), dark-mode toggle, manage children (add/remove, regenerat
 
 ### JoJo AI Chat
 
-There are **two** JoJo surfaces, both backed by the same Cloud Function:
+There are **two** JoJo surfaces on the web, both backed by the same Cloud Function through `/api/jojo`:
 
 - **Dashboard tab** (`/dashboard?tab=chatbot`) — for the signed-in parent. Conversation history is persisted **in Firestore** (`chatSessions/{id}` + a `messages` subcollection, scoped to the user).
 - **Public chatbot** (`/chatbot`, with `/chatbot/login` and `/chatbot/signup`) — a login-free guest experience. History lives in `sessionStorage` (no Firestore); a free-trial counter in `localStorage` gates further messages behind a lightweight contact-capture form.
@@ -103,23 +103,30 @@ Browser ──POST /api/jojo──► Next.js route handler ──x-api-key─�
   { messages: [...] }         (server-side proxy)                  { reply: "..." }
 ```
 
-- `app/api/jojo/route.js` is a server-side proxy so the shared `JOJO_API_KEY` never reaches the JS bundle. It sanitises history (roles, length, last 30 messages) before forwarding to `CLOUD_FUNCTION_URL`.
+- `app/api/jojo/route.js` is the only way any client reaches JoJo — the web app, both parent apps and both kid apps — so the shared `JOJO_API_KEY` never ships in an app or the JS bundle. It identifies the caller (parent ID token, kid anonymous ID token + `childId`, or tokenless guest — `app/lib/aiCaller.js`), charges a daily limit (`app/lib/aiQuota.js`, Admin-only `ai_usage` collection), drops client `system` messages, picks the persona (kid persona for kids and guests, `PARENT_PERSONA` for parents) and forwards to `CLOUD_FUNCTION_URL`.
+- `app/api/classify/route.js` labels kid-app text for risk alerts. The classifier prompt lives only on the server (`app/lib/aiPrompts.js`); kid apps send `{ texts, childId }` and get `{ labels }`.
+- `AI_REQUIRE_AUTH`: leave unset during the rollout so app builds that predate the token still work (as rate-limited `legacy` callers, logged as `[ai] … caller=legacy`). Set it to `true` once those logs go quiet; tokenless callers then get the strict `guest` limit.
 - Only the chat **history** touches Firebase, and only for signed-in parents (the Firestore `chatSessions` collection). Guests never write to Firestore.
 
-## How the Two Apps Are Linked
+## How the Apps Are Linked
 
 Pairing happens once via QR code (the child's document id is the pairing payload). After that, all communication is through the shared Firestore — neither app talks directly to the other. The web app subscribes with Firestore `onSnapshot` listeners so changes the child makes appear within seconds.
 
 ```
-Kid App (child's phone)             Shared Firebase (Firestore)          Parent Web App (browser)
+Kid app (child's phone)             Shared Firebase (Firestore)          Parent apps (web / iOS / Android)
 ─────────────────────────────       ──────────────────────────           ─────────────────────────────
-QR scan → writes childId ──────►    families / children                 ◄── getChildrenForParent()
-Daily check-in completed ──────►    enhancedDailyLogging                ◄── mood + screen-time reads
-Parent assigns module ─────────►    learningAssignments                 ◄── kid app reads assignment
-Child completes module ────────►    learningProgress                    ◄── parent sees completion %
-Parent ↔ child messages ───────►    messages                           ◄── live messaging tab
-Parent-facing JoJo history ────►    chatSessions/{id}/messages          ◄── dashboard JoJo tab
+QR scan → stores child doc id       users/{childId} (role: "child")     ◄── listenToChildrenForParent()
+Mood check-in ─────────────────►    mood_entries                        ◄── mood card + report
+Screen time (Android sync) ────►    screen_time_entries                 ◄── screen-time report
+Screen Time status (iOS) ──────►    users/{childId}.screenTimeStatus    ◄── device section
+Risk alert / SOS ──────────────►    messages (senderType "child")       ◄── bell, Risk Alerts, critical popup
+Parent assigns module ─────────►    module_assignments                  ◄── kid app reads assignment
+Child completes lesson ────────►    learning_progress                   ◄── parent sees completion %
+Parent ↔ child messages ───────►    messages                            ◄── live messaging tab
+Parent JoJo history ───────────►    chatSessions/{id}/messages          ◄── dashboard JoJo tab
 ```
+
+The kid apps never call the AI directly: JoJo chat goes to `/api/jojo` and risk classification to `/api/classify`, both on this server (see above).
 
 ## Architecture
 
@@ -127,7 +134,8 @@ Parent-facing JoJo history ────►    chatSessions/{id}/messages        
 - **Styling**: Tailwind CSS 4, with a light/dark theme driven by CSS variables and a `ThemeToggle`
 - **Backend**: Firebase (Auth, Firestore) via the modular `firebase` v12 SDK
 - **Real-time**: Firestore `onSnapshot` listeners (`listenToDoc`, `listenToChatSessions`, …)
-- **AI**: `/api/jojo` server route → deployed `chatWithAgent` Cloud Function
+- **AI**: `/api/jojo` and `/api/classify` server routes (caller check, daily limits, server-owned prompts, reply check for kids) → deployed `chatWithAgent` Cloud Function
+- **Screen Time unlock**: `/api/screen-time/*` → Firebase Admin (one-time codes)
 - **Transactional email**: `/api/partner` → Resend (the "Partner with us" form)
 - **QR pairing**: `qrcode` for generating child pairing codes
 
@@ -190,6 +198,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=…
 # JoJo assistant (server-side only — never exposed to the bundle)
 CLOUD_FUNCTION_URL=…            # chatWithAgent endpoint
 JOJO_API_KEY=…                  # shared secret sent as x-api-key
+AI_REQUIRE_AUTH=                # "true" after the JoJo key cutover (see above)
 
 # Optional — "Partner with us" email (Resend)
 RESEND_API_KEY=…
@@ -216,6 +225,7 @@ Then open http://localhost:3000.
 - `npm run start` — run the production server
 - `npm run lint` — run ESLint
 - `npm run test` — run the Vitest suite
+- `npm run test:rules` — run the Firestore rules tests against the emulator (needs Java 21+ and the Firebase CLI)
 
 ## Testing
 
@@ -228,6 +238,11 @@ The suite runs fully offline (Vitest) — no Firebase connection required.
 | `app/lib/messages.test.js` | Messaging helpers |
 | `app/lib/learningModules.test.js` | Module + lesson model |
 | `app/lib/emergencyContacts.test.js` | Emergency contact model |
+| `app/lib/aiCaller.test.js` | Who may call the AI routes (parent, kid device, guest, legacy) |
+| `app/lib/aiQuota.test.js` | Daily AI limits (stops at the cap, fails open) |
+| `app/lib/aiPrompts.test.js` | Classifier prompt, reply parsing, client prompts dropped |
+| `app/lib/explicitContent.test.js` | JoJo reply check for kids (catches explicit text, ignores everyday words) |
+| `tests/rules/firestore.rules.test.mjs` | Firestore rules, on the emulator (`npm run test:rules`) |
 
 ```bash
 npm run test
@@ -246,8 +261,9 @@ Firestore security rules live in `firestore.rules` and are deployed with the Fir
 ## Known Notes
 
 - **`.firebaserc` vs the app's Firebase project** — `.firebaserc` only scopes the Firebase **CLI** (e.g. deploying `firestore.rules`); the project the running app reads/writes is set by the `NEXT_PUBLIC_FIREBASE_*` env vars. Both now target `gurdiane-75091`.
-- **`firestore.rules` is shared across three clients** — `gurdiane-75091` is also used by two Android apps: an authenticated parent app and a child device app that uses **no Firebase Auth at all**. The rules therefore leave every child-touched collection open to unauthenticated access and gate only parent-only writes behind auth. Do not add `request.auth` requirements to child-touched collections without first adding auth to the child app, or it will break instantly. The ruleset is covered by an emulator test suite (`@firebase/rules-unit-testing`).
-- **Guest chat is client-only** — public `/chatbot` history lives in `sessionStorage` and the trial counter in `localStorage`; nothing is written to Firestore for guests.
+- **`firestore.rules` is shared across five clients** — this web app, the iOS and Android parent apps (authenticated), and the iOS and Android kid apps, which use **no Firebase Auth for Firestore** (they sign in anonymously only for the AI routes). The rules therefore leave every child-touched collection open to unauthenticated access and gate only parent-only writes behind auth. Do not add `request.auth` requirements to child-touched collections without first adding auth to the child app, or it will break instantly. The ruleset is covered by an emulator test suite: `npm run test:rules` (needs Java 21+ and the Firebase CLI; CI runs it too).
+- **Guest chat is client-only** — public `/chatbot` history lives in `sessionStorage` and the trial counter in `localStorage`; nothing is written to Firestore for guests. The server caps guests at 30 messages a day per IP.
+- **Email verification test account** — `test@gmail.com` skips email verification on the web and iOS parent apps (`app/lib/emailVerification.js`). Kept on purpose for testing; remove before launch.
 
 ## Developer
 

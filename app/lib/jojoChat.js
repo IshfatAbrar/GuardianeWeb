@@ -5,7 +5,20 @@
 //   send:  { messages: [{ role: "user"|"assistant", content: string }, ...] }
 //   recv:  { reply: string }
 
+import { auth } from "./firebase";
+
 const PROXY_URL = "/api/jojo";
+
+// A signed-in parent sends their ID token so /api/jojo can apply the parent
+// persona and per-account limit; the guest /chatbot has no user and sends none.
+async function authHeader() {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
 
 export class JojoChatError extends Error {
   constructor(message, { code, status } = {}) {
@@ -27,7 +40,13 @@ export function validateChatMessage(message) {
   }
 }
 
-export async function sendJojoMessage({ messages }) {
+/**
+ * @param {object} p
+ * @param {Array} p.messages
+ * @param {boolean} [p.guest]  true from the public /chatbot page: marks the
+ *   request so the server applies guest limits (app/lib/aiCaller.js).
+ */
+export async function sendJojoMessage({ messages, guest = false }) {
   if (!Array.isArray(messages) || messages.length === 0) {
     throw new JojoChatError("Messages are required", {
       code: "MISSING_MESSAGES",
@@ -38,7 +57,10 @@ export async function sendJojoMessage({ messages }) {
 
   const res = await fetch(PROXY_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(guest ? { "x-guardiane-client": "web-guest" } : await authHeader()),
+    },
     body: JSON.stringify({ messages }),
   });
 
