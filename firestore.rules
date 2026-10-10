@@ -157,14 +157,44 @@ service cloud.firestore {
     }
 
     // ── modules (+ lessons) — shared learning content ────────────────────────
-    // Read by the child app (unauth). Created/edited by authenticated parents;
-    // the "only the creator edits" rule is enforced in app code.
+    // Read by the child app (unauth). Written by authenticated parents, with
+    // the same ownership policy every parent app already applies in code:
+    //   • a module with a `createdBy` is edited only by that parent, and only
+    //     that parent adds or edits its lessons;
+    //   • a creator-less module (a built-in placeholder) accepts lessons from
+    //     any parent. GuardParent (Android) creates those placeholders on
+    //     demand with only { moduleId, createdAt, updatedAt } (ensureModuleDoc),
+    //     and the iOS parent app bumps their lessonCount after adding a lesson.
+    // Seeded built-in content is written with the Admin SDK, which bypasses
+    // these rules.
+    function creatorOf(data) {
+      return data.get('createdBy', null);
+    }
+
     match /modules/{moduleId} {
       allow read: if true;
-      allow create, update, delete: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+                       creatorOf(request.resource.data) == request.auth.uid ||
+                       (creatorOf(request.resource.data) == null &&
+                        request.resource.data.keys().hasOnly(['moduleId', 'createdAt', 'updatedAt'])));
+      allow update: if isAuthenticated() && (
+                       (creatorOf(resource.data) == request.auth.uid &&
+                        creatorOf(request.resource.data) == request.auth.uid) ||
+                       (creatorOf(resource.data) == null &&
+                        onlyChanges(['lessonCount', 'updatedAt'])));
+      allow delete: if isAuthenticated() &&
+                       creatorOf(resource.data) == request.auth.uid;
+
       match /lessons/{lessonId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        // getAfter: the web and iOS apps create a module and its first lesson
+        // in one batch, so the module only exists in the post-write state.
+        allow create: if isAuthenticated() &&
+                         creatorOf(getAfter(/databases/$(database)/documents/modules/$(moduleId)).data) in [null, request.auth.uid] &&
+                         creatorOf(request.resource.data) in [null, request.auth.uid];
+        allow update, delete: if isAuthenticated() && (
+                         creatorOf(resource.data) == request.auth.uid ||
+                         creatorOf(get(/databases/$(database)/documents/modules/$(moduleId)).data) == request.auth.uid);
       }
     }
 
