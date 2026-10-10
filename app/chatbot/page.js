@@ -173,7 +173,7 @@ function useGuestJojoChat() {
       commit();
 
       try {
-        const reply = await sendJojoMessage({ messages: history });
+        const reply = await sendJojoMessage({ messages: history, guest: true });
         const next = [...history, { role: "assistant", content: reply }];
         setMessages(next);
         store.messages[sessionId] = next;

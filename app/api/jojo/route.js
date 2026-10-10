@@ -1,52 +1,32 @@
-// Server-side proxy to the deployed `chatWithAgent` Cloud Function.
+// POST /api/jojo — JoJo chat for every client.
 //
-// Contract on the function side:
-//   request:  POST { messages: [{ role: "user"|"assistant", content: string }, ...] }
-//             header: x-api-key: <shared secret>
-//   response: { reply: string }
+//   Authorization: Bearer <Firebase ID token>   (parents; kid apps' anonymous token)
+//   body: { messages: [{ role: "user"|"assistant", content }], childId? }
+//   → { reply }
+//   → 401 bad token · 403 not a parent / not a paired child · 429 daily limit
 //
-// We proxy from the browser through this route so the API key stays server-side
-// and never reaches the JS bundle.
+// Callers: the web dashboard and guest /chatbot, both parent apps (chat and
+// daily insights) and both kid apps. Only this server holds the chatWithAgent
+// key (app/lib/chatAgent.js), and it picks the persona: kids and guests keep
+// the function's built-in kid persona, parents get PARENT_PERSONA. Replies to
+// anyone but a parent go through an explicit-content check. Client
+// `system` messages are always dropped. See app/lib/aiCaller.js for who may
+// call and how much.
 
-const DEFAULT_CLOUD_FUNCTION_URL =
-  "https://us-central1-guardianeusf.cloudfunctions.net/chatWithAgent";
+import { trace } from "@opentelemetry/api";
+import { authorizeAiRequest } from "../../lib/aiCaller";
+import { consumeQuota } from "../../lib/aiQuota";
+import { PARENT_PERSONA, sanitizeHistory } from "../../lib/aiPrompts";
+import { AgentError, callChatAgent } from "../../lib/chatAgent";
+import { detectVulgarContent } from "../../lib/explicitContent";
+import { getAdminFirestore } from "../../lib/firebaseAdmin";
 
-const MAX_MESSAGE_LEN = 4000;
-const MAX_HISTORY = 30;
-
-function getCloudFunctionURL() {
-  return (
-    process.env.CLOUD_FUNCTION_URL ||
-    process.env.NEXT_PUBLIC_CLOUD_FUNCTION_URL ||
-    DEFAULT_CLOUD_FUNCTION_URL
-  );
-}
-
-function sanitizeHistory(input) {
-  if (!Array.isArray(input)) return [];
-  return input
-    .filter(
-      (m) =>
-        m &&
-        (m.role === "user" || m.role === "assistant") &&
-        typeof m.content === "string",
-    )
-    .slice(-MAX_HISTORY)
-    .map((m) => ({
-      role: m.role,
-      content: m.content.slice(0, MAX_MESSAGE_LEN),
-    }));
-}
+// Swapped in when a reply to a child or guest trips the explicit-content
+// check. Same wording the kid persona uses to decline adult topics.
+const SAFE_REPLY =
+  "That's not something I can help with, but I'd love to chat about something fun!";
 
 export async function POST(request) {
-  const apiKey = process.env.JOJO_API_KEY;
-  if (!apiKey) {
-    return Response.json(
-      { error: "Server is missing JOJO_API_KEY" },
-      { status: 500 },
-    );
-  }
-
   let body;
   try {
     body = await request.json();
@@ -59,34 +39,38 @@ export async function POST(request) {
     return Response.json({ error: "No messages provided" }, { status: 400 });
   }
 
-  let upstream;
-  try {
-    upstream = await fetch(getCloudFunctionURL(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-      },
-      body: JSON.stringify({ messages }),
-    });
-  } catch (err) {
-    return Response.json(
-      { error: `Upstream request failed: ${err.message}` },
-      { status: 502 },
-    );
-  }
-
-  const text = await upstream.text();
-  if (!upstream.ok) {
-    console.error(
-      `[jojo proxy] upstream ${upstream.status} from ${getCloudFunctionURL()}: ${text}`,
-    );
-  }
-  return new Response(text, {
-    status: upstream.status,
-    headers: {
-      "Content-Type":
-        upstream.headers.get("content-type") || "application/json",
-    },
+  const db = getAdminFirestore();
+  const { caller, response } = await authorizeAiRequest(request, "jojo", body, {
+    consume: (q) => consumeQuota(db, q),
   });
+  if (response) return response;
+
+  trace.getActiveSpan()?.setAttributes({
+    "ai.route": "jojo",
+    "ai.caller": caller.kind,
+    "ai.history_length": messages.length,
+  });
+
+  const upstreamMessages =
+    caller.kind === "parent"
+      ? [{ role: "system", content: PARENT_PERSONA }, ...messages]
+      : messages;
+
+  try {
+    let reply = await callChatAgent(upstreamMessages);
+    // Parents get adult answers; everyone else is (or may be) a child. The
+    // persona should never produce explicit text, so a hit means it slipped.
+    if (caller.kind !== "parent" && detectVulgarContent(reply)) {
+      console.warn(`[ai] route=jojo caller=${caller.kind} reply filtered`);
+      reply = SAFE_REPLY;
+    }
+    console.log(`[ai] route=jojo caller=${caller.kind} status=200`);
+    return Response.json({ reply });
+  } catch (e) {
+    const status = e instanceof AgentError ? e.status : 502;
+    console.error(
+      `[ai] route=jojo caller=${caller.kind} status=${status}: ${e.message}`,
+    );
+    return Response.json({ error: e.message }, { status });
+  }
 }
